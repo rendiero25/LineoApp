@@ -38,19 +38,19 @@ Nothing ships. Goal: an engine that cannot be broken silently.
 
 ### Build infrastructure
 
-- [ ] **P0-01 · Project skeleton** — `S` — `:app`
+- [x] **P0-01 · Project skeleton** — `S` — `:app`
   - Empty Activity (Compose) template, `app.lineo`, minSdk 26
   - Delete generated `MainActivity` and `ui.theme`
   - Repo root contains `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.gemini/`, `docs/`
   - **DoD:** `./gradlew assembleDebug` succeeds on a clean checkout
 
-- [ ] **P0-02 · Convention plugins + version catalog** — `M` — `build-logic`
+- [x] **P0-02 · Convention plugins + version catalog** — `M` — `build-logic`
   - `build-logic` with `lineo.android.application`, `lineo.android.library`,
     `lineo.jvm.library`, `lineo.android.compose`
   - All versions in `gradle/libs.versions.toml`. No inline version strings anywhere
   - **DoD:** adding a new module requires ≤ 5 lines in its `build.gradle.kts`
 
-- [ ] **P0-03 · Static analysis + CI** — `S` — repo
+- [x] **P0-03 · Static analysis + CI** — `S` — repo
   - detekt with ktlint formatting, dependency licence check task
   - GitHub Actions: build, test, detekt on every PR
   - **DoD:** CI fails on a deliberately introduced style violation and on a GPL dependency
@@ -59,7 +59,7 @@ Nothing ships. Goal: an engine that cannot be broken silently.
 
 Depends on P0-02. Pure JVM library, no Android imports.
 
-- [ ] **P0-04 · Test harness first** — `M` — `:core:engine`
+- [x] **P0-04 · Test harness first** — `M` — `:core:engine`
   - Golden file runner reading `src/test/resources/golden/*.txt`, format per
     `docs/GRAMMAR.md` §5, including `locale=` directives and `!ErrorType@span`
   - `EngineFuzzTest`: random input, asserts no throw, 1 s timeout per case
@@ -67,7 +67,7 @@ Depends on P0-02. Pure JVM library, no Android imports.
     offending golden line number
   - *Written before the engine on purpose. It defines what "correct" means.*
 
-- [ ] **P0-05 · Quantity and units** — `M` — `:core:engine`
+- [x] **P0-05 · Quantity and units** — `M` — `:core:engine`
   - `Quantity(BigDecimal, UnitTerm?)`, `UnitTerm` with base-dimension exponents
   - Arithmetic: add/sub require dimension match, mul/div compose dimensions
   - Affine temperature handled as a distinct kind (`docs/GRAMMAR.md` §3.8)
@@ -75,13 +75,13 @@ Depends on P0-02. Pure JVM library, no Android imports.
   - **DoD:** golden cases for `5 km + 300 m`, `2 h * 60 km/h`, `20°C + 5°C` (rejected),
     `0.1 + 0.2 = 0.3`
 
-- [ ] **P0-06 · Lexer** — `M` — `:core:engine`
+- [x] **P0-06 · Lexer** — `M` — `:core:engine`
   - Locale-aware decimal separator, argument separator, grouping (ignored on parse)
   - Indian grouping, magnitude suffixes, scientific notation per `docs/GRAMMAR.md` §3.4
   - Every token carries a source span
   - **DoD:** golden cases pass for `en-US`, `id-ID`, `de-DE`, `hi-IN`
 
-- [ ] **P0-07 · Pratt parser + AST** — `L` — `:core:engine`
+- [x] **P0-07 · Pratt parser + AST** — `L` — `:core:engine`
   - Binding powers derived directly from the precedence table in `docs/GRAMMAR.md` §1
   - Implicit multiplication, right-associative `^`, postfix `%` `!` `°`
   - Every AST node carries a span
@@ -297,3 +297,9 @@ same question being re-litigated in a future session.
 |---|---|---|---|
 | open | P0-01 | Navigation Compose or Navigation 3? Google now points multi-screen apps at Nav 3; `ARCHITECTURE.md` §1 assumes Navigation Compose | **Unresolved — decide before P1-10 (app shell)** |
 | open | P3-01 | Encrypt the Room database at rest? Notepad documents contain salaries and debts | **Unresolved — decide before Phase 3** |
+| 2026-08-13 | P0-03 | detekt 1.23.8 cannot run on JDK 25 — its bundled Kotlin compiler fails to parse the version string | detekt runs through its CLI, forked onto the Java 17 toolchain. The rest of the build stays on the daemon JVM |
+| 2026-08-13 | P0-03 | The licence gate cannot read licences from POMs deterministically without network access | Allowlist instead: `config/licenses/allowed-dependencies.txt` records every module and its licence, and an unlisted dependency fails the build — which is also what §7 wants, since adding one is a human decision |
+| open | P0-03 | `junit:junit` is EPL-1.0, outside the Apache-2.0 / MIT / BSD rule of §2, but JUnit is approved by name in `docs/ARCHITECTURE.md` §7 | Recorded in the allowlist as test-only, marked EPL. **Needs a human confirmation** |
+| 2026-08-13 | P0-04 | Should a golden expectation be the locale-formatted result or the canonical one? | Canonical and locale-free. `locale=` selects how the input is read; the expectation asserts engine behaviour, not display formatting (`docs/CONVENTIONS.md` §1) |
+| 2026-08-13 | P0-06 | In dot-decimal locales `,` is both the grouping and the argument separator, so `max(1,5)` is ambiguous | `,` counts as grouping only when it is followed by a full group of digits — three, or two or three for Indian grouping. Otherwise it is the argument separator. `1,234` is a number, `max(1,5)` is two arguments |
+| 2026-08-13 | P0-07 | `of` has no level in the `docs/GRAMMAR.md` §1 precedence table | Parsed at the multiplicative level, so `50% of 80 + 10` is `50` |
