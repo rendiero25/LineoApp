@@ -1,5 +1,7 @@
 package app.lineo.engine
 
+import app.lineo.engine.unit.UnitTerm
+
 /**
  * Everything that can go wrong while evaluating user input, per `docs/ARCHITECTURE.md` §3.
  *

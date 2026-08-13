@@ -126,7 +126,7 @@ Depends on P0-02. Pure JVM library, no Android imports.
 
 - [ ] **P0-12 · `:core:ui` design system** — `M`
   - Dynamic color on API 31+, generated seed palette fallback below
-  - Token mapping for the keypad per the design notes; true-black variant stubbed
+  - Token mapping for the keypad per `docs/CONVENTIONS.md` §10; true-black variant stubbed
   - Typography with tabular figures; Android 14+ contrast levels honoured
   - **DoD:** Paparazzi snapshots in light, dark, and RTL for the token showcase screen
 

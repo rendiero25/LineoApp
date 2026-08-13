@@ -1,29 +1,30 @@
 package app.lineo.engine
 
+import app.lineo.engine.unit.UnitTerm
 import java.math.BigDecimal
 
 /**
  * Every value in the engine is a quantity, not a bare number (`docs/ARCHITECTURE.md` §2).
  *
- * A `null` [unit] means dimensionless. Arithmetic lives in P0-05; this type exists from
- * the start so the evaluator never has to be rewritten around it.
+ * A `null` [unit] means dimensionless. All arithmetic runs at [MATH_CONTEXT]; `Double`
+ * never appears in a result path.
  */
 data class Quantity(
     val value: BigDecimal,
     val unit: UnitTerm? = null,
 ) {
+    val isDimensionless: Boolean get() = unit == null || unit.isEmpty
+
     /**
      * Locale-free rendering, used internally and by the golden tests. Display formatting
      * is a UI-boundary concern (`docs/CONVENTIONS.md` §1) and never happens here.
      */
     fun canonicalString(): String {
         val number = value.stripTrailingZeros().toPlainString()
-        return if (unit == null) number else "$number ${unit.symbol}"
+        return if (isDimensionless) number else "$number ${requireNotNull(unit).symbol}"
+    }
+
+    companion object {
+        fun of(value: String, unit: UnitTerm? = null): Quantity = Quantity(BigDecimal(value), unit)
     }
 }
-
-/**
- * A unit expression. Full base-dimension exponents and scale factors arrive in P0-05;
- * for now it carries the symbol so error reporting and formatting already work.
- */
-data class UnitTerm(val symbol: String)

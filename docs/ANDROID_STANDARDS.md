@@ -101,8 +101,8 @@ prompting. A calculator that loses a computation on a stray back gesture is unus
 
 ### Theming
 
-- Material 3 with dynamic color on API 31+, generated seed palette below — already in
-  `CONVENTIONS.md`
+- Material 3 with dynamic color on API 31+, generated seed palette below. Full colour
+  strategy, token mapping, typography, and motion rules are in `CONVENTIONS.md` §10
 - Build the fallback palette with the [Material Theme Builder](https://m3.material.io/theme-builder)
   rather than hand-picking hex values
 - The [Android UI kit](https://goo.gle/android-ui-kit) provides Figma components that

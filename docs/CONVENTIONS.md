@@ -181,3 +181,82 @@ Adopted from Android's architecture recommendations:
 | List variant | plural model | `getDocumentsStream()` |
 | Implementation | meaningful, `Default` as last resort | `OfflineFirstRateRepository` |
 | Test double | `Fake` prefix | `FakeRateRepository` |
+
+---
+
+## 10. Design system
+
+The single source of truth for Lineo's visual language. Nothing here is decorative —
+a calculator is read at a glance, and legibility is the product.
+
+### Colour strategy
+
+```kotlin
+val scheme = when {
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && userWantsDynamic ->
+        if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
+    trueBlackEnabled && dark -> LineoAmoledScheme
+    else -> lineoScheme(seed = userSeed ?: DefaultSeed, dark)
+}
+```
+
+- **Default is dynamic color** on API 31+. It costs nothing and makes the app feel native.
+- **Fallback below API 31** is a seed-generated tonal palette. Generate it with the
+  [Material Theme Builder](https://m3.material.io/theme-builder) and commit the output.
+  Do not hand-pick hex values.
+- **Premium:** user-chosen seed, and a true-black AMOLED dark variant.
+- **Never hardcode a colour.** Always `MaterialTheme.colorScheme.*`. A literal hex in a
+  composable is a review rejection — it breaks dynamic color, dark mode, and contrast
+  levels simultaneously.
+
+### Token mapping
+
+| Element | Container token | Content token |
+|---|---|---|
+| Digit key | `surfaceContainerHigh` | `onSurface` |
+| Operator key (`+ − × ÷`) | `secondaryContainer` | `onSecondaryContainer` |
+| Equals key | `primary` | `onPrimary` |
+| Clear / AC | `tertiaryContainer` | `onTertiaryContainer` |
+| Function key (`sin`, `log`, units) | `surfaceContainer` | `onSurfaceVariant` |
+| Editor background | `surface` | `onSurface` |
+| Result value | — | `onSurfaceVariant` |
+| Error underline and message | `error` | `onErrorContainer` |
+| Suggestion chip | `secondaryContainer` | `onSecondaryContainer` |
+| Stale-rate badge | `tertiaryContainer` | `onTertiaryContainer` |
+
+Error state is never colour alone — it always carries an icon and text. See §8.
+
+### Typography
+
+| Role | Style | Notes |
+|---|---|---|
+| Expression being typed | `displayMedium` | Shrinks by step as the line grows; never wraps mid-number |
+| Result | `displaySmall` | Muted, sits below or right of the expression |
+| Notepad line source | `bodyLarge`, monospace-ish | Alignment across lines matters more than beauty |
+| Notepad line result | `bodyLarge` | Right-aligned in its own column |
+| Keypad label | `titleMedium` | |
+| Error message | `bodySmall` | |
+
+**Tabular figures are mandatory** everywhere a number appears. Without them digits shift
+horizontally as they change, and a calculator that jitters while you type feels broken.
+Enable the `tnum` font feature on the display font.
+
+Support system font scaling to maximum without clipping — verified in P1-08b.
+
+### Shape, spacing, and targets
+
+- Material 3 shape scale. Keypad keys use the large rounded shape seen in the reference
+  designs; cards use medium.
+- Spacing on a 4 dp grid; 8 dp is the default gap between keypad keys.
+- Minimum touch target 48 dp. Keypad keys should be comfortably larger — aim for 56 dp or
+  more in compact width, since the keypad is the most-tapped surface in the app.
+- Icons from Material Symbols only.
+
+### Motion
+
+- Keep it short and functional. The result updates while the user types; animating that
+  transition makes the number harder to read, so result changes are not animated.
+- Keypad-to-keyboard transition in the hybrid input is animated, because an abrupt swap
+  is disorienting. Everything else is near-instant.
+- Respect the system animator duration scale. If the user has reduced or disabled
+  animations, honour it.
