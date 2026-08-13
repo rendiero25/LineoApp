@@ -1,5 +1,7 @@
+import app.lineo.gradle.configureDetekt
 import app.lineo.gradle.configureJvmTests
 import app.lineo.gradle.configureKotlinJvm
+import app.lineo.gradle.configureLicenseCheck
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -15,6 +17,8 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
 
             configureKotlinJvm()
             configureJvmTests()
+            configureDetekt()
+            configureLicenseCheck()
         }
     }
 }

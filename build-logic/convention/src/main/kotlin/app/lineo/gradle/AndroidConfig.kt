@@ -43,6 +43,8 @@ internal fun Project.configureAndroid(extension: CommonExtension) {
 
     configureKotlinAndroid()
     configureTests()
+    configureDetekt()
+    configureLicenseCheck()
 }
 
 /** JVM target for Android modules. Kotlin is applied by AGP's built-in Kotlin support. */

@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # 17 is the project's JVM target and the toolchain detekt and the tests run on;
+      # 25 runs the Gradle daemon, matching gradle/gradle-daemon-jvm.properties.
+      - name: Set up JDKs
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            25
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Unit tests
+        run: ./gradlew test --stacktrace
+
+      - name: Static analysis
+        run: ./gradlew detekt lint --stacktrace
+
+      - name: Dependency licences
+        run: ./gradlew checkDependencyLicenses --stacktrace
+
+      - name: Upload reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/reports/detekt/**
+            **/build/reports/lint-results-*.html
+            **/build/reports/tests/**
+          if-no-files-found: ignore

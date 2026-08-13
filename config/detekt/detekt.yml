@@ -1,0 +1,69 @@
+# detekt configuration for Lineo.
+# Built on top of the default config (buildUponDefaultConfig = true), so this file only
+# records deliberate deviations. Kotlin official style; formatting rules come from
+# detekt-formatting (ktlint) and read .editorconfig.
+
+build:
+  maxIssues: 0
+
+formatting:
+  active: true
+  android: true
+  autoCorrect: false
+  MaximumLineLength:
+    active: true
+    maxLineLength: 120
+  FunctionNaming:
+    active: false # backtick test names are required by AGENTS.md §5
+
+complexity:
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 20
+    thresholdInFiles: 25
+    ignorePrivate: true
+    ignoreOverridden: true
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+  SwallowedException:
+    active: true
+
+naming:
+  FunctionNaming:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**']
+    functionPattern: '[a-z][a-zA-Z0-9]*'
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Z0-9]*'
+
+style:
+  MagicNumber:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/build-logic/**']
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+    excludeCommentStatements: true
+  ReturnCount:
+    max: 4
+  ForbiddenComment:
+    active: true
+    comments:
+      - reason: 'Unfinished work must be tracked in TASKS.md, not buried in a comment.'
+        value: 'FIXME:'
+  UnusedPrivateMember:
+    active: true
+  ThrowsCount:
+    active: true
+    max: 2
+
+potential-bugs:
+  UnsafeCallOnNullableType:
+    active: true # AGENTS.md §5 bans !!
