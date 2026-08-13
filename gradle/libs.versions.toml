@@ -9,6 +9,7 @@ activityCompose = "1.13.0"
 kotlin = "2.2.10"
 composeBom = "2026.02.01"
 detekt = "1.23.8"
+junitJupiter = "6.1.3"
 
 [libraries]
 # Gradle plugins consumed as libraries by the convention plugins in build-logic.
@@ -21,6 +22,12 @@ detekt-cli = { group = "io.gitlab.arturbosch.detekt", name = "detekt-cli", versi
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+
+# JUnit 5 for pure Kotlin modules; androidx test tooling still needs JUnit 4.
+junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junitJupiter" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

@@ -1,0 +1,8 @@
+# Fixture for GoldenHarnessTest. Not part of the real golden suite: it exercises the
+# harness itself, including the failure report, against a stub evaluator.
+locale=en-US
+2+3*4                       | 14
+1/0                         | !DivisionByZero
+sni(1)                      | !UnknownIdentifier@0..2
+locale=de-DE
+1,5+1,5                     | 3
