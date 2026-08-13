@@ -10,6 +10,11 @@ kotlin = "2.2.10"
 composeBom = "2026.02.01"
 
 [libraries]
+# Gradle plugins consumed as libraries by the convention plugins in build-logic.
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+compose-gradlePlugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
+
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -27,5 +32,13 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+# Convention plugins, implemented in build-logic. Modules apply these, never the raw ones.
+lineo-android-application = { id = "lineo.android.application" }
+lineo-android-library = { id = "lineo.android.library" }
+lineo-android-compose = { id = "lineo.android.compose" }
+lineo-jvm-library = { id = "lineo.jvm.library" }
 
