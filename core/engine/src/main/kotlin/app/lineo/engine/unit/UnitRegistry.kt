@@ -62,6 +62,27 @@ object UnitRegistry {
             ),
         )
 
+        // Plane angle. Dimensionless per ISO 80000, but the scale is what lets trigonometry
+        // honour `sin 90°` regardless of the angle mode.
+        add(linear("rad", Dimensions.NONE, "1"))
+        add(
+            UnitDefinition(
+                symbol = "°",
+                dimensions = Dimensions.NONE,
+                scale = BigDecimal("3.141592653589793238462643383279503")
+                    .divide(BigDecimal("180"), java.math.MathContext.DECIMAL128),
+                aliases = listOf("deg"),
+            ),
+        )
+        add(
+            UnitDefinition(
+                symbol = "grad",
+                dimensions = Dimensions.NONE,
+                scale = BigDecimal("3.141592653589793238462643383279503")
+                    .divide(BigDecimal("200"), java.math.MathContext.DECIMAL128),
+            ),
+        )
+
         // Temperature differences. Adding one of these to an absolute temperature is legal.
         add(delta("Δ°C", BigDecimal.ONE))
         add(delta("ΔK", BigDecimal.ONE))

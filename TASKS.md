@@ -88,7 +88,7 @@ Depends on P0-02. Pure JVM library, no Android imports.
   - **DoD:** every row of `docs/CONVENTIONS.md` §4 has a passing golden case;
     fuzz test green
 
-- [ ] **P0-08 · Evaluator + error model** — `L` — `:core:engine`
+- [x] **P0-08 · Evaluator + error model** — `L` — `:core:engine`
   - `EvalContext`: variables, previous results, angle mode, function registry
   - Full `CalcError` hierarchy per `docs/ARCHITECTURE.md` §3
   - `UnknownIdentifier` produces a nearest-match suggestion (edit distance)

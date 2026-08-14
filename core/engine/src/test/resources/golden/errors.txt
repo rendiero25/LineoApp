@@ -1,0 +1,29 @@
+# One case per CalcError variant the engine can raise on a single line
+# (docs/ARCHITECTURE.md §3), with the span the editor underlines.
+# CircularReference and RateUnavailable belong to the notepad and to currency, which are
+# Phase 1 and Phase 2; they get their cases there.
+# Never edit a line here to make a test pass (docs/GRAMMAR.md §5).
+
+locale=en-US
+
+1/0                         | !DivisionByZero
+5/(2-2)                     | !DivisionByZero
+10 mod 0                    | !DivisionByZero
+
+5 +                         | !Syntax@3..3
+2 **                        | !Syntax@3..3
+= 5                         | !Syntax@0..0
+
+(1+2                        | !UnbalancedParen@0..0
+((1+2)                      | !UnbalancedParen@0..0
+1+2)                        | !Syntax@3..3
+
+qq                          | !UnknownIdentifier@0..1
+2 + zz                      | !UnknownIdentifier@4..5
+
+5 km + 3 kg                 | !UnitMismatch@0..10
+
+(-1)!                       | !DomainError@0..4
+2.5!                        | !DomainError@0..3
+
+10^10^10                    | !Overflow@0..7

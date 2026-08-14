@@ -193,6 +193,12 @@ class Lexer(
     }
 
     private fun readWord(source: String, start: Int): Token {
+        // Δ°C, Δ°F and ΔK are single unit symbols: a temperature difference, not a product.
+        TEMPERATURE_DELTAS.firstOrNull { source.startsWith(it, start) }?.let { symbol ->
+            val end = start + symbol.length
+            return Token(TokenType.IDENTIFIER, symbol, start until end)
+        }
+
         var index = start
         while (index < source.length && (source[index].isLetterOrDigit() || source[index] == UNDERSCORE)) index++
         val text = source.substring(start, index)
@@ -215,23 +221,19 @@ class Lexer(
 
     private fun readSymbol(source: String, start: Int): Token {
         val char = source[start]
-        val span = start..start
-        val type = when (char) {
-            '+' -> TokenType.PLUS
-            '-', '−' -> TokenType.MINUS
-            '*', '×', '⋅' -> TokenType.STAR
-            '/', '÷', '∕' -> TokenType.SLASH
-            '^' -> TokenType.CARET
-            '%' -> TokenType.PERCENT
-            '!' -> TokenType.BANG
-            '°' -> TokenType.DEGREE
-            '(', '[' -> TokenType.LEFT_PAREN
-            ')', ']' -> TokenType.RIGHT_PAREN
-            '=' -> TokenType.ASSIGN
-            profile.argumentSeparator -> TokenType.ARG_SEPARATOR
-            else -> TokenType.UNKNOWN
+
+        // °C and °F are unit symbols, not a degree sign followed by a name.
+        if (char == DEGREE_SIGN && start + 1 < source.length && source[start + 1] in TEMPERATURE_LETTERS) {
+            val end = start + 2
+            return Token(TokenType.IDENTIFIER, source.substring(start, end), start until end)
         }
-        return Token(type, char.toString(), span)
+
+        val type = if (char == profile.argumentSeparator) {
+            TokenType.ARG_SEPARATOR
+        } else {
+            SYMBOLS[char] ?: TokenType.UNKNOWN
+        }
+        return Token(type, char.toString(), start..start)
     }
 
     private fun String.toBigDecimalOrZero(): BigDecimal =
@@ -240,6 +242,31 @@ class Lexer(
     private companion object {
         const val LINE_REF_MARKER = '@'
         const val UNDERSCORE = '_'
+        const val DEGREE_SIGN = '°'
+        val TEMPERATURE_LETTERS = setOf('C', 'F')
+        val TEMPERATURE_DELTAS = listOf("Δ°C", "Δ°F", "ΔK")
+
+        /** Typographic variants are accepted so that pasted text lexes like typed text. */
+        val SYMBOLS: Map<Char, TokenType> = mapOf(
+            '+' to TokenType.PLUS,
+            '-' to TokenType.MINUS,
+            '−' to TokenType.MINUS,
+            '*' to TokenType.STAR,
+            '×' to TokenType.STAR,
+            '⋅' to TokenType.STAR,
+            '/' to TokenType.SLASH,
+            '÷' to TokenType.SLASH,
+            '∕' to TokenType.SLASH,
+            '^' to TokenType.CARET,
+            '%' to TokenType.PERCENT,
+            '!' to TokenType.BANG,
+            '°' to TokenType.DEGREE,
+            '(' to TokenType.LEFT_PAREN,
+            '[' to TokenType.LEFT_PAREN,
+            ')' to TokenType.RIGHT_PAREN,
+            ']' to TokenType.RIGHT_PAREN,
+            '=' to TokenType.ASSIGN,
+        )
         val LINE_PREFIX_PATTERN = Regex("line(\\d+)")
     }
 }

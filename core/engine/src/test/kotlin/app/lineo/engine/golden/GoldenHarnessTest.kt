@@ -76,12 +76,19 @@ class GoldenHarnessTest {
     }
 
     @Test
-    fun `failure against the stub evaluator points at the offending golden line`() {
-        val failure = GoldenRunner.run(cases[0]) { source, context -> Engine.evaluate(source, context) }
+    fun `a wrong result points at the offending golden line`() {
+        val failure = GoldenRunner.run(cases[0]) { _, _ -> Quantity(BigDecimal("99")).ok() }
 
         assertNotNull(failure)
         assertTrue(failure.orEmpty().startsWith("$fixtureName:4:"), failure)
-        assertTrue(failure.orEmpty().contains("expected 14"), failure)
+        assertTrue(failure.orEmpty().contains("expected 14, got 99"), failure)
+    }
+
+    @Test
+    fun `the real engine satisfies the fixture cases the golden suite also covers`() {
+        val failure = GoldenRunner.run(cases[0]) { source, context -> Engine.evaluate(source, context) }
+
+        assertNull(failure, failure)
     }
 
     @Test
@@ -118,7 +125,7 @@ class GoldenHarnessTest {
     }
 
     @Test
-    fun `the stub evaluator returns a result rather than throwing`() {
+    fun `incomplete input returns a result rather than throwing`() {
         val result = Engine.evaluate("5 +")
 
         assertTrue(result is CalcResult.Err)

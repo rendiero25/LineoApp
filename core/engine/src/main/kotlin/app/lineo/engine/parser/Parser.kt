@@ -36,6 +36,7 @@ class Parser(
     private val knownFunctions: Set<String> = emptySet(),
 ) {
     private var position = 0
+    private var depth = 0
 
     fun parse(): CalcResult<Ast> = try {
         val ast = parseLine()
@@ -57,9 +58,16 @@ class Parser(
     }
 
     private fun parseExpression(minBindingPower: Int): Ast {
-        var left = parsePrefix()
-        while (true) {
-            left = extend(left, minBindingPower) ?: return left
+        // Nesting is bounded so that pathological input fails as an error rather than as a
+        // stack overflow — the fuzzing contract of `docs/GRAMMAR.md` §6.
+        if (++depth > MAX_DEPTH) fail(peek())
+        try {
+            var left = parsePrefix()
+            while (true) {
+                left = extend(left, minBindingPower) ?: return left
+            }
+        } finally {
+            depth--
         }
     }
 
@@ -199,8 +207,21 @@ class Parser(
 
     private fun parseGroup(open: Token): Ast {
         val inner = parseExpression(0)
-        expectRightParen(open)
-        return inner
+        val close = expectRightParen(open)
+        // The group's span includes its parentheses, so `(-1)!` underlines from the `(`.
+        return inner.withSpan(open.span.first..close.span.last)
+    }
+
+    private fun Ast.withSpan(span: IntRange): Ast = when (this) {
+        is Ast.NumberLiteral -> copy(span = span)
+        is Ast.Identifier -> copy(span = span)
+        is Ast.LineReference -> copy(span = span)
+        is Ast.Unary -> copy(span = span)
+        is Ast.Binary -> copy(span = span)
+        is Ast.Postfix -> copy(span = span)
+        is Ast.Call -> copy(span = span)
+        is Ast.Conversion -> copy(span = span)
+        is Ast.Assignment -> copy(span = span)
     }
 
     private fun expectRightParen(open: Token): Token {
@@ -296,6 +317,7 @@ class Parser(
         const val UNARY = 50
         const val POWER = 60
 
+        const val MAX_DEPTH = 128
         const val INCH = "in"
         const val MOD = "mod"
         const val OF = "of"

@@ -1,5 +1,11 @@
 package app.lineo.engine
 
+import app.lineo.engine.eval.Evaluator
+import app.lineo.engine.lexer.Lexer
+import app.lineo.engine.lexer.NumberFormatProfile
+import app.lineo.engine.parser.Ast
+import app.lineo.engine.parser.Parser
+
 /**
  * Entry point of the expression engine.
  *
@@ -11,15 +17,17 @@ package app.lineo.engine
  * (`docs/GRAMMAR.md` §6).
  */
 object Engine {
-    /**
-     * Evaluates a single source line.
-     *
-     * Stub until P0-07 and P0-08 land: it reports the whole input as a syntax error, which
-     * is enough for the golden harness and the fuzz test to exercise the contract.
-     */
-    @Suppress("UnusedParameter") // `context` is read once the evaluator lands in P0-08.
-    fun evaluate(source: String, context: EvalContext = EvalContext()): CalcResult<Quantity> {
-        val end = if (source.isEmpty()) 0 else source.length - 1
-        return CalcError.Syntax(token = source, span = 0..end).err()
+    /** Evaluates a single source line. */
+    fun evaluate(source: String, context: EvalContext = EvalContext()): CalcResult<Quantity> =
+        parse(source, context).flatMap { ast -> Evaluator(context).evaluate(ast) }
+
+    /** Parses a single source line, exposed for the editor's syntax feedback. */
+    fun parse(source: String, context: EvalContext = EvalContext()): CalcResult<Ast> {
+        val profile = NumberFormatProfile.forLocale(context.locale)
+        val tokens = Lexer(profile, definedNames = context.variables.keys).tokenize(source)
+        return Parser(tokens, knownFunctions = context.functions.names).parse()
     }
+
+    /** The name a labelled line defines, or `null` when the line is a bare expression. */
+    fun assignedName(ast: Ast): String? = (ast as? Ast.Assignment)?.name
 }
