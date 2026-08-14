@@ -1,5 +1,6 @@
 package app.lineo.engine.golden
 
+import app.lineo.engine.AngleMode
 import java.util.Locale
 
 /**
@@ -8,6 +9,7 @@ import java.util.Locale
  * ```
  * # comment
  * locale=en-US
+ * angle=DEG
  * 2+3*4                       | 14
  * 1/0                         | !DivisionByZero
  * sni(1)                      | !UnknownIdentifier@0..2
@@ -20,6 +22,7 @@ data class GoldenCase(
     val file: String,
     val lineNumber: Int,
     val locale: Locale,
+    val angleMode: AngleMode,
     val input: String,
     val expectation: Expectation,
 ) {

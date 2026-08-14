@@ -153,8 +153,15 @@ Cannot be used as variable or formula names:
 to  in  as  of  mod  and  or  not  true  false  line  if  else
 ```
 
-Built-in constants `pi`, `e`, `phi`, `inf`, `nan` can be shadowed by user variables,
-but the editor warns.
+Built-in constants `pi`, `e`, `phi` can be shadowed by user variables, but the editor
+warns.
+
+There is no `inf` and no `nan`. A `Quantity` holds a `BigDecimal`, which has no
+non-finite values, and inventing a sentinel for them would put a second number model
+into every arithmetic path. What would have produced one is an error instead:
+`1/0` is `DivisionByZero`, and a result that leaves the representable range is
+`Overflow`. Both are spans the editor can point at, which a silent `inf` would not be.
+Decided under P0-09; see the decisions log in `TASKS.md`.
 
 ---
 
@@ -165,6 +172,7 @@ but the editor warns.
 ```
 # comment
 locale=en-US
+angle=DEG
 2+3*4                       | 14
 -2^2                        | -4
 6/2(1+3)                    | 12
@@ -172,11 +180,16 @@ locale=en-US
 5 km + 300 m                | 5.3 km
 1/0                         | !DivisionByZero
 sni(1)                      | !UnknownIdentifier@0..2
+angle=RAD
+sin(pi/6)                   | 0.5
 ```
 
 - `|` separates input from expectation.
 - `!` prefixes an expected error type; `@start..end` asserts the span.
 - `locale=` sets the locale for all following lines until changed.
+- `angle=` sets the angle mode — `DEG`, `RAD` or `GRAD` — the same way, and defaults to
+  `DEG`. A file that never mentions it reads in DEG, the app's own default
+  (`docs/CONVENTIONS.md` §4).
 
 **Never edit an existing golden line to make a test pass.** A changed expectation is
 a behaviour change and needs a human decision. Add new lines freely.

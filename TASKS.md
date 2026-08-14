@@ -95,7 +95,7 @@ Depends on P0-02. Pure JVM library, no Android imports.
   - Identifier resolution order per `docs/GRAMMAR.md` §3.1
   - **DoD:** `evaluate()` never throws; one golden case per error variant with span assertion
 
-- [ ] **P0-09 · Built-in functions and constants** — `M` — `:core:engine`
+- [x] **P0-09 · Built-in functions and constants** — `M` — `:core:engine`
   - Scientific set: trig + inverse + hyperbolic, log/ln/exp, roots, `abs`, `round`,
     `floor`, `ceil`, `mod`, `gcd`, `lcm`, factorial, `nPr`, `nCr`
   - Constants `pi`, `e`, `phi`; angle mode respected and visible
@@ -303,3 +303,7 @@ same question being re-litigated in a future session.
 | 2026-08-13 | P0-04 | Should a golden expectation be the locale-formatted result or the canonical one? | Canonical and locale-free. `locale=` selects how the input is read; the expectation asserts engine behaviour, not display formatting (`docs/CONVENTIONS.md` §1) |
 | 2026-08-13 | P0-06 | In dot-decimal locales `,` is both the grouping and the argument separator, so `max(1,5)` is ambiguous | `,` counts as grouping only when it is followed by a full group of digits — three, or two or three for Indian grouping. Otherwise it is the argument separator. `1,234` is a number, `max(1,5)` is two arguments |
 | 2026-08-13 | P0-07 | `of` has no level in the `docs/GRAMMAR.md` §1 precedence table | Parsed at the multiplicative level, so `50% of 80 + 10` is `50` |
+| 2026-08-14 | P0-09 | A golden file could not express the angle mode, so RAD and GRAD behaviour had nowhere to be asserted | `angle=DEG\|RAD\|GRAD` directive added alongside `locale=`, sticky the same way, defaulting to DEG. `docs/GRAMMAR.md` §5 updated |
+| 2026-08-14 | P0-09 | Trigonometry and logarithms run on `Double`, so `sin(30°)` computes as `0.49999999999999994` and `cos(90°)` as `6.12e-17` | Results are re-boxed at 15 significant digits, HALF_UP, and angles landing exactly on a quarter turn are answered exactly — `cos(90)` is `0`, `tan(90)` is a `DomainError`. The whole `Double` boundary is `function/Precision.kt` |
+| 2026-08-14 | P0-09 | `docs/GRAMMAR.md` §4 listed `inf` and `nan`, which `BigDecimal` cannot represent | Removed from §4. The engine has no non-finite value; `DivisionByZero` and `Overflow` cover what would have produced one, and both carry a span |
+| 2026-08-14 | P0-09 | `mod` was to be both an operator and a function name | Operator only. `mod` is a reserved word (§4), so the lexer never yields it as an identifier and `mod(10, 3)` cannot parse as a call |

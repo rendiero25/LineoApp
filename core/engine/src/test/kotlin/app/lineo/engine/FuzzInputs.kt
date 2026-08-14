@@ -44,6 +44,39 @@ object FuzzInputs {
         "1)+2",
     )
 
+    /**
+     * Built-in functions handed arguments meant to break them: magnitudes no `Double` holds,
+     * exact-integer work that would be a billion digits, and the edges of every domain.
+     */
+    val HOSTILE_ARGUMENTS: List<String> = listOf(
+        "sqrt(-1e999)",
+        "sqrt(1e999999999)",
+        "cbrt(-1e999999999)",
+        "root(1e999, 0)",
+        "root(2, 1e999999999)",
+        "ln(1e-999999999)",
+        "log(1e999999999)",
+        "log(8, 1)",
+        "log2(0)",
+        "exp(1e999)",
+        "sin(1e999999999)",
+        "sin(1e999999999°)",
+        "tan(90)",
+        "asin(1e-999)",
+        "atanh(1)",
+        "acosh(-1e999)",
+        "fact(1e999999999)",
+        "fact(-1e999)",
+        "nCr(1e999999999, 2)",
+        "nPr(1000, 1000)",
+        "gcd(1e999999999, 3)",
+        "lcm(0, 1e999)",
+        "floor(1e999999999)",
+        "ceil(-1e999999999)",
+        "round(1e999999999, 1e999)",
+        "abs(-1e999999999)",
+    )
+
     val DEEP_NESTING: List<String> = listOf(50, 200, 1_000).flatMap { depth ->
         listOf(
             "(".repeat(depth) + "1" + ")".repeat(depth),

@@ -1,0 +1,131 @@
+# Built-in functions and constants (P0-09).
+# One case per function per arity, plus at least one domain error each.
+# Expectations are canonical and locale-free (docs/CONVENTIONS.md §1).
+# Never edit a line here to make a test pass (docs/GRAMMAR.md §5).
+
+locale=en-US
+angle=DEG
+
+# --- constants -------------------------------------------------------------
+pi                          | 3.1415926535897932384626433832795028841971693993751
+e                           | 2.71828182845904523536028747135266249775724709369995
+phi                         | 1.61803398874989484820458683436563811772030917980576
+2e                          | 5.436563656918090470720574942705325
+inf                         | !UnknownIdentifier@0..2
+sni(1)                      | !UnknownIdentifier@0..2
+
+# --- circular trigonometry, exact on the quarter turns ---------------------
+sin(0)                      | 0
+sin(30)                     | 0.5
+sin(90)                     | 1
+sin(180)                    | 0
+sin(270)                    | -1
+cos(0)                      | 1
+cos(60)                     | 0.5
+cos(90)                     | 0
+tan(0)                      | 0
+tan(45)                     | 1
+tan(90)                     | !DomainError@0..6
+sin 30                      | 0.5
+sin(90°)                    | 1
+sin(5 km)                   | !DomainError@0..8
+cos(5 km)                   | !DomainError@0..8
+tan(5 kg)                   | !DomainError@0..8
+
+# --- inverse trigonometry, answering in the current angle mode -------------
+asin(0.5)                   | 30
+asin(1)                     | 90
+acos(0.5)                   | 60
+atan(1)                     | 45
+arctan(1)                   | 45
+asin(2)                     | !DomainError@0..6
+acos(-2)                    | !DomainError@0..7
+atan(5 km)                  | !DomainError@0..9
+
+# --- hyperbolic ------------------------------------------------------------
+sinh(0)                     | 0
+cosh(0)                     | 1
+tanh(0)                     | 0
+asinh(0)                    | 0
+acosh(1)                    | 0
+atanh(0)                    | 0
+sinh(1)                     | 1.1752011936438
+cosh(1)                     | 1.54308063481524
+tanh(1)                     | 0.761594155955765
+acosh(0.5)                  | !DomainError@0..9
+atanh(1)                    | !DomainError@0..7
+sinh(5 km)                  | !DomainError@0..9
+
+# --- logarithms and the exponential ---------------------------------------
+ln(1)                       | 0
+ln(e)                       | 1
+log(100)                    | 2
+log(8, 2)                   | 3
+log2(8)                     | 3
+exp(0)                      | 1
+exp(1)                      | 2.71828182845905
+ln(0)                       | !DomainError@0..4
+ln(-1)                      | !DomainError@0..5
+log(8, 1)                   | !DomainError@0..8
+log2(0)                     | !DomainError@0..6
+exp(5 km)                   | !DomainError@0..8
+
+# --- roots -----------------------------------------------------------------
+sqrt(16)                    | 4
+sqrt(2)                     | 1.4142135623731
+cbrt(27)                    | 3
+cbrt(-8)                    | -2
+root(81, 4)                 | 3
+sqrt(-1)                    | !DomainError@0..7
+sqrt(16 m^2)                | !DomainError@0..11
+root(8, 0)                  | !DomainError@0..9
+root(-16, 4)                | !DomainError@0..11
+
+# --- rounding, keeping the unit -------------------------------------------
+abs(-5)                     | 5
+abs(-5 km)                  | 5 km
+floor(2.7)                  | 2
+floor(-2.1)                 | -3
+ceil(2.1)                   | 3
+ceil(-2.7)                  | -2
+round(2.5)                  | 3
+round(1.005, 2)             | 1.01
+round(2.5 kg)               | 3 kg
+
+# --- integer maths ---------------------------------------------------------
+# `mod` is a reserved word (docs/GRAMMAR.md §4), so it stays an operator rather than
+# also being a function name.
+10 mod 3                    | 1
+gcd(12, 18)                 | 6
+lcm(4, 6)                   | 12
+gcd(2.5, 5)                 | !DomainError@0..10
+lcm(4, 6 km)                | !DomainError@0..11
+
+# --- counting --------------------------------------------------------------
+fact(5)                     | 120
+fact(0)                     | 1
+5!                          | 120
+nPr(5, 2)                   | 20
+nCr(5, 2)                   | 10
+nCr(5, 5)                   | 1
+fact(-1)                    | !DomainError@0..7
+nCr(5, 2.5)                 | !DomainError@0..10
+nPr(2, 5)                   | !DomainError@0..8
+
+# --- the angle mode is honoured, and a unit beats it ----------------------
+angle=RAD
+sin(0)                      | 0
+sin(pi/6)                   | 0.5
+sin(1)                      | 0.841470984807897
+sin(90°)                    | 1
+asin(1)                     | 1.5707963267949
+cos(pi)                     | -1
+
+angle=GRAD
+sin(100)                    | 1
+sin(200)                    | 0
+tan(100)                    | !DomainError@0..7
+asin(1)                     | 100
+
+angle=DEG
+sin(90)                     | 1

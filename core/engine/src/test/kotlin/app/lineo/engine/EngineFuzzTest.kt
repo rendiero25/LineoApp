@@ -41,6 +41,23 @@ class EngineFuzzTest {
         (FuzzInputs.WELL_FORMED_LOOKING + FuzzInputs.LONG_INPUTS).forEach(::check)
     }
 
+    @Test
+    fun `built-in functions never throw on hostile arguments`() {
+        FuzzInputs.HOSTILE_ARGUMENTS.forEach(::check)
+    }
+
+    @Test
+    fun `built-in functions never throw in any angle mode`() {
+        AngleMode.entries.forEach { mode ->
+            FuzzInputs.HOSTILE_ARGUMENTS.forEach { input ->
+                val result = assertTimeoutPreemptively(TIMEOUT, "engine hung on: $input in $mode") {
+                    Engine.evaluate(input, EvalContext(angleMode = mode))
+                }
+                assertNotNull(result, "engine returned null for: $input in $mode")
+            }
+        }
+    }
+
     private fun check(input: String, locale: Locale = Locale.US) {
         val result = assertTimeoutPreemptively(TIMEOUT, "engine hung on: ${input.take(80)}") {
             Engine.evaluate(input, EvalContext(locale = locale))

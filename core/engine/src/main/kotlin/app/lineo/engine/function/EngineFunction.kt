@@ -42,5 +42,8 @@ class FunctionRegistry(functions: List<EngineFunction> = emptyList()) {
 
     companion object {
         val EMPTY = FunctionRegistry()
+
+        /** The scientific set of P0-09. What every surface sees unless a module adds more. */
+        val BUILTIN = FunctionRegistry(BuiltinFunctions.ALL)
     }
 }

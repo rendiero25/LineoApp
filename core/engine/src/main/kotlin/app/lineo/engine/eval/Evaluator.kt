@@ -10,6 +10,7 @@ import app.lineo.engine.Quantity
 import app.lineo.engine.QuantityArithmetic
 import app.lineo.engine.err
 import app.lineo.engine.flatMap
+import app.lineo.engine.function.Combinatorics
 import app.lineo.engine.ok
 import app.lineo.engine.parser.Ast
 import app.lineo.engine.parser.BinaryOperator
@@ -197,24 +198,9 @@ class Evaluator(private val context: EvalContext) {
         }
     }
 
-    private fun factorial(operand: Quantity, span: IntRange): CalcResult<Quantity> {
-        if (!operand.isDimensionless) {
-            return CalcError.DomainError(FACTORIAL_NAME, DomainReason.OUT_OF_RANGE, span).err()
-        }
-
-        val n = operand.value.toWholeIntOrNull()
-            ?: return CalcError.DomainError(FACTORIAL_NAME, DomainReason.NON_INTEGER, span).err()
-
-        return when {
-            n < 0 -> CalcError.DomainError(FACTORIAL_NAME, DomainReason.NEGATIVE_INPUT, span).err()
-            n > MAX_FACTORIAL -> CalcError.DomainError(FACTORIAL_NAME, DomainReason.TOO_LARGE, span).err()
-            else -> {
-                var result = BigDecimal.ONE
-                for (factor in 2..n) result = result.multiply(BigDecimal(factor))
-                Quantity(result).ok()
-            }
-        }
-    }
+    /** `5!` and `fact(5)` are the same computation, so both come from [Combinatorics]. */
+    private fun factorial(operand: Quantity, span: IntRange): CalcResult<Quantity> =
+        Combinatorics.factorial(operand, FACTORIAL_NAME, span)
 
     /** `90°` is an angle in degrees, kept as a unit so trigonometry can honour it. */
     private fun degrees(operand: Quantity, span: IntRange): CalcResult<Quantity> {
@@ -272,7 +258,6 @@ class Evaluator(private val context: EvalContext) {
 
     private companion object {
         val HUNDRED = BigDecimal("100")
-        const val MAX_FACTORIAL = 1_000
         const val MAX_POWER = 100_000
         const val POWER_NAME = "^"
         const val FACTORIAL_NAME = "!"

@@ -20,5 +20,5 @@ data class EvalContext(
     val angleMode: AngleMode = AngleMode.DEG,
     val variables: Map<String, Quantity> = emptyMap(),
     val lineResults: Map<LineId, Quantity> = emptyMap(),
-    val functions: FunctionRegistry = FunctionRegistry.EMPTY,
+    val functions: FunctionRegistry = FunctionRegistry.BUILTIN,
 )

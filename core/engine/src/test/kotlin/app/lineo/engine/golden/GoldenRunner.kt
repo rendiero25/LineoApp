@@ -19,7 +19,8 @@ object GoldenRunner {
             app.lineo.engine.Engine.evaluate(source, context)
         },
     ): String? {
-        val result = runCatching { evaluate(case.input, EvalContext(locale = case.locale)) }
+        val context = EvalContext(locale = case.locale, angleMode = case.angleMode)
+        val result = runCatching { evaluate(case.input, context) }
             .getOrElse { throwable ->
                 return report(case, "the engine threw ${throwable::class.simpleName}: ${throwable.message}")
             }

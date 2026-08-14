@@ -1,5 +1,6 @@
 package app.lineo.engine.golden
 
+import app.lineo.engine.AngleMode
 import app.lineo.engine.CalcError
 import app.lineo.engine.CalcResult
 import app.lineo.engine.Engine
@@ -42,6 +43,32 @@ class GoldenHarnessTest {
     fun `locale directive applies until it changes`() {
         assertEquals(Locale.forLanguageTag("en-US"), cases[0].locale)
         assertEquals(Locale.forLanguageTag("de-DE"), cases.last().locale)
+    }
+
+    @Test
+    fun `angle mode defaults to DEG when the file never says`() {
+        assertTrue(cases.all { it.angleMode == AngleMode.DEG }, cases.map { it.angleMode }.toString())
+    }
+
+    @Test
+    fun `angle directive applies until it changes`() {
+        val parsed = GoldenFileParser.parse(
+            "angles.txt",
+            "sin(90) | 1\nangle=RAD\nsin(1) | 0.841470984807897\nangle=GRAD\nsin(100) | 1\n",
+        )
+
+        assertEquals(
+            listOf(AngleMode.DEG, AngleMode.RAD, AngleMode.GRAD),
+            parsed.map { it.angleMode },
+        )
+    }
+
+    @Test
+    fun `an unknown angle mode names the file and line`() {
+        val failure = assertThrows<IllegalStateException> {
+            GoldenFileParser.parse("broken.txt", "# header\nangle=TURNS\n")
+        }
+        assertTrue(failure.message.orEmpty().startsWith("broken.txt:2:"), failure.message)
     }
 
     @Test

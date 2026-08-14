@@ -47,6 +47,9 @@ data class UnitTerm(val factors: List<UnitFactor>) {
 
     val isAbsoluteTemperature: Boolean get() = kind == UnitKind.ABSOLUTE_TEMPERATURE
 
+    /** A lone plane angle, e.g. `°` or `rad`. `rad/s` is not one: that is an angular speed. */
+    val isAngle: Boolean get() = kind == UnitKind.ANGLE
+
     val isTemperatureDelta: Boolean get() = kind == UnitKind.TEMPERATURE_DELTA
 
     /** ISO 80000 style rendering: `km`, `km/h`, `kg·m/s^2`. */

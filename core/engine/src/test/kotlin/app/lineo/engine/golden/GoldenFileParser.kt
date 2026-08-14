@@ -1,5 +1,6 @@
 package app.lineo.engine.golden
 
+import app.lineo.engine.AngleMode
 import java.util.Locale
 
 /**
@@ -8,6 +9,7 @@ import java.util.Locale
  */
 object GoldenFileParser {
     private const val LOCALE_PREFIX = "locale="
+    private const val ANGLE_PREFIX = "angle="
     private const val SEPARATOR = '|'
     private const val ERROR_MARKER = '!'
     private const val SPAN_MARKER = '@'
@@ -15,6 +17,7 @@ object GoldenFileParser {
 
     fun parse(fileName: String, content: String, defaultLocale: Locale = Locale.US): List<GoldenCase> {
         var locale = defaultLocale
+        var angleMode = AngleMode.DEG
         val cases = mutableListOf<GoldenCase>()
 
         content.lineSequence().forEachIndexed { index, rawLine ->
@@ -27,7 +30,10 @@ object GoldenFileParser {
                 line.startsWith(LOCALE_PREFIX) ->
                     locale = Locale.forLanguageTag(line.removePrefix(LOCALE_PREFIX).trim())
 
-                line.contains(SEPARATOR) -> cases += parseCase(fileName, lineNumber, locale, line)
+                line.startsWith(ANGLE_PREFIX) ->
+                    angleMode = parseAngleMode(fileName, lineNumber, line.removePrefix(ANGLE_PREFIX).trim())
+
+                line.contains(SEPARATOR) -> cases += parseCase(fileName, lineNumber, locale, angleMode, line)
 
                 else -> error("$fileName:$lineNumber: not a golden line, expected 'input | expected': $line")
             }
@@ -36,7 +42,21 @@ object GoldenFileParser {
         return cases
     }
 
-    private fun parseCase(fileName: String, lineNumber: Int, locale: Locale, line: String): GoldenCase {
+    /**
+     * `angle=` is sticky like `locale=`, and defaults to DEG — the app's own default
+     * (`docs/CONVENTIONS.md` §4), so a golden file that never mentions it reads naturally.
+     */
+    private fun parseAngleMode(fileName: String, lineNumber: Int, value: String): AngleMode =
+        AngleMode.entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
+            ?: error("$fileName:$lineNumber: unknown angle mode '$value', expected DEG, RAD or GRAD")
+
+    private fun parseCase(
+        fileName: String,
+        lineNumber: Int,
+        locale: Locale,
+        angleMode: AngleMode,
+        line: String,
+    ): GoldenCase {
         val input = line.substringBefore(SEPARATOR).trim()
         val expected = line.substringAfter(SEPARATOR).trim()
 
@@ -47,6 +67,7 @@ object GoldenFileParser {
             file = fileName,
             lineNumber = lineNumber,
             locale = locale,
+            angleMode = angleMode,
             input = input,
             expectation = parseExpectation(fileName, lineNumber, expected),
         )
