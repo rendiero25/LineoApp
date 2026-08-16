@@ -10,6 +10,10 @@ kotlin = "2.2.10"
 composeBom = "2026.02.01"
 detekt = "1.23.8"
 junitJupiter = "6.1.3"
+annotation = "1.10.0"
+coroutines = "1.10.2"
+hilt = "2.60.1"
+ksp = "2.3.11"
 
 [libraries]
 # Gradle plugins consumed as libraries by the convention plugins in build-logic.
@@ -17,11 +21,21 @@ android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", ver
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 compose-gradlePlugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
 detekt-cli = { group = "io.gitlab.arturbosch.detekt", name = "detekt-cli", version.ref = "detekt" }
+hilt-gradlePlugin = { group = "com.google.dagger", name = "hilt-android-gradle-plugin", version.ref = "hilt" }
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 # ktlint formatting rules, run through detekt so there is a single static-analysis entry point.
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+
+# Flow is the input-surface contract of docs/ARCHITECTURE.md §5.
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+
+# Hilt. Modules are contributed through multibinding (docs/ARCHITECTURE.md §4).
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 
 # JUnit 5 for pure Kotlin modules; androidx test tooling still needs JUnit 4.
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junitJupiter" }
@@ -53,4 +67,5 @@ lineo-android-application = { id = "lineo.android.application" }
 lineo-android-library = { id = "lineo.android.library" }
 lineo-android-compose = { id = "lineo.android.compose" }
 lineo-jvm-library = { id = "lineo.jvm.library" }
+lineo-android-hilt = { id = "lineo.android.hilt" }
 

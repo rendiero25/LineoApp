@@ -26,3 +26,4 @@ dependencyResolutionManagement {
 rootProject.name = "Lineo"
 include(":app")
 include(":core:engine")
+include(":core:registry")

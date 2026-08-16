@@ -103,7 +103,7 @@ Depends on P0-02. Pure JVM library, no Android imports.
 
 ### Core plumbing
 
-- [ ] **P0-10 · `:core:registry`** — `S`
+- [x] **P0-10 · `:core:registry`** — `S`
   - `CalculatorModule`, `CalcFunction`, `Tier`, `LocaleGate`, `EditorCommand`,
     `InputSurface` per `docs/ARCHITECTURE.md` §4–5
   - Hilt multibinding wiring in `:app`
@@ -307,3 +307,7 @@ same question being re-litigated in a future session.
 | 2026-08-14 | P0-09 | Trigonometry and logarithms run on `Double`, so `sin(30°)` computes as `0.49999999999999994` and `cos(90°)` as `6.12e-17` | Results are re-boxed at 15 significant digits, HALF_UP, and angles landing exactly on a quarter turn are answered exactly — `cos(90)` is `0`, `tan(90)` is a `DomainError`. The whole `Double` boundary is `function/Precision.kt` |
 | 2026-08-14 | P0-09 | `docs/GRAMMAR.md` §4 listed `inf` and `nan`, which `BigDecimal` cannot represent | Removed from §4. The engine has no non-finite value; `DivisionByZero` and `Overflow` cover what would have produced one, and both carry a span |
 | 2026-08-14 | P0-09 | `mod` was to be both an operator and a function name | Operator only. `mod` is a reserved word (§4), so the lexer never yields it as an identifier and `mod(10, 3)` cannot parse as a call |
+| 2026-08-17 | P0-10 | Hilt 2.57.2 fails to apply on AGP 9.3.1 — `Android BaseExtension not found`, the extension AGP 9 removed | Hilt raised to 2.60.1. Hilt itself is already approved by name in `docs/ARCHITECTURE.md` §7, so this is a version bump, not a new dependency |
+| 2026-08-17 | P0-10 | KSP `2.2.10-2.0.2` adds its generated sources through `kotlin.sourceSets`, which AGP 9's built-in Kotlin rejects | KSP raised to the decoupled `2.3.11` line, which registers its output with AGP directly. The documented `android.disallowKotlinSourceSets=false` escape hatch was not used — it suppresses a real check for the whole build |
+| 2026-08-17 | P0-10 | detekt `FunctionNaming` rejects `@Composable fun Screen(...)`, but `AGENTS.md` §5 requires composables to be PascalCase | `ignoreAnnotated: ['Composable']` on that rule only. The lowercase pattern still applies to every other function |
+| open | P0-10 | JUnit 5 (`org.junit.jupiter:*`, `org.junit.platform:*`, `org.junit:junit-bom`) is EPL-2.0, the same situation as the `junit:junit` row above | Recorded in the allowlist as test-only, marked EPL-2.0. **Needs the same human confirmation** |

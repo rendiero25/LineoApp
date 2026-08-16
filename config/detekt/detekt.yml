@@ -38,6 +38,8 @@ naming:
     active: true
     excludes: ['**/test/**', '**/androidTest/**']
     functionPattern: '[a-z][a-zA-Z0-9]*'
+    # Composables are PascalCase and noun-first (AGENTS.md §5).
+    ignoreAnnotated: ['Composable']
   TopLevelPropertyNaming:
     constantPattern: '[A-Z][_A-Z0-9]*'
 

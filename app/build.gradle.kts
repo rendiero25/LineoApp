@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.lineo.android.application)
     alias(libs.plugins.lineo.android.compose)
+    alias(libs.plugins.lineo.android.hilt)
 }
 
 android {
@@ -9,6 +10,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:registry"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
