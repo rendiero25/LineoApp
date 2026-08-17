@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,6 +46,7 @@ fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
             .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.KeyGap),
         verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
     ) {
+        ModeKey(key = state.modeKey, onPress = state::press)
         state.rows.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -52,6 +55,31 @@ fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
                 row.forEach { key -> Key(key = key, onPress = state::press) }
             }
         }
+    }
+}
+
+/**
+ * The surface switch, above the grid and the size of a chip rather than a key.
+ *
+ * Deliberately not a cell. Every key in the grid types something into the expression; this
+ * one changes what you are typing with, and a control that sits apart is read as a mode
+ * before its label is. It lines up with `AC` beneath it, the other key that acts on the
+ * line as a whole rather than on a character in it.
+ */
+@Composable
+private fun ModeKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
+    val colors = RoleColors.of(key.role)
+    val description = key.contentDescription?.let { stringResource(it) }
+    Box(
+        modifier = Modifier
+            .size(LineoDimens.MinTouchTarget)
+            .clip(CircleShape)
+            .background(colors.container)
+            .clickable { onPress(key) }
+            .semanticsLabel(description),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = key.label, style = MaterialTheme.typography.titleMedium, color = colors.content)
     }
 }
 

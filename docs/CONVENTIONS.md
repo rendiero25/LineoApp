@@ -227,11 +227,11 @@ val scheme = when {
 | Element | Container token | Content token |
 |---|---|---|
 | Digit key | `surfaceContainerHighest` | `onSurface` |
-| Operator key (`+ − × ÷`, brackets) | `secondaryContainer` | `onSecondaryContainer` |
+| Operator key (`+ − × ÷ %`) | `secondaryContainer` | `onSecondaryContainer` |
 | Equals key | `primaryFixed` | `onPrimaryFixed` |
 | Clear / AC | `primaryFixed` | `onPrimaryFixed` |
-| Function key (`sin`, `log`, units, backspace) | `surfaceContainer` | `onSurfaceVariant` |
-| Input switch (`Aa`, `123`) | `inverseSurface` | `inverseOnSurface` |
+| Function key (`sin`, `log`, units, backspace, `±`) | `surfaceContainer` | `onSurfaceVariant` |
+| Input switch (`Aa`, `123`) | `inverseSurface` | `inverseOnSurface` — floats above the grid, not a cell in it |
 | Editor background | `surface` | `onSurface` |
 | Result value | — | `onSurfaceVariant` |
 | Error underline | `error` | — (it is a rule, not text) |

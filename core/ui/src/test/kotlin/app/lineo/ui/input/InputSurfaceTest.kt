@@ -107,15 +107,21 @@ class InputSurfaceTest {
     }
 
     @Test
-    fun `the bracket key inserts a matched pair rather than a single glyph`() {
-        // One key instead of two is what buys the fourth column its room; WrapSelection is
-        // the contract that makes it possible without the keypad knowing about carets.
+    fun `brackets are still reachable, on the accessory row`() {
+        // They left the keypad when % took the slot. Nothing on the keypad types a bracket
+        // any more, which is recorded as an open row in TASKS.md — this asserts the only
+        // place that still can.
+        val accessory = AccessoryRowState()
+
+        assertEquals(EditorCommand.InsertText("("), accessory.key("(").command)
+        assertEquals(EditorCommand.InsertText(")"), accessory.key(")").command)
+    }
+
+    @Test
+    fun `the sign key toggles rather than typing a minus`() {
         val keypad = KeypadState()
 
-        assertEquals(
-            EditorCommand.WrapSelection(open = "(", close = ")"),
-            keypad.key("( )").command,
-        )
+        assertEquals(EditorCommand.ToggleSign, keypad.key("±").command)
     }
 
     @Test
@@ -176,13 +182,13 @@ class InputSurfaceTest {
         val keypad = KeypadState()
         val accessory = AccessoryRowState()
 
-        assertEquals(EditorCommand.ToggleTextInput, keypad.key("Aa").command)
+        assertEquals(EditorCommand.ToggleTextInput, keypad.modeKey.command)
         assertEquals(EditorCommand.ToggleTextInput, accessory.key("123").command)
     }
 
     @Test
     fun `every key that shows a glyph rather than a word is described for TalkBack`() {
-        val undescribed = (keypadRows('.').flatten() + accessoryKeys())
+        val undescribed = (KeypadState().allKeys() + accessoryKeys())
             .filter { it.contentDescription == null }
             .map { it.label }
 
@@ -192,6 +198,8 @@ class InputSurfaceTest {
 
     private fun KeypadState.key(label: String): KeypadKey =
         rows.flatten().single { it.label == label }
+
+    private fun KeypadState.allKeys(): List<KeypadKey> = rows.flatten() + modeKey
 
     private fun AccessoryRowState.key(label: String): KeypadKey =
         keys.single { it.label == label }

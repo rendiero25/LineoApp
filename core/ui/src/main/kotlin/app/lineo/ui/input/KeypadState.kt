@@ -35,6 +35,20 @@ class KeypadState(decimalSeparator: Char = '.') : CommandInputSurface() {
     /** The grid, top row first. Derived, so a separator change is the only thing that rebuilds it. */
     val rows: List<List<KeypadKey>> by derivedStateOf { keypadRows(this.decimalSeparator) }
 
+    /**
+     * The surface switch, which sits outside the grid.
+     *
+     * Floating above the grid rather than occupying a cell, because it is the one control
+     * that does not type: it changes the instrument. A key in the grid looks like a key,
+     * and this is a mode.
+     */
+    val modeKey: KeypadKey = KeypadKey(
+        label = "Aa",
+        role = LineoRole.InputSwitch,
+        command = EditorCommand.ToggleTextInput,
+        contentDescription = R.string.key_text_keyboard_description,
+    )
+
     /** Publishes what [key] means. The only way a press reaches the editor. */
     fun press(key: KeypadKey) {
         emit(key.command)
@@ -80,12 +94,7 @@ internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
     listOf(
         KeypadKey("AC", LineoRole.Clear, EditorCommand.ClearLine, R.string.key_all_clear_description),
         KeypadKey("⌫", LineoRole.Function, EditorCommand.Backspace, R.string.key_backspace_description),
-        KeypadKey(
-            label = "( )",
-            role = LineoRole.Operator,
-            command = EditorCommand.WrapSelection(open = "(", close = ")"),
-            contentDescription = R.string.key_brackets_description,
-        ),
+        KeypadKey("%", LineoRole.Operator, EditorCommand.InsertText("%"), R.string.key_percent_description),
         KeypadKey("÷", LineoRole.Operator, EditorCommand.InsertText("/"), R.string.key_divide_description),
     ),
     listOf(
@@ -107,7 +116,7 @@ internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
         KeypadKey("+", LineoRole.Operator, EditorCommand.InsertText("+"), R.string.key_add_description),
     ),
     listOf(
-        KeypadKey("Aa", LineoRole.InputSwitch, EditorCommand.ToggleTextInput, R.string.key_text_keyboard_description),
+        KeypadKey("±", LineoRole.Function, EditorCommand.ToggleSign, R.string.key_toggle_sign_description),
         KeypadKey("0", LineoRole.Digit, EditorCommand.InsertText("0")),
         KeypadKey(
             label = decimalSeparator.toString(),

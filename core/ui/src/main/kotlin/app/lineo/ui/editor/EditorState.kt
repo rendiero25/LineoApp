@@ -27,11 +27,15 @@ import kotlinx.coroutines.flow.map
  * there is exactly one place where text changes and exactly one place to look when it
  * changes wrongly.
  *
+ * @param decimalSeparator what counts as part of a number when `±` looks for one. Comes
+ *   from the same setting the keypad reads (`docs/CONVENTIONS.md` §2).
  * @param evaluate seam for tests. Defaults to the real engine; a test can hand in something
  *   that counts its calls, which is how the debounce is asserted without waiting 400 ms.
+ *   Last, so it can stay a trailing lambda.
  */
 @Stable
 class EditorState(
+    private val decimalSeparator: Char = '.',
     private val evaluate: (String) -> CalcResult<Quantity> = { Engine.evaluate(it, EvalContext()) },
 ) {
 
@@ -79,6 +83,10 @@ class EditorState(
             is EditorCommand.MoveCursor -> caret = (caret + command.delta).coerceIn(0, text.length)
             EditorCommand.Backspace -> backspace()
             EditorCommand.ClearLine -> setText("")
+            EditorCommand.ToggleSign -> {
+                val toggled = toggleSign(text, caret, decimalSeparator)
+                setText(toggled.text, toggled.caret)
+            }
             EditorCommand.NewLine -> insert("\n")
             // The surface swap is the shell's business; the text does not change.
             EditorCommand.ToggleTextInput -> Unit
