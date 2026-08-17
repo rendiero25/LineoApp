@@ -132,7 +132,7 @@ androidx.viewpager:viewpager  # Apache-2.0
 androidx.window:window  # Apache-2.0
 androidx.window:window-core  # Apache-2.0
 androidx.window:window-core-android  # Apache-2.0
-com.google.code.findbugs:jsr305  # BSD-3-Clause
+com.google.code.findbugs:jsr305  # Apache-2.0 (its POM declares Apache-2.0; the source headers carry BSD-3-Clause, and both are permitted)
 com.google.dagger:dagger  # Apache-2.0
 com.google.dagger:dagger-lint-aar  # Apache-2.0
 com.google.dagger:hilt-android  # Apache-2.0

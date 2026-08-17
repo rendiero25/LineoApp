@@ -197,7 +197,10 @@ evaluates a single line end to end.
 
 - [ ] **P1-07 · Settings** — `S` — `:app`
   - Separator override, angle mode, theme, unit system, decimal places
-  - **DoD:** changing separator updates the keypad immediately
+  - Open-source licences entry: renders `attributedDependencies` and the licence texts in
+    `res/raw`. The list is already generated and tested; only the screen is left
+  - **DoD:** changing separator updates the keypad immediately; the licences screen lists
+    every shipped dependency and can open the full text of each licence it names
 
 - [ ] **P1-08 · Accessibility pass** — `M` — all
   - TalkBack reads `2^3` semantically from the AST
@@ -233,7 +236,11 @@ evaluates a single line end to end.
 - [ ] **P1-11 · Store readiness** — `M` — non-code
   - Privacy policy live; Data Safety form; icon, feature graphic, screenshots
   - Title `Lineo: Notepad Calculator`; keystore backed up in two places
-  - **DoD:** internal testing track accepts an upload
+  - Attribution reachable from Settings — the obligation Apache-2.0 §4 puts on the binary,
+    not on the repo. The list generates itself from the licence allowlist; what P1-11 owes is
+    that the release build actually reaches it
+  - **DoD:** internal testing track accepts an upload; the licences screen is reachable in a
+    release build and names all shipped dependencies
 
 - [ ] **P1-12 · Closed testing** — `L` — non-code
   - 12 testers, 14 continuous days (personal accounts)
@@ -345,3 +352,6 @@ same question being re-litigated in a future session.
 | 2026-08-17 | P0-11b | The task spanned `:app` and `:core:ui`, which rule 3 forbids | Split into P0-11b-1 (`:core:ui` — width class, insets, adaptive pane) and P0-11b-2 (`:app` — edge-to-edge, predictive back, device verification). "Back never discards notepad work" moved to P1-03: Phase 0 has no notepad to protect, and a guarantee nothing can violate is a guarantee nothing tests |
 | 2026-08-17 | P0-11b-1 | `AdaptivePane` measures the input pane before the document, so an input asking for `fillMaxSize` took the whole window. The first compact snapshot showed an input pane and no document at all | The input pane must size itself to its content — the same contract Material's `Scaffold` places on its `bottomBar`, and natural for a keypad, which is rows of keys. Stated in the KDoc and demonstrated by the snapshot test, which now uses a wrapping input |
 | 2026-08-17 | P0-11b-1 | `WindowSizeClass.compute` is deprecated in `window-core` 1.5.0, and `allWarningsAsErrors` turns that into a build failure | Switched to `WindowSizeClass.BREAKPOINTS_V1.computeWindowSizeClass(...)`. `androidx.window:window-core` is now declared rather than inherited transitively; it was already on the release classpath and already allowlisted, so no licence decision |
+| 2026-08-17 | P1-11 | Apache-2.0 §4 requires a copy of the licence to travel with the binary, and MIT and BSD require the copyright notice. Nothing in the app carried either | Attribution is generated from `config/licenses/allowed-dependencies.txt` at build time by `:app:generateLicenseAttribution`, registered as a source directory rather than committed. Google's `play-services-oss-licenses` was rejected: it is a new dependency, needs the network at build time, weighs against the 12 MB target of P1-10, and reads a different source than the gate — so it can list a library the APK does not contain. Generating from the enforced allowlist cannot drift. The screen itself is P1-07 |
+| 2026-08-17 | P1-11 | `com.google.code.findbugs:jsr305` was recorded as BSD-3-Clause | Its POM declares Apache-2.0, so the record now says so. The source headers do carry BSD-3-Clause; both are permitted, and the distributor's own declaration is the one to record. Every shipped dependency is now Apache-2.0, so the app bundles exactly one licence text |
+| 2026-08-17 | P1-11 | An MIT or BSD dependency needs its copyright holder recorded, and the allowlist has no column for one. Adding an empty column to 149 Apache-2.0 rows would be noise | No column. The generator refuses the first MIT or BSD entry that arrives without a `Copyright` note, and `AttributionTest` refuses any licence family whose text is not bundled in `res/raw`. Both were verified by introducing a fake MIT dependency and watching each fail in turn |
