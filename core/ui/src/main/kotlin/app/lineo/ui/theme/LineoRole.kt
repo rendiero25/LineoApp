@@ -34,8 +34,20 @@ enum class LineoRole {
     /** A computed result. Text only — it sits on the editor, so it has no container. */
     Result,
 
-    /** Error underline and message. Never colour alone: §10 requires an icon and text. */
-    Error,
+    /**
+     * The rule drawn under the span an error points at. A shape, not text — it carries no
+     * content colour, and it is measured against the editor surface behind it.
+     */
+    ErrorUnderline,
+
+    /**
+     * The error message itself. Separate from [ErrorUnderline] because it is text and needs
+     * a container it can be read on: `onErrorContainer` on `error` measures 1.31:1 in the
+     * dark scheme, which is not a message, it is a smudge.
+     *
+     * Never colour alone: §10 requires an icon and text as well.
+     */
+    ErrorMessage,
 
     /** Suggestion chip: an in-scope variable, a recent unit, a spelling fix. */
     SuggestionChip,

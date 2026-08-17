@@ -109,7 +109,8 @@ private fun NotepadLineSample() {
 @Composable
 private fun ErrorSample() {
     val editor = RoleColors.of(LineoRole.Editor)
-    val error = RoleColors.of(LineoRole.Error)
+    val underline = RoleColors.of(LineoRole.ErrorUnderline)
+    val message = RoleColors.of(LineoRole.ErrorMessage)
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "sni(1)",
@@ -120,15 +121,15 @@ private fun ErrorSample() {
             modifier = Modifier
                 .width(ErrorUnderlineSampleWidth)
                 .height(ErrorUnderlineThickness)
-                .background(error.container),
+                .background(underline.container),
         )
         Text(
             text = "UnknownIdentifier @3..6",
             style = MaterialTheme.typography.bodySmall,
-            color = error.content,
+            color = message.content,
             modifier = Modifier
                 .padding(top = LineoDimens.Grid)
-                .background(MaterialTheme.colorScheme.errorContainer)
+                .background(message.container)
                 .padding(horizontal = LineoDimens.Grid),
         )
     }

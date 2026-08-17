@@ -224,11 +224,21 @@ val scheme = when {
 | Function key (`sin`, `log`, units) | `surfaceContainer` | `onSurfaceVariant` |
 | Editor background | `surface` | `onSurface` |
 | Result value | — | `onSurfaceVariant` |
-| Error underline and message | `error` | `onErrorContainer` |
+| Error underline | `error` | — (it is a rule, not text) |
+| Error message | `errorContainer` | `onErrorContainer` |
 | Suggestion chip | `secondaryContainer` | `onSecondaryContainer` |
 | Stale-rate badge | `tertiaryContainer` | `onTertiaryContainer` |
 
 Error state is never colour alone — it always carries an icon and text. See §8.
+
+The underline and the message are two rows because they are two different things. The
+underline is a rule drawn under the offending span, so it takes the loud `error` colour and
+is measured against the editor surface behind it — a non-text target, 3:1 under WCAG 1.4.11.
+The message is text, so it needs a container it can be read on: `onErrorContainer` on
+`errorContainer` measures 13.25:1 in the light scheme and 7.24:1 in the dark one, while the
+same content on `error` measures 2.66:1 and 1.31:1 — unreadable. Every pair in this table is
+asserted by `RoleContrastTest` in `:core:ui`; a change here that drops below AA fails the
+build.
 
 ### Typography
 

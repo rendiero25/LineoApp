@@ -116,9 +116,9 @@ Depends on P0-02. Pure JVM library, no Android imports.
   - **DoD:** `MigrationTestHelper` test passes for v1; a corrupt DB enters recovery
     mode instead of crashing
 
-- [!] **P0-11b · Adaptive shell + edge-to-edge** — `M` — `:app`, `:core:ui` — blocked: spans two
-  modules, so it must be split per rule 3; and its DoD needs a device — gesture and 3-button nav,
-  a display cutout, split-screen, and a foldable emulator across a fold. Taken after P0-12.
+- [ ] **P0-11b · Adaptive shell + edge-to-edge** — `M` — `:app`, `:core:ui` — split before starting:
+  it spans two modules, which rule 3 forbids. The emulator side is no longer a blocker — `Pixel_10`
+  (API 37) boots again; a foldable AVD still has to be created for the fold half of the DoD.
   - `WindowSizeClass` drives layout; no device-type or width branching
   - Edge-to-edge with correct insets; keypad consumes `ime` + `navigationBars` without
     double padding
@@ -315,6 +315,8 @@ same question being re-litigated in a future session.
 | open | P0-10 | JUnit 5 (`org.junit.jupiter:*`, `org.junit.platform:*`, `org.junit:junit-bom`) is EPL-2.0, the same situation as the `junit:junit` row above | Recorded in the allowlist as test-only, marked EPL-2.0. **Needs the same human confirmation** |
 | 2026-08-17 | P0-11 | `MigrationTestHelper` reads the exported schema as a test asset, but the generated `android { sourceSets }` accessor resolves to the legacy type AGP 9 removed | The schema directory is registered through the typed `com.android.build.api.dsl.LibraryExtension` instead. No source-set escape hatch, no schema copy step |
 | 2026-08-17 | P0-11 | Room's migration test needs a real Android framework, so `:core:data` unit tests run on Robolectric rather than plain JVM | Accepted for this module only. Robolectric is approved by name in `docs/ARCHITECTURE.md` §7; the engine stays a pure JVM library with no Android test runtime |
+| 2026-08-17 | P0-12 | The §10 row `Error underline and message → error / onErrorContainer` puts message text at 2.66:1 in the light scheme and 1.31:1 in the dark one, far below the WCAG AA minimum of 4.5:1 | The row was two things at once. Split into `Error underline` (`error`, a rule measured against the editor at the 3:1 non-text minimum) and `Error message` (`onErrorContainer` on `errorContainer`, 13.25:1 and 7.24:1). `LineoRole.Error` became `ErrorUnderline` and `ErrorMessage`; `docs/CONVENTIONS.md` §10 updated |
+| 2026-08-17 | P0-12 | The role mapping was only reachable from a composition, so no test could measure it — which is how the error row shipped unread | `RoleColors.of(scheme, role)` added as a plain function; the composable overload delegates to it. `RoleContrastTest` now asserts every row of §10 in all three seeded schemes, and the assertion was verified by reverting the mapping and watching it fail |
 | 2026-08-17 | P0-12 | The seed colour for the fallback palette had never been chosen | `#4C5FD5`, an indigo. Neutral enough that the equals key reads as the accent without competing with the numbers, and it is the hue the whole tonal scheme is derived from |
 | 2026-08-17 | P0-12 | The Material Theme Builder is a web tool, so no agent can run it, yet §10 forbids hand-picking hex values | Material's HCT colour space and its TonalSpot scheme were ported to a one-off generator and the output committed. The port was validated against Material's own baseline: seed `#6750A4` reproduces the published `primary #65558F`, `primaryContainer #EADDFF`, `secondary #625B71`, `tertiary #7D5260`. `docs/CONVENTIONS.md` §10 updated to allow any equivalent generator |
 | 2026-08-17 | P0-12 | Paparazzi 1.3.5 cannot apply on AGP 9.3.1 — `Extension of type 'BaseExtension' does not exist`, the same extension AGP 9 removed for Hilt | Paparazzi raised to `2.0.0-alpha05`, the line that targets AGP 9. It is a pre-release; Paparazzi itself is approved by name in `docs/ARCHITECTURE.md` §7, and it is test-only, so nothing pre-release reaches the APK |
