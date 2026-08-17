@@ -204,10 +204,13 @@ val scheme = when {
 - **Fallback below API 31** is a seed-generated tonal palette. Generate it with the
   [Material Theme Builder](https://m3.material.io/theme-builder) and commit the output.
   Do not hand-pick hex values. The committed palette is in
-  `core/ui/.../theme/LineoColorSchemes.kt`; its seed and the tonal palettes derived from it
-  are recorded in that file's KDoc. Any equivalent generator is acceptable as long as it
-  produces Material's TonalSpot scheme from the seed — what is not acceptable is editing a
-  single value by eye, which breaks the tonal relationships the whole scheme depends on.
+  `core/ui/.../theme/LineoColorSchemes.kt`, copied verbatim from the export kept in
+  `docs/LineoCP/`. Lineo's is olive and chartreuse: the accent is warm and the surfaces are
+  warm with it, which keeps a screen that is mostly numbers from reading as cold.
+  To change it, export again and replace the whole file — editing one value by eye breaks
+  the tonal relationships the scheme is made of, silently.
+  The export also carries medium- and high-contrast variants of both schemes. They are what
+  the Android 14 contrast setting needs; wiring them up is tracked in `TASKS.md`.
 - **Premium:** user-chosen seed, and a true-black AMOLED dark variant.
 - **Never hardcode a colour.** Always `MaterialTheme.colorScheme.*`. A literal hex in a
   composable is a review rejection — it breaks dynamic color, dark mode, and contrast
