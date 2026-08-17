@@ -218,8 +218,30 @@ enters recovery mode; it never crashes.
 
 ## 7. Dependency and licensing policy
 
-Every dependency must be **Apache-2.0, MIT, or BSD**. No exceptions without a
+Every **shipped** dependency must be **Apache-2.0, MIT, or BSD**. No exceptions without a
 recorded human decision.
+
+### Shipped versus test-only
+
+The rule exists because copyleft obligations attach to *distribution*. A library that only
+ever runs on a developer's machine or in CI is never distributed, so those obligations
+never trigger. The two are therefore held to different standards, and the build enforces
+the difference rather than leaving it to a reviewer's judgement:
+
+| | Reaches the APK | Rule | Recorded in |
+|---|---|---|---|
+| Shipped | yes | Apache-2.0, MIT, BSD only. The recorded licence is checked, not just the presence of the entry | `config/licenses/allowed-dependencies.txt` |
+| Test-only | no | Any licence, copyleft included | `config/licenses/allowed-test-dependencies.txt` |
+
+A dependency counts as shipped when it is reachable from a runtime classpath that is not a
+unit-test, instrumented-test, screenshot-test, or test-fixture one. `checkDependencyLicenses`
+computes both sets from the resolved graph, so the classification cannot drift from reality.
+
+Both lists still require a human decision to grow — that part of §7 is unchanged. What
+changed is that a copyleft test transitive no longer looks identical to a copyleft library
+that ships. Before the split the single list held fifteen EPL and LGPL rows, every one of
+them harmless, and each new one asked for the same approval as a shipped library. A rule
+that raises fifteen false alarms stops being read by the time the real one arrives.
 
 ### Approved
 

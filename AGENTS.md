@@ -44,7 +44,7 @@ Never violate these without an explicit human decision recorded in the relevant 
 | Rule | Why |
 |---|---|
 | All money/decimal math uses `BigDecimal` with `MathContext.DECIMAL128`. Never `Double` for user-visible arithmetic. | `0.1 + 0.2` must print `0.3`. |
-| Every new dependency must be Apache-2.0, MIT, or BSD. No GPL, LGPL, or dual-licensed-commercial. | Closed-source paid app. See `docs/ARCHITECTURE.md` §7. |
+| Every **shipped** dependency must be Apache-2.0, MIT, or BSD. No GPL, LGPL, or dual-licensed-commercial. Test-only dependencies are recorded but not restricted — they are never distributed. | Closed-source paid app. See `docs/ARCHITECTURE.md` §7. |
 | The engine never throws for bad user input. It returns `Result<Quantity, CalcError>`. | Errors are UI state, not exceptions. |
 | Internal representation is locale-free. Locale formatting happens only at the input and display boundaries. | See `docs/CONVENTIONS.md` §1. |
 | No backend server. Currency rates are fetched device-side and cached in Room. | Keeps operating cost at zero. |

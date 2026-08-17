@@ -1,0 +1,117 @@
+# Dependencies used only by tests — never distributed, so §2's licence rule
+# does not apply to them. They are still recorded, because adding a dependency
+# is a human decision. Record the real licence, copyleft included.
+# Format: group:name  # LICENCE
+# Regenerate with ./gradlew writeDependencyLicenseAllowlist, then fill in
+# any TODO licence and review the diff by hand.
+
+androidx.compose.ui:ui-test  # Apache-2.0
+androidx.compose.ui:ui-test-android  # Apache-2.0
+androidx.compose.ui:ui-test-junit4  # Apache-2.0
+androidx.compose.ui:ui-test-junit4-android  # Apache-2.0
+androidx.concurrent:concurrent-futures-ktx  # Apache-2.0
+androidx.room:room-migration  # Apache-2.0
+androidx.room:room-migration-jvm  # Apache-2.0
+androidx.room:room-testing  # Apache-2.0
+androidx.room:room-testing-android  # Apache-2.0
+androidx.test.espresso:espresso-core  # Apache-2.0
+androidx.test.espresso:espresso-idling-resource  # Apache-2.0
+androidx.test.ext:junit  # Apache-2.0
+androidx.test.services:storage  # Apache-2.0
+androidx.test:core  # Apache-2.0
+androidx.test:monitor  # Apache-2.0
+androidx.test:runner  # Apache-2.0
+app.cash.paparazzi:paparazzi  # Apache-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+app.cash.turbine:turbine  # Apache-2.0
+app.cash.turbine:turbine-jvm  # Apache-2.0
+com.almworks.sqlite4java:sqlite4java  # Apache-2.0
+com.android.tools.analytics-library:protos  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools.analytics-library:shared  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools.build:aapt2-proto  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools.ddms:ddmlib  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools.layoutlib:layoutlib  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools.layoutlib:layoutlib-api  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools:annotations  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools:common  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools:dvlib  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools:ninepatch  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools:repository  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools:sdk-common  # Apache-2.0 (test only, transitive via Paparazzi)
+com.android.tools:sdklib  # Apache-2.0 (test only, transitive via Paparazzi)
+com.google.auto.value:auto-value-annotations  # Apache-2.0
+com.google.code.gson:gson  # Apache-2.0 (test only, transitive via Paparazzi)
+com.google.errorprone:error_prone_annotation  # Apache-2.0
+com.google.errorprone:error_prone_annotations  # Apache-2.0
+com.google.guava:failureaccess  # Apache-2.0
+com.google.guava:guava  # Apache-2.0
+com.google.j2objc:j2objc-annotations  # Apache-2.0
+com.google.jimfs:jimfs  # Apache-2.0 (test only, transitive via Paparazzi)
+com.google.protobuf:protobuf-java  # BSD-3-Clause (test only, transitive via Paparazzi)
+com.google.testparameterinjector:test-parameter-injector  # Apache-2.0
+com.ibm.icu:icu4j  # Unicode-3.0 (test only, transitive via Robolectric)
+com.squareup.moshi:moshi  # Apache-2.0 (test only, transitive via Paparazzi)
+com.squareup.moshi:moshi-adapters  # Apache-2.0 (test only, transitive via Paparazzi)
+com.squareup.moshi:moshi-kotlin  # Apache-2.0 (test only, transitive via Paparazzi)
+com.sun.activation:javax.activation  # CDDL-1.0 or GPL-2.0-with-classpath-exception (test only, transitive via Paparazzi)
+com.sun.istack:istack-commons-runtime  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
+com.sun.xml.fastinfoset:FastInfoset  # Apache-2.0 (test only, transitive via Paparazzi)
+commons-codec:commons-codec  # Apache-2.0 (test only, transitive via Paparazzi)
+commons-logging:commons-logging  # Apache-2.0 (test only, transitive via Paparazzi)
+dev.drewhamilton.poko:poko-annotations  # Apache-2.0 (test only, transitive via Paparazzi)
+dev.drewhamilton.poko:poko-annotations-jvm  # Apache-2.0 (test only, transitive via Paparazzi)
+jakarta.activation:jakarta.activation-api  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
+jakarta.xml.bind:jakarta.xml.bind-api  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
+javax.annotation:javax.annotation-api  # CDDL-1.1 or GPL-2.0-with-classpath-exception (test only, transitive via Robolectric)
+junit:junit  # EPL-1.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+kxml2:kxml2  # BSD-3-Clause, declared as "BSD style" (test only, transitive via Paparazzi)
+net.bytebuddy:byte-buddy  # Apache-2.0 (test only, transitive via Paparazzi)
+net.bytebuddy:byte-buddy-agent  # Apache-2.0 (test only, transitive via Paparazzi)
+net.java.dev.jna:jna  # Apache-2.0 elected; dual LGPL-2.1 or Apache-2.0 (test only, transitive via Paparazzi)
+net.java.dev.jna:jna-platform  # Apache-2.0 elected; dual LGPL-2.1 or Apache-2.0 (test only, transitive via Paparazzi)
+net.sf.kxml:kxml2  # BSD-3-Clause, declared as "BSD style" (test only, transitive via Paparazzi)
+org.apache.commons:commons-compress  # Apache-2.0 (test only, transitive via Paparazzi)
+org.apache.httpcomponents:httpclient  # Apache-2.0 (test only, transitive via Paparazzi)
+org.apache.httpcomponents:httpcore  # Apache-2.0 (test only, transitive via Paparazzi)
+org.apache.httpcomponents:httpmime  # Apache-2.0 (test only, transitive via Paparazzi)
+org.bouncycastle:bcpkix-jdk18on  # MIT (test only, transitive via Paparazzi)
+org.bouncycastle:bcprov-jdk18on  # MIT
+org.bouncycastle:bcutil-jdk18on  # MIT (test only, transitive via Paparazzi)
+org.conscrypt:conscrypt-openjdk-uber  # Apache-2.0
+org.glassfish.jaxb:jaxb-runtime  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
+org.glassfish.jaxb:txw2  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
+org.hamcrest:hamcrest-core  # BSD-3-Clause
+org.hamcrest:hamcrest-library  # BSD-3-Clause
+org.jetbrains.intellij.deps:trove4j  # LGPL-2.1 (test only, transitive via Paparazzi)
+org.jetbrains.kotlin:kotlin-bom  # Apache-2.0
+org.jetbrains.kotlin:kotlin-reflect  # Apache-2.0
+org.jetbrains.kotlin:kotlin-stdlib-jdk7  # Apache-2.0
+org.jetbrains.kotlin:kotlin-stdlib-jdk8  # Apache-2.0
+org.jetbrains.kotlinx:kotlinx-coroutines-test  # Apache-2.0
+org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm  # Apache-2.0
+org.junit.jupiter:junit-jupiter  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.junit.jupiter:junit-jupiter-api  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.junit.jupiter:junit-jupiter-engine  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.junit.jupiter:junit-jupiter-params  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.junit.platform:junit-platform-commons  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.junit.platform:junit-platform-engine  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.junit.platform:junit-platform-launcher  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.junit:junit-bom  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.jvnet.staxex:stax-ex  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
+org.opentest4j:opentest4j  # Apache-2.0
+org.ow2.asm:asm  # BSD-3-Clause
+org.ow2.asm:asm-commons  # BSD-3-Clause
+org.ow2.asm:asm-tree  # BSD-3-Clause
+org.robolectric:annotations  # MIT
+org.robolectric:junit  # MIT
+org.robolectric:nativeruntime  # MIT
+org.robolectric:nativeruntime-dist-compat  # MIT
+org.robolectric:pluginapi  # MIT
+org.robolectric:plugins-maven-dependency-resolver  # MIT
+org.robolectric:resources  # MIT
+org.robolectric:robolectric  # MIT
+org.robolectric:sandbox  # MIT
+org.robolectric:shadowapi  # MIT
+org.robolectric:shadows-framework  # MIT
+org.robolectric:utils  # MIT
+org.robolectric:utils-reflector  # MIT
+org.yaml:snakeyaml  # Apache-2.0
