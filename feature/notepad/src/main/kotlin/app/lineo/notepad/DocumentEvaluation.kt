@@ -1,0 +1,31 @@
+package app.lineo.notepad
+
+import app.lineo.engine.LineId
+import app.lineo.engine.Quantity
+
+/**
+ * Every line of a document and what it currently evaluates to.
+ *
+ * Also the input to the next evaluation: it carries the graph and the text it was computed
+ * from, which is how [NotepadEvaluator] works out what a change actually invalidated instead
+ * of recomputing the document (`docs/ARCHITECTURE.md` §6).
+ */
+class DocumentEvaluation internal constructor(
+    /** One entry per line, in document order. */
+    val results: Map<LineId, LineEvaluation>,
+    internal val graph: DependencyGraph,
+    internal val sources: Map<LineId, String>,
+) {
+
+    /** What this line evaluated to. [LineEvaluation.Empty] for a line that is not here at all. */
+    operator fun get(id: LineId): LineEvaluation = results[id] ?: LineEvaluation.Empty
+
+    /** The lines that produced a value, and what it was. */
+    val values: Map<LineId, Quantity>
+        get() = results.mapNotNull { (id, evaluation) ->
+            (evaluation as? LineEvaluation.Value)?.let { id to it.value }
+        }.toMap()
+
+    /** The circles of references in the document, every line of each one (`docs/GRAMMAR.md` §3.7). */
+    val cycles: List<List<LineId>> get() = graph.cycles
+}
