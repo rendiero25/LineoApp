@@ -2,6 +2,7 @@ package app.lineo.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 
 /**
  * Lineo's type scale: the Material 3 scale with tabular figures switched on.
@@ -47,4 +48,22 @@ object LineoTypography {
     }
 
     private fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = TABULAR_FIGURES)
+
+    /**
+     * The three styles that carry numbers, sized above the Material scale.
+     *
+     * `displayLarge` is the top of that scale, and a calculator wanted more: the expression
+     * and its result are the only thing on the screen worth reading, and the keys are meant
+     * to be hit without looking. These are the Material styles at 1.2×, line height scaled
+     * with them so nothing clips.
+     *
+     * Sizes and not roles, because there is no role left above `displayLarge` — but named
+     * here rather than written at the call sites, so `docs/CONVENTIONS.md` §10 still has
+     * something to point at and there is one place to change them.
+     */
+    val Expression: TextStyle = Default.displayLarge.copy(fontSize = 68.sp, lineHeight = 76.sp)
+
+    val Result: TextStyle = Default.displayMedium.copy(fontSize = 54.sp, lineHeight = 62.sp)
+
+    val KeypadLabel: TextStyle = Default.headlineLarge.copy(fontSize = 38.sp, lineHeight = 48.sp)
 }

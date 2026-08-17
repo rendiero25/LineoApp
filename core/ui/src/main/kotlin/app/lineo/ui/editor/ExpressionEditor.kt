@@ -32,6 +32,7 @@ import app.lineo.engine.CalcError
 import app.lineo.ui.R
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
+import app.lineo.ui.theme.LineoTypography
 import app.lineo.ui.theme.RoleColors
 import app.lineo.ui.theme.asExpression
 
@@ -83,7 +84,7 @@ private fun ExpressionField(state: EditorState, focusRequester: FocusRequester?)
         modifier = Modifier
             .fillMaxWidth()
             .let { if (focusRequester == null) it else it.focusRequester(focusRequester) },
-        textStyle = MaterialTheme.typography.displayLarge
+        textStyle = LineoTypography.Expression
             .asExpression()
             .copy(color = editor.content, textAlign = TextAlign.End),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -99,7 +100,7 @@ private fun ResultLine(result: EditorEvaluation.Result) {
     // exist yet; it is recorded in TASKS.md as its own task rather than improvised here.
     Text(
         text = result.value.canonicalString(),
-        style = MaterialTheme.typography.displayMedium.asExpression(),
+        style = LineoTypography.Result.asExpression(),
         color = RoleColors.of(LineoRole.Result).content,
         textAlign = TextAlign.End,
         modifier = Modifier.fillMaxWidth(),

@@ -226,12 +226,12 @@ val scheme = when {
 
 | Element | Container token | Content token |
 |---|---|---|
-| Digit key | `surfaceContainerHigh` | `onSurface` |
+| Digit key | `surfaceContainerHighest` | `onSurface` |
 | Operator key (`+ − × ÷`, brackets) | `secondaryContainer` | `onSecondaryContainer` |
 | Equals key | `primaryFixed` | `onPrimaryFixed` |
 | Clear / AC | `primaryFixed` | `onPrimaryFixed` |
 | Function key (`sin`, `log`, units, backspace) | `surfaceContainer` | `onSurfaceVariant` |
-| Input switch (`Aa`, `123`) | `tertiaryContainer` | `onTertiaryContainer` |
+| Input switch (`Aa`, `123`) | `inverseSurface` | `inverseOnSurface` |
 | Editor background | `surface` | `onSurface` |
 | Result value | — | `onSurfaceVariant` |
 | Error underline | `error` | — (it is a rule, not text) |
@@ -254,15 +254,15 @@ build.
 
 | Role | Style | Notes |
 |---|---|---|
-| Expression being typed | `displayLarge` | Shrinks by step as the line grows; never wraps mid-number |
-| Result | `displayMedium` | Muted, sits below the expression |
+| Expression being typed | `LineoTypography.Expression` | 68 sp — `displayLarge` at 1.2×. Shrinks by step as the line grows; never wraps mid-number |
+| Result | `LineoTypography.Result` | 54 sp — `displayMedium` at 1.2×. Muted, sits below the expression |
 
 The expression and its result are **aligned to the end**, stacked, so their digits line up
 column for column and the eye can compare them without moving. Everything the editor puts
 below the line — message, fix chip — follows the same edge, so the block reads as one thing.
 | Notepad line source | `bodyLarge`, monospace-ish | Alignment across lines matters more than beauty |
 | Notepad line result | `bodyLarge` | Right-aligned in its own column |
-| Keypad label | `headlineLarge` | A key is a target read at a glance, not prose |
+| Keypad label | `LineoTypography.KeypadLabel` | 38 sp — `headlineLarge` at 1.2×. A key is hit without looking |
 | Error message | `bodySmall` | |
 
 **Tabular figures are mandatory** everywhere a number appears. Without them digits shift

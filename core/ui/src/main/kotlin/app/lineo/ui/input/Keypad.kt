@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import app.lineo.ui.layout.dockedBottomPadding
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
+import app.lineo.ui.theme.LineoTypography
 import app.lineo.ui.theme.RoleColors
 import app.lineo.ui.theme.asExpression
 
@@ -79,7 +79,7 @@ private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
     ) {
         Text(
             text = key.label,
-            style = MaterialTheme.typography.headlineLarge.asExpression(),
+            style = LineoTypography.KeypadLabel.asExpression(),
             color = colors.content,
         )
     }
