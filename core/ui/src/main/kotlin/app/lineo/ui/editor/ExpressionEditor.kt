@@ -83,7 +83,7 @@ private fun ExpressionField(state: EditorState, focusRequester: FocusRequester?)
         modifier = Modifier
             .fillMaxWidth()
             .let { if (focusRequester == null) it else it.focusRequester(focusRequester) },
-        textStyle = MaterialTheme.typography.displayMedium
+        textStyle = MaterialTheme.typography.displayLarge
             .asExpression()
             .copy(color = editor.content, textAlign = TextAlign.End),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -99,7 +99,7 @@ private fun ResultLine(result: EditorEvaluation.Result) {
     // exist yet; it is recorded in TASKS.md as its own task rather than improvised here.
     Text(
         text = result.value.canonicalString(),
-        style = MaterialTheme.typography.displaySmall.asExpression(),
+        style = MaterialTheme.typography.displayMedium.asExpression(),
         color = RoleColors.of(LineoRole.Result).content,
         textAlign = TextAlign.End,
         modifier = Modifier.fillMaxWidth(),
