@@ -2,9 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+        enableOnBackInvokedCallback opts into predictive back (API 33+; the attribute is
+        ignored below that, hence tools:targetApi). docs/ANDROID_STANDARDS.md §2 requires it:
+        without the opt-in the system cannot animate the gesture, and the user gets no
+        preview of where back is about to take them.
+    -->
     <application
         android:name=".LineoApplication"
         android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="tiramisu"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
