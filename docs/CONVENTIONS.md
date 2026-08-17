@@ -203,7 +203,11 @@ val scheme = when {
 - **Default is dynamic color** on API 31+. It costs nothing and makes the app feel native.
 - **Fallback below API 31** is a seed-generated tonal palette. Generate it with the
   [Material Theme Builder](https://m3.material.io/theme-builder) and commit the output.
-  Do not hand-pick hex values.
+  Do not hand-pick hex values. The committed palette is in
+  `core/ui/.../theme/LineoColorSchemes.kt`; its seed and the tonal palettes derived from it
+  are recorded in that file's KDoc. Any equivalent generator is acceptable as long as it
+  produces Material's TonalSpot scheme from the seed — what is not acceptable is editing a
+  single value by eye, which breaks the tonal relationships the whole scheme depends on.
 - **Premium:** user-chosen seed, and a true-black AMOLED dark variant.
 - **Never hardcode a colour.** Always `MaterialTheme.colorScheme.*`. A literal hex in a
   composable is a review rejection — it breaks dynamic color, dark mode, and contrast

@@ -116,7 +116,9 @@ Depends on P0-02. Pure JVM library, no Android imports.
   - **DoD:** `MigrationTestHelper` test passes for v1; a corrupt DB enters recovery
     mode instead of crashing
 
-- [ ] **P0-11b · Adaptive shell + edge-to-edge** — `M` — `:app`, `:core:ui`
+- [!] **P0-11b · Adaptive shell + edge-to-edge** — `M` — `:app`, `:core:ui` — blocked: spans two
+  modules, so it must be split per rule 3; and its DoD needs a device — gesture and 3-button nav,
+  a display cutout, split-screen, and a foldable emulator across a fold. Taken after P0-12.
   - `WindowSizeClass` drives layout; no device-type or width branching
   - Edge-to-edge with correct insets; keypad consumes `ime` + `navigationBars` without
     double padding
@@ -124,7 +126,7 @@ Depends on P0-02. Pure JVM library, no Android imports.
   - **DoD:** verified with gesture and 3-button nav, display cutout, split-screen, and a
     foldable emulator across a fold
 
-- [ ] **P0-12 · `:core:ui` design system** — `M`
+- [x] **P0-12 · `:core:ui` design system** — `M`
   - Dynamic color on API 31+, generated seed palette fallback below
   - Token mapping for the keypad per `docs/CONVENTIONS.md` §10; true-black variant stubbed
   - Typography with tabular figures; Android 14+ contrast levels honoured
@@ -313,4 +315,11 @@ same question being re-litigated in a future session.
 | open | P0-10 | JUnit 5 (`org.junit.jupiter:*`, `org.junit.platform:*`, `org.junit:junit-bom`) is EPL-2.0, the same situation as the `junit:junit` row above | Recorded in the allowlist as test-only, marked EPL-2.0. **Needs the same human confirmation** |
 | 2026-08-17 | P0-11 | `MigrationTestHelper` reads the exported schema as a test asset, but the generated `android { sourceSets }` accessor resolves to the legacy type AGP 9 removed | The schema directory is registered through the typed `com.android.build.api.dsl.LibraryExtension` instead. No source-set escape hatch, no schema copy step |
 | 2026-08-17 | P0-11 | Room's migration test needs a real Android framework, so `:core:data` unit tests run on Robolectric rather than plain JVM | Accepted for this module only. Robolectric is approved by name in `docs/ARCHITECTURE.md` §7; the engine stays a pure JVM library with no Android test runtime |
+| 2026-08-17 | P0-12 | The seed colour for the fallback palette had never been chosen | `#4C5FD5`, an indigo. Neutral enough that the equals key reads as the accent without competing with the numbers, and it is the hue the whole tonal scheme is derived from |
+| 2026-08-17 | P0-12 | The Material Theme Builder is a web tool, so no agent can run it, yet §10 forbids hand-picking hex values | Material's HCT colour space and its TonalSpot scheme were ported to a one-off generator and the output committed. The port was validated against Material's own baseline: seed `#6750A4` reproduces the published `primary #65558F`, `primaryContainer #EADDFF`, `secondary #625B71`, `tertiary #7D5260`. `docs/CONVENTIONS.md` §10 updated to allow any equivalent generator |
+| 2026-08-17 | P0-12 | Paparazzi 1.3.5 cannot apply on AGP 9.3.1 — `Extension of type 'BaseExtension' does not exist`, the same extension AGP 9 removed for Hilt | Paparazzi raised to `2.0.0-alpha05`, the line that targets AGP 9. It is a pre-release; Paparazzi itself is approved by name in `docs/ARCHITECTURE.md` §7, and it is test-only, so nothing pre-release reaches the APK |
+| 2026-08-17 | P0-12 | Paparazzi 2.0 ships Java 21 bytecode, but the shared test toolchain is 17, pinned there by detekt | The launcher is overridden to 21 in `:core:ui` alone. A build-wide bump would have moved the engine and data tests off the version detekt is verified against, for no gain |
+| 2026-08-17 | P0-12 | In an RTL layout, bidi reordered `1 234,5 + 67,89` into `67,89 + 234,5 1` — same characters, different sum | Expressions are forced left to right through `TextStyle.asExpression()`. Alignment stays a layout decision: text is positioned by `Alignment.CenterStart`/`CenterEnd`, never by `TextAlign`, which would follow the forced direction instead of the locale |
+| open | P0-12 | Android 14+ contrast levels are honoured on the dynamic path only — the system rebuilds its colour resources and `LineoTheme` re-reads them. The seeded fallback has no medium or high contrast variant | Accepted for Phase 0: below API 31 there is no contrast setting to honour, so the gap is only a user on API 34+ who has turned dynamic colour off. **Close it with the Phase 3 seed picker**, which has to generate contrast variants anyway |
+| open | P0-12 | Paparazzi's test-only transitives include three outside the Apache-2.0 / MIT / BSD rule of §2: `org.jetbrains.intellij.deps:trove4j` (LGPL-2.1), `com.sun.activation:javax.activation` (CDDL-1.0 or GPL-2.0-with-classpath-exception), and `net.java.dev.jna:*` (dual LGPL-2.1 or Apache-2.0, Apache elected) | Recorded in the allowlist with the licence named. None is linked into the shipped APK. `trove4j` is a plain LGPL row and the strongest case of the three — **needs a human confirmation** |
 | open | P0-11 | Robolectric drags in two test-only transitives outside the Apache-2.0 / MIT / BSD rule of §2: `com.ibm.icu:icu4j` (Unicode-3.0) and `javax.annotation:javax.annotation-api` (CDDL-1.1 or GPL-2.0-with-classpath-exception) | Recorded in the allowlist as test-only with the licence named. Neither is linked into the shipped APK. The GPL-2.0-with-classpath-exception text touches §2 directly — **needs a human confirmation** |
