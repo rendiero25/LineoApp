@@ -58,6 +58,11 @@ internal fun Phase0InputHarness() {
                 is EditorCommand.InsertText -> text += command.text
                 is EditorCommand.InsertFunction -> text += "${command.name}("
                 EditorCommand.Backspace -> text = text.dropLast(1)
+                // The harness has one buffer, not a line model: clearing the "current line"
+                // means dropping everything after the last newline. The editor will do this
+                // properly at P0-14.
+                EditorCommand.ClearLine -> text = text.substringBeforeLast('\n', missingDelimiterValue = "")
+                    .let { if (it.isEmpty()) "" else "$it\n" }
                 EditorCommand.NewLine -> text += "\n"
                 EditorCommand.ToggleTextInput -> {
                     textInputActive = !textInputActive
