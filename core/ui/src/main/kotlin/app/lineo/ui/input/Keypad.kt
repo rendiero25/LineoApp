@@ -41,7 +41,7 @@ fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .background(RoleColors.of(LineoRole.Editor).container)
             .dockedBottomPadding()
-            .padding(LineoDimens.KeyGap),
+            .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.KeyGap),
         verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
     ) {
         state.rows.forEach { row ->

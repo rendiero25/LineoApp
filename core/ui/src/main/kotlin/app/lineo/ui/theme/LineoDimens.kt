@@ -16,6 +16,9 @@ object LineoDimens {
     /** The grid every other value is a multiple of. */
     val Grid: Dp = 4.dp
 
+    /** Padding along the leading and trailing edges of the keypad, so keys never touch the window. */
+    val KeypadEdge: Dp = 16.dp
+
     /** Default gap between keypad keys. */
     val KeyGap: Dp = 8.dp
 

@@ -226,7 +226,7 @@ val scheme = when {
 
 | Element | Container token | Content token |
 |---|---|---|
-| Digit key | `surfaceContainerLowest` | `onSurface` |
+| Digit key | `surfaceContainerLow` | `onSurface` |
 | Operator key (`+ − × ÷`) | `secondaryContainer` | `onSecondaryContainer` |
 | Equals key | `primaryFixed` | `onPrimaryFixed` |
 | Clear / AC | `primaryFixed` | `onPrimaryFixed` |

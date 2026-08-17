@@ -38,7 +38,7 @@ data class RoleColors(val container: Color, val content: Color) {
          */
         @Suppress("CyclomaticComplexMethod")
         fun of(scheme: ColorScheme, role: LineoRole): RoleColors = when (role) {
-            LineoRole.Digit -> RoleColors(scheme.surfaceContainerLowest, scheme.onSurface)
+            LineoRole.Digit -> RoleColors(scheme.surfaceContainerLow, scheme.onSurface)
             LineoRole.Operator -> RoleColors(scheme.secondaryContainer, scheme.onSecondaryContainer)
             // Fixed rather than primary: the accent keeps the same yellow in both schemes,
             // which is what the reference design shows and what the role exists for.
