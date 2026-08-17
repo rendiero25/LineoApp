@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        Spoken labels for keys whose glyph says nothing out loud. Keys whose label is already
+        a word or a number carry no description: TalkBack reads the label, and a redundant
+        one would have it read twice.
+    -->
+    <string name="key_backspace_description">Backspace</string>
+    <string name="key_percent_description">Percent</string>
+    <string name="key_divide_description">Divide</string>
+    <string name="key_multiply_description">Multiply</string>
+    <string name="key_subtract_description">Subtract</string>
+    <string name="key_add_description">Add</string>
+    <string name="key_equals_description">Equals</string>
+    <string name="key_decimal_separator_description">Decimal separator</string>
+    <string name="key_text_keyboard_description">Text keyboard</string>
+
+    <string name="key_open_bracket_description">Open bracket</string>
+    <string name="key_close_bracket_description">Close bracket</string>
+    <string name="key_power_description">To the power of</string>
+    <string name="key_square_root_description">Square root</string>
+    <string name="key_argument_separator_description">Argument separator</string>
+    <string name="key_numeric_keypad_description">Calculator keypad</string>
+
+</resources>

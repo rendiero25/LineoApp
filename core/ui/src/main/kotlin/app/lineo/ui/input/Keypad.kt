@@ -1,0 +1,95 @@
+package app.lineo.ui.input
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import app.lineo.ui.layout.dockedBottomPadding
+import app.lineo.ui.theme.LineoDimens
+import app.lineo.ui.theme.LineoRole
+import app.lineo.ui.theme.RoleColors
+import app.lineo.ui.theme.asExpression
+
+/**
+ * The calculator keypad, docked at the bottom of the window.
+ *
+ * Stateless in the Compose sense: everything it can change lives in [state], and a press
+ * leaves through `state.commands` rather than through a callback the caller has to wire.
+ *
+ * The container is painted before the inset padding so its colour reaches the bottom of the
+ * window while the keys stay above the navigation bar and above the keyboard — the contract
+ * `AdaptivePane` states and the reason `dockedBottomPadding` exists.
+ */
+@Composable
+fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(RoleColors.of(LineoRole.Editor).container)
+            .dockedBottomPadding()
+            .padding(LineoDimens.KeyGap),
+        verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
+    ) {
+        state.rows.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
+            ) {
+                row.forEach { key -> Key(key = key, onPress = state::press) }
+            }
+        }
+    }
+}
+
+/**
+ * One key.
+ *
+ * Every key takes an equal share of the row, so the grid stays aligned whatever the labels
+ * are — a decimal separator that changes from `.` to `,` must not shift the column.
+ */
+@Composable
+private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
+    val colors = RoleColors.of(key.role)
+    val description = key.contentDescription?.let { stringResource(it) }
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .defaultMinSize(minHeight = LineoDimens.KeyMinSize)
+            .clip(RoundedCornerShape(KeyCornerRadius))
+            .background(colors.container)
+            .clickable { onPress(key) }
+            .then(
+                if (description == null) {
+                    Modifier
+                } else {
+                    Modifier.semantics { contentDescription = description }
+                },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = key.label,
+            style = MaterialTheme.typography.titleMedium.asExpression(),
+            color = colors.content,
+        )
+    }
+}
+
+private val KeyCornerRadius = 20.dp
