@@ -226,11 +226,11 @@ val scheme = when {
 
 | Element | Container token | Content token |
 |---|---|---|
-| Digit key | `surfaceContainerHighest` | `onSurface` |
+| Digit key, decimal, `±` | `surfaceContainerHighest` | `onSurface` |
 | Operator key (`+ − × ÷ %`) | `secondaryContainer` | `onSecondaryContainer` |
 | Equals key | `primaryFixed` | `onPrimaryFixed` |
 | Clear / AC | `primaryFixed` | `onPrimaryFixed` |
-| Function key (`sin`, `log`, units, backspace, `±`) | `surfaceContainer` | `onSurfaceVariant` |
+| Function key (`sin`, `log`, units, backspace, brackets) | `surfaceContainer` | `onSurfaceVariant` |
 | Input switch (`Aa`, `123`) | `inverseSurface` | `inverseOnSurface` — floats above the grid, not a cell in it |
 | Editor background | `surface` | `onSurface` |
 | Result value | — | `onSurfaceVariant` |
@@ -280,7 +280,8 @@ Support system font scaling to maximum without clipping — verified in P1-08b.
 - `Clear` and `Equals` share the primary colour, so they are told apart by position rather
   than by hue: `AC` sits in the leading corner of the top row, `=` in the trailing corner of
   the bottom one. Nothing else may take either corner.
-- Spacing on a 4 dp grid; 8 dp is the default gap between keypad keys.
+- Spacing on a 4 dp grid; 6 dp between keypad keys. Tighter than the usual 8 so the keys
+  themselves grow — the grid divides what is left, so a smaller gap is a bigger target.
 - Minimum touch target 48 dp. Keypad keys should be comfortably larger — aim for 56 dp or
   more in compact width, since the keypad is the most-tapped surface in the app.
 - Icons from Material Symbols only.

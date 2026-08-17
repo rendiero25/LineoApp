@@ -9,6 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import app.lineo.registry.EditorCommand
 import app.lineo.ui.R
+import app.lineo.ui.layout.LocalWindowWidthClass
+import app.lineo.ui.layout.WindowWidthClass
 import app.lineo.ui.theme.LineoRole
 
 /**
@@ -24,7 +26,10 @@ import app.lineo.ui.theme.LineoRole
  *   decision, so the keypad is told rather than deciding.
  */
 @Stable
-class KeypadState(decimalSeparator: Char = '.') : CommandInputSurface() {
+class KeypadState(
+    decimalSeparator: Char = '.',
+    hasRoomForFunctions: Boolean = false,
+) : CommandInputSurface() {
 
     /**
      * Changing this rebuilds the layout on the next frame, which is what P1-07 means by
@@ -32,8 +37,20 @@ class KeypadState(decimalSeparator: Char = '.') : CommandInputSurface() {
      */
     var decimalSeparator: Char by mutableStateOf(decimalSeparator)
 
-    /** The grid, top row first. Derived, so a separator change is the only thing that rebuilds it. */
-    val rows: List<List<KeypadKey>> by derivedStateOf { keypadRows(this.decimalSeparator) }
+    /**
+     * Whether the window is wide enough for the fifth column.
+     *
+     * Set from the window width class, never from orientation — `docs/ANDROID_STANDARDS.md`
+     * §2 forbids branching on orientation, and the thing that actually decides is how much
+     * width there is. A phone in landscape has room; so does a tablet held upright, and so
+     * does an unfolded foldable. All three get the same keypad for the same reason.
+     */
+    var hasRoomForFunctions: Boolean by mutableStateOf(hasRoomForFunctions)
+
+    /** The grid, top row first. Derived, so only a real change rebuilds it. */
+    val rows: List<List<KeypadKey>> by derivedStateOf {
+        keypadRows(this.decimalSeparator, this.hasRoomForFunctions)
+    }
 
     /**
      * The surface switch, which sits outside the grid.
@@ -41,9 +58,13 @@ class KeypadState(decimalSeparator: Char = '.') : CommandInputSurface() {
      * Floating above the grid rather than occupying a cell, because it is the one control
      * that does not type: it changes the instrument. A key in the grid looks like a key,
      * and this is a mode.
+     *
+     * Labelled `ABC` rather than with an icon or an `Aa`: it is the label every software
+     * keyboard on the platform uses for exactly this journey, and it names the destination
+     * rather than the mechanism. `123` on the accessory row is the same key coming back.
      */
     val modeKey: KeypadKey = KeypadKey(
-        label = "Aa",
+        label = "ABC",
         role = LineoRole.InputSwitch,
         command = EditorCommand.ToggleTextInput,
         contentDescription = R.string.key_text_keyboard_description,
@@ -56,20 +77,22 @@ class KeypadState(decimalSeparator: Char = '.') : CommandInputSurface() {
 }
 
 /**
- * Remembers a [KeypadState] and keeps its separator in step with [decimalSeparator].
+ * Remembers a [KeypadState] and keeps it in step with the separator and the window.
  *
- * The state survives recomposition but not the caller changing separator — that is an
- * assignment, not a new keypad, so the command stream and any collector stay attached.
+ * The state survives recomposition and survives both of those changing — they are
+ * assignments, not a new keypad, so the command stream and any collector stay attached.
  */
 @Composable
 fun rememberKeypadState(decimalSeparator: Char = '.'): KeypadState {
-    val state = remember { KeypadState(decimalSeparator) }
+    val hasRoom = LocalWindowWidthClass.current != WindowWidthClass.Compact
+    val state = remember { KeypadState(decimalSeparator, hasRoom) }
     state.decimalSeparator = decimalSeparator
+    state.hasRoomForFunctions = hasRoom
     return state
 }
 
 /**
- * The compact layout: four columns, five rows, matching `docs/LineoCP/preview.webp`.
+ * Four columns when the window is narrow, five when it is not.
  *
  * Digits sit in the familiar phone-dial block so the hand can find them without reading.
  * Operators run down the trailing edge where a thumb reaches. `AC` and `=` share the
@@ -77,20 +100,42 @@ fun rememberKeypadState(decimalSeparator: Char = '.'): KeypadState {
  * and `⌫` is kept away from `=`, because two keys that destroy work should not neighbour
  * the one pressed most often.
  *
- * `Aa` raises the system keyboard, the hybrid-input switch of `docs/ARCHITECTURE.md` §5.
- * `=` emits `NewLine`: committing a line is what finishing means in a notepad calculator.
- * `AC` emits `ClearLine`, which empties the line and not the document.
+ * `ABC` is not here: it floats above the grid, being a mode rather than a key. `=` emits
+ * `NewLine`, which is what committing a line means in a notepad calculator. `AC` clears the
+ * line and not the document. `±` flips the sign of the number the caret is in.
  *
- * The bracket key inserts a matched pair with the caret between them — one key rather than
- * two, which is what `EditorCommand.WrapSelection` exists for and what buys the fourth
- * column its room.
- *
- * **Four columns cannot hold everything.** `%`, `^`, `√` and the argument separator live on
- * the accessory row, which today appears only with the text keyboard. `docs/ARCHITECTURE.md`
- * §5 already says that row belongs above *either* surface; until P1-03 puts it there, those
- * four characters are out of reach in keypad mode. Recorded in `TASKS.md`.
+ * **The fifth column is what a narrow phone cannot afford.** Brackets, power, root and the
+ * argument separator go there, inserted before the operator column so the operators keep
+ * the trailing edge. On a compact window they are reachable only from the accessory row —
+ * a real gap, recorded in `TASKS.md`, and the reason this column exists at all.
  */
-internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
+internal fun keypadRows(
+    decimalSeparator: Char,
+    hasRoomForFunctions: Boolean = false,
+): List<List<KeypadKey>> {
+    val extras = listOf(
+        KeypadKey("(", LineoRole.Function, EditorCommand.InsertText("("), R.string.key_open_bracket_description),
+        KeypadKey(")", LineoRole.Function, EditorCommand.InsertText(")"), R.string.key_close_bracket_description),
+        KeypadKey("^", LineoRole.Function, EditorCommand.InsertText("^"), R.string.key_power_description),
+        KeypadKey(
+            label = "√",
+            role = LineoRole.Function,
+            command = EditorCommand.InsertFunction(name = "sqrt", arity = 1),
+            contentDescription = R.string.key_square_root_description,
+        ),
+        KeypadKey(
+            label = argumentSeparatorFor(decimalSeparator).toString(),
+            role = LineoRole.Function,
+            command = EditorCommand.InsertText(argumentSeparatorFor(decimalSeparator).toString()),
+            contentDescription = R.string.key_argument_separator_description,
+        ),
+    )
+    return baseRows(decimalSeparator).mapIndexed { index, row ->
+        if (hasRoomForFunctions) row.dropLast(1) + extras[index] + row.last() else row
+    }
+}
+
+private fun baseRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
     listOf(
         KeypadKey("AC", LineoRole.Clear, EditorCommand.ClearLine, R.string.key_all_clear_description),
         KeypadKey("⌫", LineoRole.Function, EditorCommand.Backspace, R.string.key_backspace_description),
@@ -116,7 +161,7 @@ internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
         KeypadKey("+", LineoRole.Operator, EditorCommand.InsertText("+"), R.string.key_add_description),
     ),
     listOf(
-        KeypadKey("±", LineoRole.Function, EditorCommand.ToggleSign, R.string.key_toggle_sign_description),
+        KeypadKey("±", LineoRole.Digit, EditorCommand.ToggleSign, R.string.key_toggle_sign_description),
         KeypadKey("0", LineoRole.Digit, EditorCommand.InsertText("0")),
         KeypadKey(
             label = decimalSeparator.toString(),

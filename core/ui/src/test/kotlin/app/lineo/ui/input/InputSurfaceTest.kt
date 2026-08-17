@@ -125,6 +125,20 @@ class InputSurfaceTest {
     }
 
     @Test
+    fun `a wider window grows a fifth column of function keys`() {
+        // Not landscape — width. A tablet upright and an unfolded foldable get it too, and
+        // docs/ANDROID_STANDARDS.md §2 forbids asking about orientation at all.
+        val narrow = KeypadState(hasRoomForFunctions = false)
+        val wide = KeypadState(hasRoomForFunctions = true)
+
+        assertTrue(narrow.rows.all { it.size == 4 })
+        assertTrue(wide.rows.all { it.size == 5 })
+        assertTrue(wide.rows.flatten().map { it.label }.containsAll(listOf("(", ")", "^", "√")))
+        // Operators keep the trailing edge; the new column is inserted before them.
+        assertEquals(listOf("÷", "×", "−", "+", "="), wide.rows.map { it.last().label })
+    }
+
+    @Test
     fun `no two keys ever show the same label, in either separator convention`() {
         listOf('.', ',').forEach { separator ->
             val labels = KeypadState(separator).rows.flatten().map { it.label } +
@@ -184,6 +198,7 @@ class InputSurfaceTest {
 
         assertEquals(EditorCommand.ToggleTextInput, keypad.modeKey.command)
         assertEquals(EditorCommand.ToggleTextInput, accessory.key("123").command)
+        assertEquals("ABC", keypad.modeKey.label)
     }
 
     @Test

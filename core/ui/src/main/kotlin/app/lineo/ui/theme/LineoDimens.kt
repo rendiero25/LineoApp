@@ -20,7 +20,7 @@ object LineoDimens {
     val KeypadEdge: Dp = 16.dp
 
     /** Default gap between keypad keys. */
-    val KeyGap: Dp = 8.dp
+    val KeyGap: Dp = 6.dp
 
     /** Platform minimum touch target. Nothing interactive may be smaller. */
     val MinTouchTarget: Dp = 48.dp

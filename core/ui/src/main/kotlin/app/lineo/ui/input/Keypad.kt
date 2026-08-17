@@ -4,10 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,6 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
+import app.lineo.ui.layout.LocalWindowWidthClass
+import app.lineo.ui.layout.WindowWidthClass
 import app.lineo.ui.layout.dockedBottomPadding
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
@@ -38,9 +44,14 @@ import app.lineo.ui.theme.asExpression
  */
 @Composable
 fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
+    // In a side pane the keypad has a ceiling; stacked under a document it does not.
+    // Which dimension is scarce decides how a square key is sized, and getting it wrong
+    // is visible: five square keys measured from the width overflowed a landscape pane.
+    val heightIsScarce = LocalWindowWidthClass.current != WindowWidthClass.Compact
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .then(if (heightIsScarce) Modifier.fillMaxHeight() else Modifier)
             .background(RoleColors.of(LineoRole.Editor).container)
             .dockedBottomPadding()
             .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.KeyGap),
@@ -49,10 +60,17 @@ fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
         ModeKey(key = state.modeKey, onPress = state::press)
         state.rows.forEach { row ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (heightIsScarce) Modifier.weight(1f) else Modifier),
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = LineoDimens.KeyGap,
+                    alignment = Alignment.CenterHorizontally,
+                ),
             ) {
-                row.forEach { key -> Key(key = key, onPress = state::press) }
+                row.forEach { key ->
+                    Key(key = key, onPress = state::press, sizedByHeight = heightIsScarce)
+                }
             }
         }
     }
@@ -90,14 +108,22 @@ private fun ModeKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
  * are — a decimal separator that changes from `.` to `,` must not shift the column.
  */
 @Composable
-private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
+private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit, sizedByHeight: Boolean) {
     val colors = RoleColors.of(key.role)
     val description = key.contentDescription?.let { stringResource(it) }
     Box(
         modifier = Modifier
-            .weight(1f)
-            // Square cell, circular key: the diameter follows the column width, so a
-            // narrower phone gets smaller keys rather than an overflowing grid.
+            // Keys are circles either way; what changes is which dimension sets the
+            // diameter. Stacked under a document, width is the scarce one and the row
+            // divides it. In a side pane the pane's height is the ceiling, so the key
+            // takes the row's height and the row centres what is left over.
+            .then(
+                if (sizedByHeight) {
+                    Modifier.fillMaxHeight()
+                } else {
+                    Modifier.weight(1f)
+                },
+            )
             .aspectRatio(1f)
             .clip(CircleShape)
             .background(colors.container)
@@ -105,10 +131,27 @@ private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
             .semanticsLabel(description),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = key.label,
-            style = LineoTypography.KeypadLabel.asExpression(),
-            color = colors.content,
-        )
+        // The label is a fraction of the key, not a fixed size. A fixed one only works at
+        // one key size, and the keypad has two: a landscape pane shrinks the keys, and
+        // 38 sp labels came out clipped — AC read as a triangle and ± as a plus.
+        BoxWithConstraints(contentAlignment = Alignment.Center) {
+            Text(
+                text = key.label,
+                style = LineoTypography.KeypadLabel
+                    .asExpression()
+                    .copy(fontSize = (maxWidth.value * LABEL_SHARE_OF_KEY).sp, lineHeight = TextUnit.Unspecified),
+                color = colors.content,
+                maxLines = 1,
+            )
+        }
     }
 }
+
+/**
+ * How much of a key's diameter its label occupies.
+ *
+ * Chosen to reproduce the 38 sp of `LineoTypography.KeypadLabel` at the size a key takes on
+ * a compact phone, so the portrait keypad is unchanged and every other window scales from
+ * it. To make labels bigger, change this — not a size in one place and not the other.
+ */
+private const val LABEL_SHARE_OF_KEY = 0.42f

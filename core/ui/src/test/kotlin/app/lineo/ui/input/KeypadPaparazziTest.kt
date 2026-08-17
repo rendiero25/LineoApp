@@ -65,6 +65,15 @@ class KeypadPaparazziTest {
     }
 
     @Test
+    fun `keypad in a window wide enough for the function column`() {
+        paparazzi.snapshot {
+            LineoTheme(darkTheme = false, dynamicColor = false) {
+                Keypad(state = KeypadState(hasRoomForFunctions = true))
+            }
+        }
+    }
+
+    @Test
     fun `accessory row in light scheme`() {
         paparazzi.snapshot {
             LineoTheme(darkTheme = false, dynamicColor = false) {

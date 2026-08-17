@@ -13,7 +13,14 @@ package app.lineo.ui.theme
  */
 enum class LineoRole {
 
-    /** Digit key, `0`–`9` and the decimal separator. */
+    /**
+     * A key that enters or edits the number being typed: `0`–`9`, the decimal separator,
+     * and `±`.
+     *
+     * `±` is here rather than with the functions because of what it acts on. An operator
+     * combines two numbers; `±` changes one, the same as typing another digit into it. Two
+     * keys that edit the same thing should not look like different kinds of key.
+     */
     Digit,
 
     /**
