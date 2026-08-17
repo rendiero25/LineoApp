@@ -23,6 +23,15 @@ sealed interface EditorCommand {
 
     data object Backspace : EditorCommand
 
+    /**
+     * Empties the line the caret is on. The `AC` key.
+     *
+     * The *line*, not the document. A notepad line is one calculation, so clearing it is
+     * what a calculator's all-clear has always meant; clearing the document would discard
+     * work the user cannot get back, which `docs/SPEC.md` and P1-03 both rule out.
+     */
+    data object ClearLine : EditorCommand
+
     data object NewLine : EditorCommand
 
     /** Swaps the calculator keypad for the system keyboard, the `Aa` button. */

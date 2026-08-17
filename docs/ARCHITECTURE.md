@@ -168,6 +168,7 @@ sealed interface EditorCommand {
     data class WrapSelection(val open: String, val close: String) : EditorCommand
     data class MoveCursor(val delta: Int) : EditorCommand
     data object Backspace : EditorCommand
+    data object ClearLine : EditorCommand
     data object NewLine : EditorCommand
     data object ToggleTextInput : EditorCommand
 }
@@ -179,6 +180,11 @@ interface InputSurface {
 
 Implementations: accessory row, custom keypad, system keyboard adapter, hardware
 keyboard, suggestion chips. The editor is agnostic.
+
+`ClearLine` empties the current line and nothing else. There is deliberately no command
+that clears the document: a notepad line is one calculation, which is the scope a
+calculator's all-clear has always had, and anything wider would destroy work the user
+cannot recover.
 
 This is what makes the Phase 1 → Phase 2 input change additive rather than a rewrite.
 
