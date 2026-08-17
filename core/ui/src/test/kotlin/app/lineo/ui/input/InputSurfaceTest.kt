@@ -78,11 +78,53 @@ class InputSurfaceTest {
     }
 
     @Test
+    fun `all clear empties the line and does not touch the document`() = runTest {
+        val keypad = KeypadState()
+
+        keypad.commands.test {
+            keypad.press(keypad.key("AC"))
+
+            // ClearLine, not a document-wide clear: EditorCommand has no such variant, on
+            // purpose, and this asserts the keypad cannot reach for one either.
+            assertEquals(EditorCommand.ClearLine, awaitItem())
+        }
+    }
+
+    @Test
+    fun `a comma decimal separator moves the argument separator to a semicolon`() {
+        // docs/CONVENTIONS.md §2. Without this the keypad would show two comma keys and
+        // type the wrong one half the time.
+        val dotLocale = KeypadState(decimalSeparator = '.').rows.flatten().map { it.label }
+        val commaLocale = KeypadState(decimalSeparator = ',').rows.flatten().map { it.label }
+
+        assertTrue(dotLocale.toString(), dotLocale.containsAll(listOf(".", ",")))
+        assertTrue(commaLocale.toString(), commaLocale.containsAll(listOf(",", ";")))
+    }
+
+    @Test
+    fun `no two keys ever show the same label, in either separator convention`() {
+        listOf('.', ',').forEach { separator ->
+            val labels = KeypadState(separator).rows.flatten().map { it.label } +
+                AccessoryRowState(separator).keys.map { it.label }
+            val duplicated = labels.groupingBy { it }.eachCount().filterValues { it > 1 }
+
+            // The keypad and the row share glyphs by design; each on its own must not.
+            val keypadLabels = KeypadState(separator).rows.flatten().map { it.label }
+            assertEquals(
+                "separator $separator",
+                emptyMap<String, Int>(),
+                keypadLabels.groupingBy { it }.eachCount().filterValues { it > 1 },
+            )
+            assertTrue(duplicated.keys.all { it in keypadLabels })
+        }
+    }
+
+    @Test
     fun `the decimal key types the separator it was given`() = runTest {
         val keypad = KeypadState(decimalSeparator = ',')
 
         keypad.commands.test {
-            keypad.press(keypad.key(","))
+            keypad.press(keypad.rows.last()[DECIMAL_KEY_COLUMN])
 
             assertEquals(EditorCommand.InsertText(","), awaitItem())
         }

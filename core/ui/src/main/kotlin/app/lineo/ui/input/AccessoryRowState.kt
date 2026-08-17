@@ -20,10 +20,10 @@ import app.lineo.ui.theme.LineoRole
  * independently — the editor collects whichever is attached and cannot tell them apart.
  */
 @Stable
-class AccessoryRowState : CommandInputSurface() {
+class AccessoryRowState(decimalSeparator: Char = '.') : CommandInputSurface() {
 
     /** Left to right, in the order they are shown. */
-    val keys: List<KeypadKey> = accessoryKeys()
+    val keys: List<KeypadKey> = accessoryKeys(decimalSeparator)
 
     fun press(key: KeypadKey) {
         emit(key.command)
@@ -31,7 +31,8 @@ class AccessoryRowState : CommandInputSurface() {
 }
 
 @Composable
-fun rememberAccessoryRowState(): AccessoryRowState = remember { AccessoryRowState() }
+fun rememberAccessoryRowState(decimalSeparator: Char = '.'): AccessoryRowState =
+    remember(decimalSeparator) { AccessoryRowState(decimalSeparator) }
 
 /**
  * What the text keyboard cannot type.
@@ -40,7 +41,7 @@ fun rememberAccessoryRowState(): AccessoryRowState = remember { AccessoryRowStat
  * character on its own is not something the parser accepts. The `123` key is the return
  * journey of `Aa` — the same [EditorCommand.ToggleTextInput], which is a toggle.
  */
-internal fun accessoryKeys(): List<KeypadKey> = listOf(
+internal fun accessoryKeys(decimalSeparator: Char = '.'): List<KeypadKey> = listOf(
     KeypadKey("123", LineoRole.Function, EditorCommand.ToggleTextInput, R.string.key_numeric_keypad_description),
     KeypadKey("(", LineoRole.SuggestionChip, EditorCommand.InsertText("("), R.string.key_open_bracket_description),
     KeypadKey(")", LineoRole.SuggestionChip, EditorCommand.InsertText(")"), R.string.key_close_bracket_description),
@@ -53,9 +54,9 @@ internal fun accessoryKeys(): List<KeypadKey> = listOf(
     ),
     KeypadKey("%", LineoRole.SuggestionChip, EditorCommand.InsertText("%"), R.string.key_percent_description),
     KeypadKey(
-        label = ",",
+        label = argumentSeparatorFor(decimalSeparator).toString(),
         role = LineoRole.SuggestionChip,
-        command = EditorCommand.InsertText(","),
+        command = EditorCommand.InsertText(argumentSeparatorFor(decimalSeparator).toString()),
         contentDescription = R.string.key_argument_separator_description,
     ),
 )

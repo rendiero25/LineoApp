@@ -55,20 +55,23 @@ fun rememberKeypadState(decimalSeparator: Char = '.'): KeypadState {
 }
 
 /**
- * The compact layout: four columns, five rows.
+ * The compact layout: five columns, five rows.
  *
- * Digits sit in the familiar phone-dial block so the hand can find them without reading;
- * operators run down the trailing edge where a thumb reaches; backspace is on the top row,
- * away from `=`. The `Aa` key raises the system keyboard, the hybrid-input switch of
- * `docs/ARCHITECTURE.md` §5. `=` emits `NewLine`, which is what committing a line means in
- * a notepad calculator — there is no separate result to compute on demand.
+ * Digits sit in the familiar phone-dial block so the hand can find them without reading.
+ * Operators run down the trailing edge where a thumb reaches. Clear and backspace are on
+ * the top row, as far from `=` as the grid allows — the two keys that destroy work should
+ * not sit next to the one pressed most often. The fourth column holds what an expression
+ * needs and a phone dial does not.
  *
- * **There is no all-clear key.** `EditorCommand` has no variant for it, and inventing one
- * would change the contract in `:core:registry` and `docs/ARCHITECTURE.md` §5. Recorded as
- * an open decision in `TASKS.md` rather than smuggled in as an empty `InsertText`.
+ * `Aa` raises the system keyboard, the hybrid-input switch of `docs/ARCHITECTURE.md` §5.
+ * `=` emits `NewLine`, which is what committing a line means in a notepad calculator —
+ * there is no separate result to compute on demand.
+ *
+ * `AC` clears the current line and not the document; see `EditorCommand.ClearLine`.
  */
 internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
     listOf(
+        KeypadKey("AC", LineoRole.Clear, EditorCommand.ClearLine, R.string.key_all_clear_description),
         KeypadKey("⌫", LineoRole.Clear, EditorCommand.Backspace, R.string.key_backspace_description),
         KeypadKey("(", LineoRole.Function, EditorCommand.InsertText("("), R.string.key_open_bracket_description),
         KeypadKey(")", LineoRole.Function, EditorCommand.InsertText(")"), R.string.key_close_bracket_description),
@@ -78,18 +81,26 @@ internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
         KeypadKey("7", LineoRole.Digit, EditorCommand.InsertText("7")),
         KeypadKey("8", LineoRole.Digit, EditorCommand.InsertText("8")),
         KeypadKey("9", LineoRole.Digit, EditorCommand.InsertText("9")),
+        KeypadKey("%", LineoRole.Function, EditorCommand.InsertText("%"), R.string.key_percent_description),
         KeypadKey("×", LineoRole.Operator, EditorCommand.InsertText("*"), R.string.key_multiply_description),
     ),
     listOf(
         KeypadKey("4", LineoRole.Digit, EditorCommand.InsertText("4")),
         KeypadKey("5", LineoRole.Digit, EditorCommand.InsertText("5")),
         KeypadKey("6", LineoRole.Digit, EditorCommand.InsertText("6")),
+        KeypadKey("^", LineoRole.Function, EditorCommand.InsertText("^"), R.string.key_power_description),
         KeypadKey("−", LineoRole.Operator, EditorCommand.InsertText("-"), R.string.key_subtract_description),
     ),
     listOf(
         KeypadKey("1", LineoRole.Digit, EditorCommand.InsertText("1")),
         KeypadKey("2", LineoRole.Digit, EditorCommand.InsertText("2")),
         KeypadKey("3", LineoRole.Digit, EditorCommand.InsertText("3")),
+        KeypadKey(
+            label = "√",
+            role = LineoRole.Function,
+            command = EditorCommand.InsertFunction(name = "sqrt", arity = 1),
+            contentDescription = R.string.key_square_root_description,
+        ),
         KeypadKey("+", LineoRole.Operator, EditorCommand.InsertText("+"), R.string.key_add_description),
     ),
     listOf(
@@ -100,6 +111,12 @@ internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
             role = LineoRole.Digit,
             command = EditorCommand.InsertText(decimalSeparator.toString()),
             contentDescription = R.string.key_decimal_separator_description,
+        ),
+        KeypadKey(
+            label = argumentSeparatorFor(decimalSeparator).toString(),
+            role = LineoRole.Function,
+            command = EditorCommand.InsertText(argumentSeparatorFor(decimalSeparator).toString()),
+            contentDescription = R.string.key_argument_separator_description,
         ),
         KeypadKey("=", LineoRole.Equals, EditorCommand.NewLine, R.string.key_equals_description),
     ),

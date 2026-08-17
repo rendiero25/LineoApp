@@ -6,6 +6,7 @@
         a word or a number carry no description: TalkBack reads the label, and a redundant
         one would have it read twice.
     -->
+    <string name="key_all_clear_description">Clear line</string>
     <string name="key_backspace_description">Backspace</string>
     <string name="key_percent_description">Percent</string>
     <string name="key_divide_description">Divide</string>
