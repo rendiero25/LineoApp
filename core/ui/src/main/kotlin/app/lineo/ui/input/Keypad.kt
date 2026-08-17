@@ -18,8 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.lineo.ui.layout.dockedBottomPadding
 import app.lineo.ui.theme.LineoDimens
@@ -75,13 +73,7 @@ private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
             .clip(RoundedCornerShape(KeyCornerRadius))
             .background(colors.container)
             .clickable { onPress(key) }
-            .then(
-                if (description == null) {
-                    Modifier
-                } else {
-                    Modifier.semantics { contentDescription = description }
-                },
-            ),
+            .semanticsLabel(description),
         contentAlignment = Alignment.Center,
     ) {
         Text(

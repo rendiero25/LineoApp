@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import app.lineo.ui.layout.AdaptivePane
 import app.lineo.ui.layout.LocalWindowWidthClass
 import app.lineo.ui.theme.LineoTheme
 
@@ -21,14 +20,11 @@ import app.lineo.ui.theme.LineoTheme
  * keyboard, and a shell that had already padded the bottom would push it a navigation bar
  * too high.
  *
- * @param document what the user reads. Given the space the input pane does not take.
- * @param input the keypad or accessory row. Must wrap its height; see `AdaptivePane`.
+ * @param content the screen. It composes `AdaptivePane` itself, because which panes exist
+ *   is a screen's decision and not the shell's.
  */
 @Composable
-fun LineoAppShell(
-    document: @Composable () -> Unit,
-    input: @Composable () -> Unit,
-) {
+fun LineoAppShell(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalWindowWidthClass provides rememberWindowWidthClass()) {
         LineoTheme {
             Box(
@@ -36,7 +32,7 @@ fun LineoAppShell(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.statusBars),
             ) {
-                AdaptivePane(document = document, input = input)
+                content()
             }
         }
     }

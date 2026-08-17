@@ -5,8 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import app.lineo.shell.LineoAppShell
-import app.lineo.shell.PlaceholderDocument
-import app.lineo.shell.PlaceholderInput
+import app.lineo.shell.Phase0InputHarness
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -15,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
  * `enableEdgeToEdge()` before `setContent`, and no inset handling of its own — the window
  * is drawn behind the system bars and `LineoAppShell` decides what to keep clear of them.
  *
- * The panes are placeholders until the editor (P0-14) and the keypad (P0-13) exist.
+ * The content is the Phase 0 input harness until the editor (P0-14) replaces it.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -23,10 +22,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LineoAppShell(
-                document = { PlaceholderDocument() },
-                input = { PlaceholderInput() },
-            )
+            LineoAppShell {
+                Phase0InputHarness()
+            }
         }
     }
 }
