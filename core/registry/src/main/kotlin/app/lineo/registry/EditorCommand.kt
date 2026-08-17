@@ -32,6 +32,15 @@ sealed interface EditorCommand {
      */
     data object ClearLine : EditorCommand
 
+    /**
+     * Flips the sign of the number the caret is in or just after. The `±` key.
+     *
+     * A command rather than an `InsertText("-")` because it is a toggle, and because only
+     * the editor knows where the current number starts — the surface that emits this has no
+     * idea what has been typed.
+     */
+    data object ToggleSign : EditorCommand
+
     data object NewLine : EditorCommand
 
     /** Swaps the calculator keypad for the system keyboard, the `Aa` button. */

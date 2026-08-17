@@ -169,6 +169,7 @@ sealed interface EditorCommand {
     data class MoveCursor(val delta: Int) : EditorCommand
     data object Backspace : EditorCommand
     data object ClearLine : EditorCommand
+    data object ToggleSign : EditorCommand
     data object NewLine : EditorCommand
     data object ToggleTextInput : EditorCommand
 }
