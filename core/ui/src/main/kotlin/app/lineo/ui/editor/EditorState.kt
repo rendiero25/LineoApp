@@ -77,19 +77,14 @@ class EditorState(
      */
     fun apply(command: EditorCommand) {
         when (command) {
-            is EditorCommand.InsertText -> insert(command.text)
-            is EditorCommand.InsertFunction -> insertFunction(command.name)
-            is EditorCommand.WrapSelection -> insert(command.open + command.close, caretOffset = -command.close.length)
-            is EditorCommand.MoveCursor -> caret = (caret + command.delta).coerceIn(0, text.length)
-            EditorCommand.Backspace -> backspace()
-            EditorCommand.ClearLine -> setText("")
-            EditorCommand.ToggleSign -> {
-                val toggled = toggleSign(text, caret, decimalSeparator)
-                setText(toggled.text, toggled.caret)
-            }
+            // A single-line editor has nowhere to put another line, so `=` ends this one.
             EditorCommand.NewLine -> insert("\n")
             // The surface swap is the shell's business; the text does not change.
             EditorCommand.ToggleTextInput -> Unit
+            else -> {
+                val edited = EditedLine(text, caret).applying(command, decimalSeparator)
+                setText(edited.text, edited.caret)
+            }
         }
     }
 
@@ -156,23 +151,9 @@ class EditorState(
         }
     }
 
-    private fun insert(inserted: String, caretOffset: Int = 0) {
-        val at = caret.coerceIn(0, text.length)
-        setText(
-            newText = text.substring(0, at) + inserted + text.substring(at),
-            newCaret = at + inserted.length + caretOffset,
-        )
-    }
-
-    /** `sqrt(` with the caret between the brackets, where the argument goes. */
-    private fun insertFunction(name: String) {
-        insert("$name()", caretOffset = -1)
-    }
-
-    private fun backspace() {
-        val at = caret.coerceIn(0, text.length)
-        if (at == 0) return
-        setText(newText = text.removeRange(at - 1, at), newCaret = at - 1)
+    private fun insert(inserted: String) {
+        val edited = EditedLine(text, caret).applying(EditorCommand.InsertText(inserted), decimalSeparator)
+        setText(edited.text, edited.caret)
     }
 
     private companion object {

@@ -194,14 +194,34 @@ what, in what order, and which lines are in a circle — then the evaluation tha
   - **DoD:** 200-line document, keystroke to result under 50 ms on an API 26 emulator
     — *asserted by counting work, not by timing: see the open row below*
 
-- [ ] **P1-03 · Notepad UI + hybrid input** — `L` — `:feature:notepad`
-  - Keypad default; `Aa` raises system keyboard
-  - Context auto-switch: line starting with a digit → keypad, with a letter → keyboard
-  - Suggestion chips: in-scope variables, recent units
+*P1-03 was `L` and spanned three modules, which rules 3 and 5 both forbid. Split by module:
+the reusable line edit first, then the state, then the screen, then persistence.*
+
+- [x] **P1-03-0 · Reusable line editing** — `S` — `:core:ui`
+  - `EditedLine` + `applying(command)`: the pure text-and-caret transform, lifted out of
+    `EditorState` so the notepad applies commands through the same code
+  - **DoD:** the single-line editor's tests pass unchanged; `±` has one implementation
+
+- [x] **P1-03-1 · Notepad state** — `M` — `:feature:notepad` — depends on P1-03-0, P1-02-2
+  - One `uiState`; every surface reaches the document through `EditorCommand`
+  - Enter splits a line, backspace at the start joins it to the one above
+  - Context auto-switch on focus: a line beginning with a letter raises the keyboard
+  - **DoD:** switching surfaces preserves cursor position; a reference keeps its target
+    across a split; typing `line12` does not rewrite itself under the user
+
+- [ ] **P1-03-2 · Notepad screen** — `M` — `:feature:notepad` — depends on P1-03-1
+  - The list of lines, per-line result, the docked input surface, suggestion chips for
+    in-scope variables and recent units
+  - The chip row must reach `%`, `^`, `√` and the argument separator above *either* surface —
+    the gap recorded against P0-13
+  - **DoD:** no visible layout jump when the surface changes; Paparazzi in light, dark and RTL
+
+- [ ] **P1-03-3 · Persistence and back** — `M` — `:feature:notepad` — depends on P1-03-2
+  - Maps `NotepadDocument` to the `documents` / `lines` rows through `:core:data`
   - Back never discards work: with unsaved state, back commits it rather than prompting
     (moved here from P0-11b, which had no document to protect)
-  - **DoD:** switching surfaces preserves cursor position; no visible layout jump; back with
-    an uncommitted line leaves the line in the document, verified across process death
+  - **DoD:** back with an uncommitted line leaves the line in the document, verified across
+    process death
 
 - [ ] **P1-04 · `:feature:scientific`** — `M`
   - Registers its functions through `CalcFunction`, not in the Screen
@@ -435,4 +455,9 @@ same question being re-litigated in a future session.
 | 2026-08-17 | P1-02-2 | Rebuilding the graph re-parses the document, which would put an O(lines) parse on every keystroke — the cost the incremental evaluator exists to avoid | `ParseCache`, keyed by the line's text **and** the scope it is read in. Never by the text alone: `2k` is two thousand until a line above defines `k` (§3.2), so a text-only key would serve the wrong reading of the same characters further down the same document. A keystroke on an ordinary line now costs two parses — the definition pass and the line's own — instead of two per line, and the graph hands its parses to the evaluator so nothing is parsed twice |
 | 2026-08-17 | P1-02-2 | `LineEvaluation` repeats most of `EditorEvaluation` in `:core:ui` | Deliberate, and not shared. The document has two states the editor does not (`Blocked`, and a circle) and the editor has one the document must not (`Unfinished`, which belongs to the line being typed). Merging them would mean a module that owns neither. P1-03 maps one to the other, which is the right place for a translation between a model and a screen |
 | open | P1-02-2 | The DoD figure — 50 ms for a keystroke on a 200-line document on an API 26 emulator — has **not** been measured on a device | What is asserted instead is the work: one evaluation per line the change actually reached, two parses for a keystroke on an ordinary line, and zero evaluations when nothing changed. On the JVM the worst case (a 200-line chain changed at the top, every line invalidated) takes **0.69 ms**, with a 25 ms ceiling in the test to catch an algorithmic regression. A build agent's JVM is not an API 26 device. **Close it with the Macrobenchmark of P1-10**, which owns device measurement, or on a device once P1-03 puts the notepad on screen |
+| 2026-08-17 | P1-03 | The task is `L` and it spans `:core:ui`, `:feature:notepad` and storage, which rule 3 forbids in one task | Four: P1-03-0 (`:core:ui`, the reusable line edit), P1-03-1 (state), P1-03-2 (screen), P1-03-3 (persistence and back). The first exists because the notepad needs the same text edit the single-line editor already has, and the alternative was a second `±` |
+| 2026-08-17 | P1-03-0 | `toggleSign` and the insert/backspace logic were `private` inside `EditorState`, so the notepad could only have copied them | Lifted into `EditedLine` and `applying(command)` — pure, public, `:core:ui`'s. `EditorState` delegates, and its eleven tests passed unchanged, which is what says the extraction did not change behaviour. `±` alone would have been forty lines and ten tests of drift |
+| 2026-08-17 | P1-03-1 | Deriving the line's display text from the document on every keystroke rewrites references while they are being typed: `line12` passes through `line1`, which binds to a real line, so the next render would show whatever *that* line's ordinal is | The focused line keeps a draft of exactly what the user typed; the document is still written on every keystroke, so nothing is lost, but the display text is re-derived only when focus moves. Unfocused lines always render from what is stored, which is how a reference follows its target when a line is inserted |
+| 2026-08-17 | P1-03-1 | Enter at the very start of a line: does the text move down to a new line, or does a blank line appear above it? | A blank line appears above and the line keeps its text **and its id**. Identity follows content, so a reference to it still reads what the user can see it pointing at — the guarantee P1-01 exists for. Moving the text to a new id would have quietly repointed every reference to that line, which is the exact failure the whole model is built to prevent |
+| 2026-08-17 | P1-03-1 | The single-line editor debounces evaluation by 400 ms (`docs/SPEC.md`). Should the notepad? | No. That debounce paid for a full parse per keystroke; the notepad parses one line and evaluates only what the change reached, which measures 0.69 ms on a 200-line worst case. Waiting 400 ms to show a number that is already computed would be slower for no saving. Revisit if the device measurement owed by P1-02-2 says otherwise |
 | open | P0-13 | **Pressing `ABC` does not raise the keyboard on the owner's machine.** On mine the system reports `mInputShown=true` and the field reports `focused="true"`, and after `pm clear` of GBoard the full keyboard appears — so the app's request is reaching the IME here. It does not reproduce for me, and it does reproduce for the owner | **Deferred by the owner, not resolved.** Next steps when picked up: confirm which IME is selected on the failing device (`adb shell settings get secure default_input_method`), check whether `mInputShown` is true there too, and if it is, the fault is in what the IME does with the request rather than in making it. Worth adding regardless: keep the keypad on screen until the `ime` inset is actually non-zero, so a failed switch never leaves the user with an accessory row and no keyboard |
