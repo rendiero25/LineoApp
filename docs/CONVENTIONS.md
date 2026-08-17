@@ -227,10 +227,11 @@ val scheme = when {
 | Element | Container token | Content token |
 |---|---|---|
 | Digit key | `surfaceContainerHigh` | `onSurface` |
-| Operator key (`+ − × ÷`) | `secondaryContainer` | `onSecondaryContainer` |
+| Operator key (`+ − × ÷`, brackets) | `secondaryContainer` | `onSecondaryContainer` |
 | Equals key | `primaryFixed` | `onPrimaryFixed` |
 | Clear / AC | `primaryFixed` | `onPrimaryFixed` |
-| Function key (`sin`, `log`, units) | `surfaceContainer` | `onSurfaceVariant` |
+| Function key (`sin`, `log`, units, backspace) | `surfaceContainer` | `onSurfaceVariant` |
+| Input switch (`Aa`, `123`) | `tertiaryContainer` | `onTertiaryContainer` |
 | Editor background | `surface` | `onSurface` |
 | Result value | — | `onSurfaceVariant` |
 | Error underline | `error` | — (it is a rule, not text) |

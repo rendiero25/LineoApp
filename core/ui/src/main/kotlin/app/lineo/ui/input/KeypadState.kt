@@ -82,7 +82,7 @@ internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
         KeypadKey("⌫", LineoRole.Function, EditorCommand.Backspace, R.string.key_backspace_description),
         KeypadKey(
             label = "( )",
-            role = LineoRole.Function,
+            role = LineoRole.Operator,
             command = EditorCommand.WrapSelection(open = "(", close = ")"),
             contentDescription = R.string.key_brackets_description,
         ),
@@ -107,7 +107,7 @@ internal fun keypadRows(decimalSeparator: Char): List<List<KeypadKey>> = listOf(
         KeypadKey("+", LineoRole.Operator, EditorCommand.InsertText("+"), R.string.key_add_description),
     ),
     listOf(
-        KeypadKey("Aa", LineoRole.Function, EditorCommand.ToggleTextInput, R.string.key_text_keyboard_description),
+        KeypadKey("Aa", LineoRole.InputSwitch, EditorCommand.ToggleTextInput, R.string.key_text_keyboard_description),
         KeypadKey("0", LineoRole.Digit, EditorCommand.InsertText("0")),
         KeypadKey(
             label = decimalSeparator.toString(),

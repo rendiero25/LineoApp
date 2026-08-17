@@ -47,6 +47,7 @@ data class RoleColors(val container: Color, val content: Color) {
             // position — opposite corners of the grid — never by hue.
             LineoRole.Clear -> RoleColors(scheme.primaryFixed, scheme.onPrimaryFixed)
             LineoRole.Function -> RoleColors(scheme.surfaceContainer, scheme.onSurfaceVariant)
+            LineoRole.InputSwitch -> RoleColors(scheme.tertiaryContainer, scheme.onTertiaryContainer)
             LineoRole.Editor -> RoleColors(scheme.surface, scheme.onSurface)
             LineoRole.Result -> RoleColors(Color.Transparent, scheme.onSurfaceVariant)
             LineoRole.ErrorUnderline -> RoleColors(scheme.error, Color.Transparent)
