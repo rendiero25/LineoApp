@@ -149,11 +149,22 @@ below: the reusable pieces first, then the shell that wires them to a window.*
   - Accessory row docks above the system IME using `WindowInsets.ime`
   - **DoD:** verified against GBoard, SwiftKey, and Samsung Keyboard; no layout jump
 
-- [ ] **P0-14 · Expression editor** — `L` — `:core:ui`
-  - Consumes `EditorCommand`, renders result inline
-  - Error underline at `CalcError.span`, message below the line, tap-to-fix chip
-  - 400 ms debounce; incomplete input shows nothing
-  - **DoD:** typing `5 +` shows no error state; `sni(1)` shows a suggestion chip
+*P0-14 was `L`, and rule 5 says an `L` gets split once it starts. State first, then what the
+state looks like — the half that can be tested without a screen, and the half that cannot.*
+
+- [x] **P0-14-1 · Editor state: commands, caret, debounced evaluation** — `M` — `:core:ui`
+  - Consumes `EditorCommand`; owns the text and the caret
+  - 400 ms debounce; input that is merely unfinished evaluates to nothing rather than to an
+    error, because a user mid-keystroke has not made a mistake yet
+  - **DoD:** `5 +` produces no error state; one unit test per command; the debounce asserted
+    on a test scheduler rather than by waiting
+
+- [ ] **P0-14-2 · Editor rendering: result, underline, fix chip** — `M` — `:core:ui` — depends
+  on P0-14-1
+  - Result rendered inline; underline at `CalcError.span`; message below the line
+  - Tap-to-fix chip built from `CalcError.UnknownIdentifier.suggestion`
+  - **DoD:** `sni(1)` shows a suggestion chip that replaces the identifier when tapped;
+    Paparazzi in light, dark, and RTL
 
 **Phase 0 exit criteria:** engine golden suite and fuzz test green in CI; editor
 evaluates a single line end to end.
@@ -364,3 +375,6 @@ same question being re-litigated in a future session.
 | open | P0-13 | The DoD names GBoard, SwiftKey and Samsung Keyboard. Only GBoard is on the emulator image, and the other two are not distributed as installable APKs for it | Verified against GBoard in docked and floating modes. **SwiftKey and Samsung Keyboard remain unverified** — they need a physical device or a Samsung system image, so this is a hardware gap, not a code one |
 | 2026-08-17 | P0-13 | A `uiautomator` dump showed each key's content description on a child node of the clickable one rather than on it | Compose publishes the unmerged tree as well; TalkBack reads the merged node, which carries both. Left as is, and `semanticsLabel` records why. Confirming it with TalkBack itself is P1-08, which exists for that |
 | 2026-08-17 | P0-13 | Adding `AC` widened the keypad to five columns, which put a comma decimal key next to a comma argument key: the same glyph twice, typing the wrong one half the time | The argument separator is derived from the decimal separator per `docs/CONVENTIONS.md` §2 — `,` beside a dot decimal, `;` beside a comma one. A test now asserts no two keys on one surface ever show the same label, in either convention. The bug was invisible until the layout changed; the four-column keypad had no argument key at all |
+| 2026-08-17 | P0-14 | The task is `L`, and rule 5 says an `L` is split once it starts | P0-14-1 is the state — commands, caret, debounce — which is testable without a screen. P0-14-2 is what that state looks like: inline result, underline at the span, message, fix chip. The split falls where the test strategy changes, not at an arbitrary halfway point |
+| 2026-08-17 | P0-14-1 | `CalcError.Syntax` covers both `5 +`, which the next keystroke fixes, and `5 + + 3`, which it does not. The error type alone cannot tell the editor whether to stay quiet | Position decides. A syntax error at the end of the trimmed line is unfinished; one inside it is a mistake. An unbalanced bracket is always unfinished — there is no way to have typed a closing bracket that is still missing. `EditorEvaluation` has a distinct `Unfinished` state so a user mid-keystroke is never shown a red underline |
+| 2026-08-17 | P0-14-1 | The debounce was built on `snapshotFlow { text }`, and the restart-the-timer test failed: it saw one evaluation where it expected none | `snapshotFlow` only observes a change once the recomposer sends apply notifications, so the evaluation pipeline silently depended on something being composed. The text is now mirrored into a `MutableStateFlow` written in the same place as the Compose state. The test that caught it asserts a burst of six keystrokes costs one parse, not six |
