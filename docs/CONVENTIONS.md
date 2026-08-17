@@ -193,16 +193,22 @@ a calculator is read at a glance, and legibility is the product.
 
 ```kotlin
 val scheme = when {
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && userWantsDynamic ->
+    // Opt-in, not default: the user asked to follow their wallpaper.
+    userWantsDynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
         if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
     trueBlackEnabled && dark -> LineoAmoledScheme
-    else -> lineoScheme(seed = userSeed ?: DefaultSeed, dark)
+    dark -> LineoColorSchemes.Dark
+    else -> LineoColorSchemes.Light
 }
 ```
 
-- **Default is dynamic color** on API 31+. It costs nothing and makes the app feel native.
-- **Fallback below API 31** is a seed-generated tonal palette. Generate it with the
-  [Material Theme Builder](https://m3.material.io/theme-builder) and commit the output.
+- **Default is Lineo's own palette**, on every API level. Dynamic colour is offered in
+  settings for users who want the app to follow their wallpaper, and it is off until they
+  ask. Reversed from the original rule on 2026-08-17: with dynamic colour as the default,
+  the palette the product is designed around would never be seen on API 31+, which is
+  almost every device. An app is allowed to look like itself.
+- **The palette** is a Material Theme Builder export, generated with the
+  [Material Theme Builder](https://m3.material.io/theme-builder) and committed whole.
   Do not hand-pick hex values. The committed palette is in
   `core/ui/.../theme/LineoColorSchemes.kt`, copied verbatim from the export kept in
   `docs/LineoCP/`. Lineo's is olive and chartreuse: the accent is warm and the surfaces are

@@ -208,6 +208,8 @@ evaluates a single line end to end.
 
 - [ ] **P1-07 · Settings** — `S` — `:app`
   - Separator override, angle mode, theme, unit system, decimal places
+  - "Follow wallpaper colours" toggle, off by default — the opt-in that pays for Lineo's
+    palette being the default (`docs/CONVENTIONS.md` §10)
   - Open-source licences entry: renders `attributedDependencies` and the licence texts in
     `res/raw`. The list is already generated and tested; only the screen is left
   - **DoD:** changing separator updates the keypad immediately; the licences screen lists
@@ -385,3 +387,4 @@ same question being re-litigated in a future session.
 | 2026-08-17 | P0-13 | The reference design in `docs/LineoCP/preview.webp` shows circular keys in four columns, with `AC` and `=` the same yellow in *both* schemes | Adopted. Keys are circles sized by the column width, so a narrow phone gets smaller keys rather than an overflowing grid. `AC` and `=` use `primaryFixed`/`onPrimaryFixed` — `primary` inverts between schemes and would have made them dark olive in light mode, while "fixed" is the M3 role for an accent that does not flip. §10 updated for both, plus the rule that they are told apart by corner and never by hue |
 | 2026-08-17 | P0-13 | Four columns hold twenty keys, and the keypad needs twenty-three | The bracket key became one key emitting `WrapSelection`, which is what that command was for and what freed a slot. `⌫` stayed on the top row away from `=` (the owner's call). `%`, `^`, `√` and the argument separator moved off the keypad entirely |
 | open | P0-13 | `%`, `^`, `√` and the argument separator are now reachable only from the accessory row, which appears only with the text keyboard — so they cannot be typed in keypad mode at all | `docs/ARCHITECTURE.md` §5 already says the chip row belongs above *either* surface. **Close it in P1-03**, which owns hybrid input; until then keypad mode cannot type `max(1, 5)` or a percentage |
+| 2026-08-17 | P0-12 | The palette was adopted but the emulator still showed wallpaper colours. §10 made dynamic colour the default on API 31+, which is almost every device — so the palette the product is designed around would have been seen by almost nobody | Reversed by the product owner: Lineo's palette is the default on every API level, and dynamic colour becomes an opt-in toggle in settings (added to P1-07). §10 rewritten, including its code sketch. The snapshots never changed, because they always passed `dynamicColor = false` — which is why the discrepancy only showed up on a device |

@@ -14,26 +14,26 @@ import androidx.compose.ui.platform.LocalContext
  *
  * Scheme selection follows `docs/CONVENTIONS.md` §10:
  *
- * - **Dynamic colour on API 31+** is the default. It costs nothing and makes the app feel
- *   native. It also carries the user's contrast setting for free: on Android 14+ the
- *   system rebuilds its colour resources when contrast changes, and because the scheme is
- *   read from the context on each composition rather than cached, Lineo follows it.
- * - **Below API 31**, or when the user turns dynamic colour off, the seeded palette in
- *   [LineoColorSchemes] is used.
+ * - **Lineo's own palette is the default**, on every API level. The app is designed
+ *   around it, and a default of dynamic colour would mean almost nobody ever saw it.
+ * - **Dynamic colour is opt-in** and needs API 31+. When it is on, the user's contrast
+ *   setting comes with it for free: Android 14+ rebuilds its colour resources when
+ *   contrast changes, and because the scheme is read from the context on each
+ *   composition rather than cached, Lineo follows it.
  * - **True black** replaces the dark scheme outright, including the dynamic one. Blacking
  *   out the surfaces of a dynamic palette would leave a container ladder that no longer
  *   steps evenly, so the AMOLED variant is its own generated scheme instead.
  *
  * @param darkTheme whether to use the dark scheme. Defaults to the system setting; the
  *   settings screen passes an explicit value once the user has chosen one.
- * @param dynamicColor whether to use the wallpaper-derived palette where the platform
- *   offers one. Ignored below API 31 and when [trueBlack] is on.
+ * @param dynamicColor whether to follow the wallpaper instead of Lineo's palette. Off
+ *   unless the user asks for it in settings; ignored below API 31 and when [trueBlack] is on.
  * @param trueBlack the OLED variant. Premium, stubbed until Phase 3 (`docs/SPEC.md` §3).
  */
 @Composable
 fun LineoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     trueBlack: Boolean = false,
     content: @Composable () -> Unit,
 ) {
