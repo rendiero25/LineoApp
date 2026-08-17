@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import app.lineo.engine.CalcError
@@ -56,6 +58,9 @@ fun ExpressionEditor(
             .fillMaxWidth()
             .background(editor.container)
             .padding(LineoDimens.EditorPadding),
+        // The whole stack reads from the right, as the reference design does: a result
+        // lines up with the expression it came from digit for digit.
+        horizontalAlignment = Alignment.End,
     ) {
         ExpressionField(state = state, focusRequester = focusRequester)
         when (val evaluation = state.evaluation) {
@@ -78,7 +83,9 @@ private fun ExpressionField(state: EditorState, focusRequester: FocusRequester?)
         modifier = Modifier
             .fillMaxWidth()
             .let { if (focusRequester == null) it else it.focusRequester(focusRequester) },
-        textStyle = MaterialTheme.typography.displayMedium.asExpression().copy(color = editor.content),
+        textStyle = MaterialTheme.typography.displayMedium
+            .asExpression()
+            .copy(color = editor.content, textAlign = TextAlign.End),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         visualTransformation = errorSpanTransformation(span, underlineColour),
     )
@@ -94,6 +101,8 @@ private fun ResultLine(result: EditorEvaluation.Result) {
         text = result.value.canonicalString(),
         style = MaterialTheme.typography.displaySmall.asExpression(),
         color = RoleColors.of(LineoRole.Result).content,
+        textAlign = TextAlign.End,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 

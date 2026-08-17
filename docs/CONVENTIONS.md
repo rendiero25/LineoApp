@@ -226,7 +226,7 @@ val scheme = when {
 
 | Element | Container token | Content token |
 |---|---|---|
-| Digit key | `surfaceContainerHigh` | `onSurface` |
+| Digit key | `surfaceContainerLowest` | `onSurface` |
 | Operator key (`+ − × ÷`) | `secondaryContainer` | `onSecondaryContainer` |
 | Equals key | `primaryFixed` | `onPrimaryFixed` |
 | Clear / AC | `primaryFixed` | `onPrimaryFixed` |
@@ -254,10 +254,14 @@ build.
 | Role | Style | Notes |
 |---|---|---|
 | Expression being typed | `displayMedium` | Shrinks by step as the line grows; never wraps mid-number |
-| Result | `displaySmall` | Muted, sits below or right of the expression |
+| Result | `displaySmall` | Muted, sits below the expression |
+
+The expression and its result are **aligned to the end**, stacked, so their digits line up
+column for column and the eye can compare them without moving. Everything the editor puts
+below the line — message, fix chip — follows the same edge, so the block reads as one thing.
 | Notepad line source | `bodyLarge`, monospace-ish | Alignment across lines matters more than beauty |
 | Notepad line result | `bodyLarge` | Right-aligned in its own column |
-| Keypad label | `titleMedium` | |
+| Keypad label | `headlineSmall` | A key is a target read at a glance, not prose |
 | Error message | `bodySmall` | |
 
 **Tabular figures are mandatory** everywhere a number appears. Without them digits shift

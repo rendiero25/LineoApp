@@ -79,7 +79,7 @@ private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
     ) {
         Text(
             text = key.label,
-            style = MaterialTheme.typography.titleMedium.asExpression(),
+            style = MaterialTheme.typography.headlineSmall.asExpression(),
             color = colors.content,
         )
     }
