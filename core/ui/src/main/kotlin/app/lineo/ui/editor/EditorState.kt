@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import app.lineo.engine.CalcError
 import app.lineo.engine.CalcResult
 import app.lineo.engine.Engine
 import app.lineo.engine.EvalContext
@@ -106,7 +107,34 @@ class EditorState(
             .collect { evaluation = it }
     }
 
-    /** Evaluates immediately. Exposed for the caller that needs a result now, such as `=`. */
+    /**
+     * Replaces a misspelled name with the engine's nearest match — the tap-to-fix chip.
+     *
+     * Takes the error rather than two offsets so the caret cannot be applied to a line that
+     * has moved on since the suggestion was offered: the span belongs to the error, and the
+     * chip is only shown while that error is the current one.
+     */
+    fun applySuggestion(error: CalcError.UnknownIdentifier) {
+        val suggestion = error.suggestion ?: return
+        val start = error.span.first.coerceIn(0, text.length)
+        val end = (error.span.last + 1).coerceIn(start, text.length)
+        setText(
+            newText = text.replaceRange(start, end, suggestion),
+            newCaret = start + suggestion.length,
+        )
+    }
+
+    /**
+     * Evaluates now and publishes the answer, skipping the debounce.
+     *
+     * What `=` does: the user has said they are finished, so making them wait another
+     * 400 ms to see the result they just asked for would be perverse.
+     */
+    fun evaluateAndPublish() {
+        evaluation = evaluateNow()
+    }
+
+    /** Evaluates immediately without publishing. */
     fun evaluateNow(source: String = text): EditorEvaluation = when {
         source.isBlank() -> EditorEvaluation.Empty
         else -> when (val result = evaluate(source)) {

@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import app.lineo.shell.LineoAppShell
-import app.lineo.shell.Phase0InputHarness
+import app.lineo.shell.SingleLineScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -14,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
  * `enableEdgeToEdge()` before `setContent`, and no inset handling of its own — the window
  * is drawn behind the system bars and `LineoAppShell` decides what to keep clear of them.
  *
- * The content is the Phase 0 input harness until the editor (P0-14) replaces it.
+ * One line, evaluated end to end. `:feature:notepad` replaces it at P1-03.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LineoAppShell {
-                Phase0InputHarness()
+                SingleLineScreen()
             }
         }
     }

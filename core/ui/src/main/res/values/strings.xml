@@ -24,4 +24,23 @@
     <string name="key_argument_separator_description">Argument separator</string>
     <string name="key_numeric_keypad_description">Calculator keypad</string>
 
+
+    <!--
+        Error messages. One per CalcError variant, because the editor must never render an
+        error it has no words for. docs/CONVENTIONS.md §8: never colour alone.
+    -->
+    <string name="error_syntax">Unexpected \'%1$s\'</string>
+    <plurals name="error_unbalanced_paren">
+        <item quantity="one">%1$d bracket still open</item>
+        <item quantity="other">%1$d brackets still open</item>
+    </plurals>
+    <string name="error_unknown_identifier">Unknown name \'%1$s\'</string>
+    <string name="error_unit_mismatch">Cannot combine %1$s and %2$s</string>
+    <string name="error_domain">%1$s cannot take that value</string>
+    <string name="error_circular_reference">These lines refer to each other in a circle</string>
+    <string name="error_division_by_zero">Division by zero</string>
+    <string name="error_overflow">Number too large to represent</string>
+    <string name="error_rate_unavailable">No exchange rate for %1$s to %2$s</string>
+
+    <string name="editor_fix_to">Use \'%1$s\'</string>
 </resources>
