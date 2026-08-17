@@ -27,3 +27,4 @@ rootProject.name = "Lineo"
 include(":app")
 include(":core:engine")
 include(":core:registry")
+include(":core:data")

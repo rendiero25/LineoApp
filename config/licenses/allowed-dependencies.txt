@@ -69,6 +69,18 @@ androidx.core:core-ktx  # Apache-2.0
 androidx.core:core-viewtree  # Apache-2.0
 androidx.customview:customview  # Apache-2.0
 androidx.customview:customview-poolingcontainer  # Apache-2.0
+androidx.datastore:datastore  # Apache-2.0
+androidx.datastore:datastore-android  # Apache-2.0
+androidx.datastore:datastore-core  # Apache-2.0
+androidx.datastore:datastore-core-android  # Apache-2.0
+androidx.datastore:datastore-core-okio  # Apache-2.0
+androidx.datastore:datastore-core-okio-jvm  # Apache-2.0
+androidx.datastore:datastore-preferences  # Apache-2.0
+androidx.datastore:datastore-preferences-android  # Apache-2.0
+androidx.datastore:datastore-preferences-core  # Apache-2.0
+androidx.datastore:datastore-preferences-core-android  # Apache-2.0
+androidx.datastore:datastore-preferences-external-protobuf  # Apache-2.0
+androidx.datastore:datastore-preferences-proto  # Apache-2.0
 androidx.documentfile:documentfile  # Apache-2.0
 androidx.dynamicanimation:dynamicanimation  # Apache-2.0
 androidx.emoji2:emoji2  # Apache-2.0
@@ -102,11 +114,24 @@ androidx.navigationevent:navigationevent-compose  # Apache-2.0
 androidx.navigationevent:navigationevent-compose-android  # Apache-2.0
 androidx.print:print  # Apache-2.0
 androidx.profileinstaller:profileinstaller  # Apache-2.0
+androidx.room:room-common  # Apache-2.0
+androidx.room:room-common-jvm  # Apache-2.0
+androidx.room:room-ktx  # Apache-2.0
+androidx.room:room-migration  # Apache-2.0
+androidx.room:room-migration-jvm  # Apache-2.0
+androidx.room:room-runtime  # Apache-2.0
+androidx.room:room-runtime-android  # Apache-2.0
+androidx.room:room-testing  # Apache-2.0
+androidx.room:room-testing-android  # Apache-2.0
 androidx.savedstate:savedstate  # Apache-2.0
 androidx.savedstate:savedstate-android  # Apache-2.0
 androidx.savedstate:savedstate-compose  # Apache-2.0
 androidx.savedstate:savedstate-compose-android  # Apache-2.0
 androidx.savedstate:savedstate-ktx  # Apache-2.0
+androidx.sqlite:sqlite  # Apache-2.0
+androidx.sqlite:sqlite-android  # Apache-2.0
+androidx.sqlite:sqlite-framework  # Apache-2.0
+androidx.sqlite:sqlite-framework-android  # Apache-2.0
 androidx.startup:startup-runtime  # Apache-2.0
 androidx.test.espresso:espresso-core  # Apache-2.0
 androidx.test.espresso:espresso-idling-resource  # Apache-2.0
@@ -122,16 +147,31 @@ androidx.viewpager:viewpager  # Apache-2.0
 androidx.window:window  # Apache-2.0
 androidx.window:window-core  # Apache-2.0
 androidx.window:window-core-android  # Apache-2.0
+app.cash.turbine:turbine  # Apache-2.0
+app.cash.turbine:turbine-jvm  # Apache-2.0
+com.almworks.sqlite4java:sqlite4java  # Apache-2.0
+com.google.auto.value:auto-value-annotations  # Apache-2.0
 com.google.code.findbugs:jsr305  # BSD-3-Clause
 com.google.dagger:dagger  # Apache-2.0
 com.google.dagger:dagger-lint-aar  # Apache-2.0
 com.google.dagger:hilt-android  # Apache-2.0
 com.google.dagger:hilt-core  # Apache-2.0
+com.google.errorprone:error_prone_annotation  # Apache-2.0
 com.google.errorprone:error_prone_annotations  # Apache-2.0
+com.google.guava:failureaccess  # Apache-2.0
+com.google.guava:guava  # Apache-2.0
 com.google.guava:listenablefuture  # Apache-2.0
+com.google.j2objc:j2objc-annotations  # Apache-2.0
+com.google.testparameterinjector:test-parameter-injector  # Apache-2.0
+com.ibm.icu:icu4j  # Unicode-3.0 (test only, transitive via Robolectric)
+com.squareup.okio:okio  # Apache-2.0
+com.squareup.okio:okio-jvm  # Apache-2.0
 jakarta.inject:jakarta.inject-api  # Apache-2.0
+javax.annotation:javax.annotation-api  # CDDL-1.1 or GPL-2.0-with-classpath-exception (test only, transitive via Robolectric)
 javax.inject:javax.inject  # Apache-2.0
 junit:junit  # EPL-1.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
+org.bouncycastle:bcprov-jdk18on  # MIT
+org.conscrypt:conscrypt-openjdk-uber  # Apache-2.0
 org.hamcrest:hamcrest-core  # BSD-3-Clause
 org.hamcrest:hamcrest-library  # BSD-3-Clause
 org.jetbrains.kotlin:kotlin-stdlib  # Apache-2.0
@@ -144,6 +184,8 @@ org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm  # Apache-2.0
 org.jetbrains.kotlinx:kotlinx-serialization-bom  # Apache-2.0
 org.jetbrains.kotlinx:kotlinx-serialization-core  # Apache-2.0
 org.jetbrains.kotlinx:kotlinx-serialization-core-jvm  # Apache-2.0
+org.jetbrains.kotlinx:kotlinx-serialization-json  # Apache-2.0
+org.jetbrains.kotlinx:kotlinx-serialization-json-jvm  # Apache-2.0
 org.jetbrains:annotations  # Apache-2.0
 org.jspecify:jspecify  # Apache-2.0
 org.junit.jupiter:junit-jupiter  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
@@ -155,3 +197,20 @@ org.junit.platform:junit-platform-engine  # EPL-2.0 (test only, approved by name
 org.junit.platform:junit-platform-launcher  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
 org.junit:junit-bom  # EPL-2.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
 org.opentest4j:opentest4j  # Apache-2.0
+org.ow2.asm:asm  # BSD-3-Clause
+org.ow2.asm:asm-commons  # BSD-3-Clause
+org.ow2.asm:asm-tree  # BSD-3-Clause
+org.robolectric:annotations  # MIT
+org.robolectric:junit  # MIT
+org.robolectric:nativeruntime  # MIT
+org.robolectric:nativeruntime-dist-compat  # MIT
+org.robolectric:pluginapi  # MIT
+org.robolectric:plugins-maven-dependency-resolver  # MIT
+org.robolectric:resources  # MIT
+org.robolectric:robolectric  # MIT
+org.robolectric:sandbox  # MIT
+org.robolectric:shadowapi  # MIT
+org.robolectric:shadows-framework  # MIT
+org.robolectric:utils  # MIT
+org.robolectric:utils-reflector  # MIT
+org.yaml:snakeyaml  # Apache-2.0
