@@ -19,6 +19,7 @@ datastore = "1.2.1"
 robolectric = "4.16.1"
 turbine = "1.2.1"
 androidxTest = "1.7.0"
+window = "1.5.0"
 paparazzi = "2.0.0-alpha05"
 
 [libraries]
@@ -49,6 +50,9 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# Window size classes for adaptive layout. docs/ANDROID_STANDARDS.md §2.
+androidx-window-core = { group = "androidx.window", name = "window-core", version.ref = "window" }
 
 # JUnit 5 for pure Kotlin modules; androidx test tooling still needs JUnit 4.
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junitJupiter" }

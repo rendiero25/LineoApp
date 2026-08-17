@@ -116,15 +116,27 @@ Depends on P0-02. Pure JVM library, no Android imports.
   - **DoD:** `MigrationTestHelper` test passes for v1; a corrupt DB enters recovery
     mode instead of crashing
 
-- [ ] **P0-11b · Adaptive shell + edge-to-edge** — `M` — `:app`, `:core:ui` — split before starting:
-  it spans two modules, which rule 3 forbids. The emulator side is no longer a blocker — `Pixel_10`
-  (API 37) boots again; a foldable AVD still has to be created for the fold half of the DoD.
-  - `WindowSizeClass` drives layout; no device-type or width branching
-  - Edge-to-edge with correct insets; keypad consumes `ime` + `navigationBars` without
-    double padding
-  - Predictive back opted in; back never discards notepad work
-  - **DoD:** verified with gesture and 3-button nav, display cutout, split-screen, and a
-    foldable emulator across a fold
+*P0-11b was one task across `:app` and `:core:ui`, which rule 3 forbids. Split into the two
+below: the reusable pieces first, then the shell that wires them to a window.*
+
+- [x] **P0-11b-1 · Adaptive layout and insets** — `M` — `:core:ui`
+  - `WindowSizeClass` exposed as state a composable can read. Layout branches on the class,
+    never on device type, orientation, or a raw width
+  - Inset helpers for the input surface: `ime` and `navigationBars` combined into one padding,
+    so a keypad above a shown keyboard is not padded twice
+  - Uses `androidx.window:window-core`, already on the release classpath — no new dependency
+  - **DoD:** a pane reflows across compact, medium, and expanded with no width literal in any
+    composable; a unit test covers every combination of ime and navigation-bar insets, present
+    and absent; Paparazzi snapshots at the three widths
+
+- [ ] **P0-11b-2 · Activity shell** — `M` — `:app` — depends on P0-11b-1
+  - `enableEdgeToEdge()`; the window size class is computed at the activity and fed into the
+    layout as state, so a fold changes it without the activity being recreated
+  - Predictive back opted in via `android:enableOnBackInvokedCallback`
+  - **DoD:** verified on `Pixel_10` with gesture and with 3-button navigation, on a display
+    cutout, in split-screen, and on a foldable AVD across the fold
+  - *"Back never discards notepad work" moved to P1-03: there is no notepad in Phase 0 to
+    discard, and a guarantee nothing can violate is a guarantee nothing tests.*
 
 - [x] **P0-12 · `:core:ui` design system** — `M`
   - Dynamic color on API 31+, generated seed palette fallback below
@@ -164,7 +176,10 @@ evaluates a single line end to end.
   - Keypad default; `Aa` raises system keyboard
   - Context auto-switch: line starting with a digit → keypad, with a letter → keyboard
   - Suggestion chips: in-scope variables, recent units
-  - **DoD:** switching surfaces preserves cursor position; no visible layout jump
+  - Back never discards work: with unsaved state, back commits it rather than prompting
+    (moved here from P0-11b, which had no document to protect)
+  - **DoD:** switching surfaces preserves cursor position; no visible layout jump; back with
+    an uncommitted line leaves the line in the document, verified across process death
 
 - [ ] **P1-04 · `:feature:scientific`** — `M`
   - Registers its functions through `CalcFunction`, not in the Screen
@@ -327,3 +342,6 @@ same question being re-litigated in a future session.
 | 2026-08-17 | P0-11 | Robolectric drags in two test-only transitives outside the Apache-2.0 / MIT / BSD rule of §2: `com.ibm.icu:icu4j` (Unicode-3.0) and `javax.annotation:javax.annotation-api` (CDDL-1.1 or GPL-2.0-with-classpath-exception) | Recorded in the allowlist as test-only with the licence named. Neither is linked into the shipped APK. The GPL-2.0-with-classpath-exception text touches §2 directly — resolved by the shipped/test-only split recorded below |
 | 2026-08-17 | P0-03 | §2 held a test transitive and a shipped library to the same standard, so the allowlist grew fifteen harmless EPL and LGPL rows, each asking for the same approval as a library that actually reaches users. A rule that raises fifteen false alarms is not read by the time the real one arrives | The gate now classifies by resolved classpath. Shipped — reachable from a runtime classpath that is not a unit-test, instrumented-test, screenshot-test, or test-fixture one — is held to Apache-2.0 / MIT / BSD, **and the recorded licence is now checked, not merely present**. Test-only moves to `config/licenses/allowed-test-dependencies.txt` and may carry any licence. Verified by marking a shipped entry LGPL-2.1 and by deleting another: both fail the build. `AGENTS.md` §2 and `docs/ARCHITECTURE.md` §7 updated. Shipped is 149 modules, all permissive; test-only is 110 |
 | 2026-08-17 | P0-03 | Four `writeDependencyLicenseAllowlist` tasks run in parallel and read-modify-write the same two files, which produced torn lines and duplicated entries. A Gradle `BuildService` — the documented fix — could not be shared: each project loads the convention plugin in its own classloader, so one project's service type is not the next one's | The task action synchronises on an interned string. The JVM string pool is shared across every classloader in the daemon, so the monitor is one object everywhere |
+| 2026-08-17 | P0-11b | The task spanned `:app` and `:core:ui`, which rule 3 forbids | Split into P0-11b-1 (`:core:ui` — width class, insets, adaptive pane) and P0-11b-2 (`:app` — edge-to-edge, predictive back, device verification). "Back never discards notepad work" moved to P1-03: Phase 0 has no notepad to protect, and a guarantee nothing can violate is a guarantee nothing tests |
+| 2026-08-17 | P0-11b-1 | `AdaptivePane` measures the input pane before the document, so an input asking for `fillMaxSize` took the whole window. The first compact snapshot showed an input pane and no document at all | The input pane must size itself to its content — the same contract Material's `Scaffold` places on its `bottomBar`, and natural for a keypad, which is rows of keys. Stated in the KDoc and demonstrated by the snapshot test, which now uses a wrapping input |
+| 2026-08-17 | P0-11b-1 | `WindowSizeClass.compute` is deprecated in `window-core` 1.5.0, and `allWarningsAsErrors` turns that into a build failure | Switched to `WindowSizeClass.BREAKPOINTS_V1.computeWindowSizeClass(...)`. `androidx.window:window-core` is now declared rather than inherited transitively; it was already on the release classpath and already allowlisted, so no licence decision |

@@ -19,6 +19,9 @@ tasks.withType<Test>().configureEach {
 
 dependencies {
     implementation(libs.androidx.annotation)
+    // Window size classes. Already on the release classpath transitively, so declaring it
+    // here adds no artifact and no licence decision — it only makes the use deliberate.
+    api(libs.androidx.window.core)
 
     testImplementation(libs.junit)
 }
