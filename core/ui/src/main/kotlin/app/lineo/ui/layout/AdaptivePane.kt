@@ -20,6 +20,13 @@ import app.lineo.ui.theme.RoleColors
  * through [LocalWindowWidthClass], which the shell provides and a fold changes at runtime
  * without the activity being recreated.
  *
+ * **The input pane owns its bottom inset.** This layout does not apply one. Padding the pane
+ * from the outside would stop its background at the top of the navigation bar and leave a
+ * strip of editor surface behind the bar — visible, and wrong under edge-to-edge. The pane
+ * therefore draws its container full bleed and applies [dockedBottomPadding] inside it, so
+ * the colour runs to the bottom of the window while the keys stay above the bar and above
+ * the keyboard. This is how Material's own `BottomAppBar` handles it.
+ *
  * **The input pane must size itself to its content.** It is measured before the document,
  * which then takes whatever is left, so an input that asks for `fillMaxHeight` or
  * `fillMaxSize` takes the window and leaves the document nothing. This is the same contract
@@ -58,7 +65,7 @@ private fun StackedPanes(
 ) {
     Column(modifier = modifier.fillMaxSize().background(RoleColors.of(LineoRole.Editor).container)) {
         Column(modifier = Modifier.fillMaxWidth().weight(1f)) { document() }
-        Column(modifier = Modifier.fillMaxWidth().dockedBottomPadding()) { input() }
+        Column(modifier = Modifier.fillMaxWidth()) { input() }
     }
 }
 
@@ -78,8 +85,7 @@ private fun SideBySidePanes(
         Column(
             modifier = Modifier
                 .weight(INPUT_SHARE)
-                .padding(start = LineoDimens.EditorPadding)
-                .dockedBottomPadding(),
+                .padding(start = LineoDimens.EditorPadding),
         ) { input() }
     }
 }
