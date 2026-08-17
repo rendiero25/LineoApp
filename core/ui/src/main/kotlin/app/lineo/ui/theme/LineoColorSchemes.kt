@@ -60,6 +60,18 @@ object LineoColorSchemes {
         surfaceContainerHigh = Color(0xFFECE8DB),
         surfaceContainerHighest = Color(0xFFE6E2D5),
         surfaceTint = Color(0xFF646116),
+        primaryFixed = Color(0xFFEBE68D),
+        primaryFixedDim = Color(0xFFCFCA74),
+        onPrimaryFixed = Color(0xFF4B4900),
+        onPrimaryFixedVariant = Color(0xFF646116),
+        secondaryFixed = Color(0xFFE8E4BE),
+        secondaryFixedDim = Color(0xFFCCC8A4),
+        onSecondaryFixed = Color(0xFF4A482C),
+        onSecondaryFixedVariant = Color(0xFF626042),
+        tertiaryFixed = Color(0xFFC0ECD6),
+        tertiaryFixedDim = Color(0xFFA5D0BB),
+        onTertiaryFixed = Color(0xFF264E3E),
+        onTertiaryFixedVariant = Color(0xFF3E6655),
     )
 
     val Dark: ColorScheme = darkColorScheme(
@@ -99,6 +111,20 @@ object LineoColorSchemes {
         surfaceContainerHigh = Color(0xFF2B2A22),
         surfaceContainerHighest = Color(0xFF36352C),
         surfaceTint = Color(0xFFCFCA74),
+        // Identical to the light scheme, which is what "fixed" means: an accent that does
+        // not flip when the scheme does. AC and = are painted from these.
+        primaryFixed = Color(0xFFEBE68D),
+        primaryFixedDim = Color(0xFFCFCA74),
+        onPrimaryFixed = Color(0xFF4B4900),
+        onPrimaryFixedVariant = Color(0xFF646116),
+        secondaryFixed = Color(0xFFE8E4BE),
+        secondaryFixedDim = Color(0xFFCCC8A4),
+        onSecondaryFixed = Color(0xFF4A482C),
+        onSecondaryFixedVariant = Color(0xFF626042),
+        tertiaryFixed = Color(0xFFC0ECD6),
+        tertiaryFixedDim = Color(0xFFA5D0BB),
+        onTertiaryFixed = Color(0xFF264E3E),
+        onTertiaryFixedVariant = Color(0xFF3E6655),
     )
 
     /**

@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.lineo.ui.layout.dockedBottomPadding
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
@@ -69,8 +68,10 @@ private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
     Box(
         modifier = Modifier
             .weight(1f)
-            .defaultMinSize(minHeight = LineoDimens.KeyMinSize)
-            .clip(RoundedCornerShape(KeyCornerRadius))
+            // Square cell, circular key: the diameter follows the column width, so a
+            // narrower phone gets smaller keys rather than an overflowing grid.
+            .aspectRatio(1f)
+            .clip(CircleShape)
             .background(colors.container)
             .clickable { onPress(key) }
             .semanticsLabel(description),
@@ -83,5 +84,3 @@ private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
         )
     }
 }
-
-private val KeyCornerRadius = 20.dp

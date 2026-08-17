@@ -40,8 +40,12 @@ data class RoleColors(val container: Color, val content: Color) {
         fun of(scheme: ColorScheme, role: LineoRole): RoleColors = when (role) {
             LineoRole.Digit -> RoleColors(scheme.surfaceContainerHigh, scheme.onSurface)
             LineoRole.Operator -> RoleColors(scheme.secondaryContainer, scheme.onSecondaryContainer)
-            LineoRole.Equals -> RoleColors(scheme.primary, scheme.onPrimary)
-            LineoRole.Clear -> RoleColors(scheme.tertiaryContainer, scheme.onTertiaryContainer)
+            // Fixed rather than primary: the accent keeps the same yellow in both schemes,
+            // which is what the reference design shows and what the role exists for.
+            LineoRole.Equals -> RoleColors(scheme.primaryFixed, scheme.onPrimaryFixed)
+            // Clear shares its colour with Equals, per §10, and they are told apart by
+            // position — opposite corners of the grid — never by hue.
+            LineoRole.Clear -> RoleColors(scheme.primaryFixed, scheme.onPrimaryFixed)
             LineoRole.Function -> RoleColors(scheme.surfaceContainer, scheme.onSurfaceVariant)
             LineoRole.Editor -> RoleColors(scheme.surface, scheme.onSurface)
             LineoRole.Result -> RoleColors(Color.Transparent, scheme.onSurfaceVariant)

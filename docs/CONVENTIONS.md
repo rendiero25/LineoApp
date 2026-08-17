@@ -222,8 +222,8 @@ val scheme = when {
 |---|---|---|
 | Digit key | `surfaceContainerHigh` | `onSurface` |
 | Operator key (`+ − × ÷`) | `secondaryContainer` | `onSecondaryContainer` |
-| Equals key | `primary` | `onPrimary` |
-| Clear / AC | `tertiaryContainer` | `onTertiaryContainer` |
+| Equals key | `primaryFixed` | `onPrimaryFixed` |
+| Clear / AC | `primaryFixed` | `onPrimaryFixed` |
 | Function key (`sin`, `log`, units) | `surfaceContainer` | `onSurfaceVariant` |
 | Editor background | `surface` | `onSurface` |
 | Result value | — | `onSurfaceVariant` |
@@ -262,8 +262,13 @@ Support system font scaling to maximum without clipping — verified in P1-08b.
 
 ### Shape, spacing, and targets
 
-- Material 3 shape scale. Keypad keys use the large rounded shape seen in the reference
-  designs; cards use medium.
+- Material 3 shape scale. Cards use medium.
+- **Keypad keys are circles**, one per grid cell, sized by the cell width. Four columns in
+  compact width, which is what the reference design in `docs/LineoCP/preview.webp` shows
+  and what keeps a key comfortably wider than the 48 dp minimum on a narrow phone.
+- `Clear` and `Equals` share the primary colour, so they are told apart by position rather
+  than by hue: `AC` sits in the leading corner of the top row, `=` in the trailing corner of
+  the bottom one. Nothing else may take either corner.
 - Spacing on a 4 dp grid; 8 dp is the default gap between keypad keys.
 - Minimum touch target 48 dp. Keypad keys should be comfortably larger — aim for 56 dp or
   more in compact width, since the keypad is the most-tapped surface in the app.

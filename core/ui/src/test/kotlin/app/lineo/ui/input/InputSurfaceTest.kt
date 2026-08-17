@@ -92,13 +92,30 @@ class InputSurfaceTest {
 
     @Test
     fun `a comma decimal separator moves the argument separator to a semicolon`() {
-        // docs/CONVENTIONS.md §2. Without this the keypad would show two comma keys and
-        // type the wrong one half the time.
-        val dotLocale = KeypadState(decimalSeparator = '.').rows.flatten().map { it.label }
-        val commaLocale = KeypadState(decimalSeparator = ',').rows.flatten().map { it.label }
+        // docs/CONVENTIONS.md §2. The two keys live on different surfaces since the keypad
+        // went to four columns, but the rule is the same one: they must never be the same
+        // glyph, or the user types the wrong one half the time.
+        val dotKeypad = KeypadState(decimalSeparator = '.').rows.flatten().map { it.label }
+        val dotAccessory = AccessoryRowState(decimalSeparator = '.').keys.map { it.label }
+        val commaKeypad = KeypadState(decimalSeparator = ',').rows.flatten().map { it.label }
+        val commaAccessory = AccessoryRowState(decimalSeparator = ',').keys.map { it.label }
 
-        assertTrue(dotLocale.toString(), dotLocale.containsAll(listOf(".", ",")))
-        assertTrue(commaLocale.toString(), commaLocale.containsAll(listOf(",", ";")))
+        assertTrue(dotKeypad.toString(), "." in dotKeypad)
+        assertTrue(dotAccessory.toString(), "," in dotAccessory)
+        assertTrue(commaKeypad.toString(), "," in commaKeypad)
+        assertTrue(commaAccessory.toString(), ";" in commaAccessory)
+    }
+
+    @Test
+    fun `the bracket key inserts a matched pair rather than a single glyph`() {
+        // One key instead of two is what buys the fourth column its room; WrapSelection is
+        // the contract that makes it possible without the keypad knowing about carets.
+        val keypad = KeypadState()
+
+        assertEquals(
+            EditorCommand.WrapSelection(open = "(", close = ")"),
+            keypad.key("( )").command,
+        )
     }
 
     @Test

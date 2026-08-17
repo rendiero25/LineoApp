@@ -18,6 +18,7 @@
     <string name="key_text_keyboard_description">Text keyboard</string>
 
     <string name="key_open_bracket_description">Open bracket</string>
+    <string name="key_brackets_description">Brackets</string>
     <string name="key_close_bracket_description">Close bracket</string>
     <string name="key_power_description">To the power of</string>
     <string name="key_square_root_description">Square root</string>
