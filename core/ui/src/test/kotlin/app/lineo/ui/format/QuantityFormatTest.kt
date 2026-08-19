@@ -80,7 +80,7 @@ class QuantityFormatTest {
 
     @Test
     fun `a unit symbol is appended and never translated`() {
-        val km = UnitTerm(listOf(UnitFactor(requireNotNull(UnitRegistry.find("km")), exponent = 1)))
+        val km = UnitTerm(listOf(UnitFactor(requireNotNull(UnitRegistry.BUILTIN.find("km")), exponent = 1)))
         val quantity = Quantity(BigDecimal("5.3"), km)
 
         assertEquals("5,3 km", QuantityFormat(Locale.GERMANY).format(quantity).text)

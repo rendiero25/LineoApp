@@ -147,7 +147,8 @@ class QuantityArithmeticTest {
         assertTrue(result.errorOrNull() is CalcError.UnitMismatch, result.toString())
     }
 
-    private fun definition(symbol: String) = requireNotNull(UnitRegistry.find(symbol)) { "unknown unit $symbol" }
+    private fun definition(symbol: String) =
+        requireNotNull(UnitRegistry.BUILTIN.find(symbol)) { "unknown unit $symbol" }
 
     private fun unit(symbol: String) = UnitTerm.of(definition(symbol))
 

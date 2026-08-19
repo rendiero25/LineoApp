@@ -170,7 +170,10 @@ object QuantityArithmetic {
 
     private fun deltaUnitOf(absolute: UnitTerm): UnitTerm? {
         val definition = absolute.factors.singleOrNull()?.definition ?: return null
-        return UnitRegistry.deltaOf(definition)?.let { UnitTerm.of(it) }
+        // Temperature deltas are the engine's own, like the absolute temperatures they pair
+        // with, so this reads BUILTIN rather than an evaluation's registry — which is also why
+        // arithmetic can stay free of an EvalContext parameter.
+        return UnitRegistry.BUILTIN.deltaOf(definition)?.let { UnitTerm.of(it) }
     }
 
     private fun unitOf(quantity: Quantity): UnitTerm = quantity.unit ?: UnitTerm.NONE

@@ -1,119 +1,67 @@
 package app.lineo.engine.unit
 
-import java.math.BigDecimal
-
 /**
- * The units the engine knows out of the box.
+ * The units an evaluation can see.
  *
- * Deliberately a core set: the full catalogue belongs to `:feature:converter` (P1-05),
- * which registers its own `UnitDefinition`s. Symbols follow ISO 80000 / SI
- * (`docs/CONVENTIONS.md` §5), so `kg` not `Kg` and `s` not `sec`.
+ * An instance rather than a singleton, and the same shape as `FunctionRegistry`: `:core:engine`
+ * ships [BUILTIN] — the handful the grammar itself needs — and a module adds its catalogue with
+ * [with], which is how `:feature:converter` makes `5 km to mi` work in notepad mode without the
+ * notepad knowing that module exists (`docs/ARCHITECTURE.md` §4).
+ *
+ * Symbols follow ISO 80000 / SI (`docs/CONVENTIONS.md` §5), so `kg` not `Kg` and `s` not `sec`.
+ *
+ * A definition whose symbol is already taken is **ignored**, the same rule `ModuleRegistry`
+ * applies to functions: silently rebinding `m` from a feature module would make the same
+ * expression mean different things in different builds.
  */
-object UnitRegistry {
-
-    private val definitions: List<UnitDefinition> = buildList {
-        // Length, base metre.
-        add(linear("m", Dimensions.LENGTH, "1"))
-        add(linear("km", Dimensions.LENGTH, "1000"))
-        add(linear("cm", Dimensions.LENGTH, "0.01"))
-        add(linear("mm", Dimensions.LENGTH, "0.001"))
-        add(linear("mi", Dimensions.LENGTH, "1609.344"))
-        add(linear("yd", Dimensions.LENGTH, "0.9144"))
-        add(linear("ft", Dimensions.LENGTH, "0.3048"))
-        add(linear("in", Dimensions.LENGTH, "0.0254"))
-
-        // Mass, base kilogram.
-        add(linear("kg", Dimensions.MASS, "1"))
-        add(linear("g", Dimensions.MASS, "0.001"))
-        add(linear("mg", Dimensions.MASS, "0.000001"))
-        add(linear("t", Dimensions.MASS, "1000"))
-        add(linear("lb", Dimensions.MASS, "0.45359237"))
-        add(linear("oz", Dimensions.MASS, "0.028349523125"))
-
-        // Time, base second.
-        add(linear("s", Dimensions.TIME, "1"))
-        add(linear("ms", Dimensions.TIME, "0.001"))
-        add(linear("min", Dimensions.TIME, "60"))
-        add(linear("h", Dimensions.TIME, "3600"))
-        add(linear("d", Dimensions.TIME, "86400"))
-
-        // Temperature, base kelvin. °C and °F are affine (docs/GRAMMAR.md §3.8).
-        add(linear("K", Dimensions.TEMPERATURE, "1", kind = UnitKind.ABSOLUTE_TEMPERATURE))
-        add(
-            UnitDefinition(
-                symbol = "°C",
-                dimensions = Dimensions.TEMPERATURE,
-                scale = BigDecimal.ONE,
-                kind = UnitKind.ABSOLUTE_TEMPERATURE,
-                offset = BigDecimal("273.15"),
-                aliases = listOf("degC"),
-            ),
-        )
-        add(
-            UnitDefinition(
-                symbol = "°F",
-                dimensions = Dimensions.TEMPERATURE,
-                scale = BigDecimal("5").divide(BigDecimal("9"), java.math.MathContext.DECIMAL128),
-                kind = UnitKind.ABSOLUTE_TEMPERATURE,
-                offset = BigDecimal("459.67")
-                    .multiply(BigDecimal("5"))
-                    .divide(BigDecimal("9"), java.math.MathContext.DECIMAL128),
-                aliases = listOf("degF"),
-            ),
-        )
-
-        // Plane angle. Dimensionless per ISO 80000, but the scale is what lets trigonometry
-        // honour `sin 90°` regardless of the angle mode.
-        add(linear("rad", Dimensions.NONE, "1", kind = UnitKind.ANGLE))
-        add(
-            UnitDefinition(
-                symbol = "°",
-                dimensions = Dimensions.NONE,
-                scale = BigDecimal("3.141592653589793238462643383279503")
-                    .divide(BigDecimal("180"), java.math.MathContext.DECIMAL128),
-                kind = UnitKind.ANGLE,
-                aliases = listOf("deg"),
-            ),
-        )
-        add(
-            UnitDefinition(
-                symbol = "grad",
-                dimensions = Dimensions.NONE,
-                scale = BigDecimal("3.141592653589793238462643383279503")
-                    .divide(BigDecimal("200"), java.math.MathContext.DECIMAL128),
-                kind = UnitKind.ANGLE,
-            ),
-        )
-
-        // Temperature differences. Adding one of these to an absolute temperature is legal.
-        add(delta("Δ°C", BigDecimal.ONE))
-        add(delta("ΔK", BigDecimal.ONE))
-        add(delta("Δ°F", BigDecimal("5").divide(BigDecimal("9"), java.math.MathContext.DECIMAL128)))
-    }
+class UnitRegistry(definitions: List<UnitDefinition>) {
 
     private val bySymbol: Map<String, UnitDefinition> = buildMap {
         definitions.forEach { definition ->
-            put(definition.symbol, definition)
-            definition.aliases.forEach { alias -> put(alias, definition) }
+            putIfAbsent(definition.symbol, definition)
+            definition.aliases.forEach { alias -> putIfAbsent(alias, definition) }
         }
     }
 
-    /** All known symbols, including aliases. Used by the lexer and by suggestions. */
+    /** All known symbols, including aliases. Used by the evaluator and by suggestions. */
     val symbols: Set<String> get() = bySymbol.keys
 
     fun find(symbol: String): UnitDefinition? = bySymbol[symbol]
 
-    /** The delta counterpart of an absolute temperature, e.g. `°C` → `Δ°C`. */
+    /**
+     * The delta counterpart of an absolute temperature, e.g. `°C` → `Δ°C`.
+     *
+     * Looked up by name rather than held on the definition, so a module contributing an
+     * absolute temperature contributes its delta the same way — as another symbol.
+     */
     fun deltaOf(definition: UnitDefinition): UnitDefinition? =
         if (definition.isAbsoluteTemperature) bySymbol["Δ${definition.symbol}"] else null
 
-    private fun linear(
-        symbol: String,
-        dimensions: Dimensions,
-        scale: String,
-        kind: UnitKind = UnitKind.LINEAR,
-    ): UnitDefinition = UnitDefinition(symbol, dimensions, BigDecimal(scale), kind)
+    /** This registry plus [extra]. Symbols already here win, and the newcomer is dropped. */
+    fun with(extra: List<UnitDefinition>): UnitRegistry =
+        UnitRegistry(bySymbol.values.distinct() + extra)
 
-    private fun delta(symbol: String, scale: BigDecimal): UnitDefinition =
-        UnitDefinition(symbol, Dimensions.TEMPERATURE, scale, UnitKind.TEMPERATURE_DELTA)
+    /** The symbols in [extra] this registry would refuse, so a debug build can surface them. */
+    fun conflicts(extra: List<UnitDefinition>): List<String> {
+        val taken = symbols.toMutableSet()
+        return extra.flatMap { definition ->
+            val names = listOf(definition.symbol) + definition.aliases
+            val clashing = names.filter { it in taken }
+            taken += names
+            clashing
+        }
+    }
+
+    companion object {
+
+        /**
+         * What the engine knows without any module: the units the grammar itself refers to.
+         *
+         * Deliberately a core set — angles, because trigonometry reads them; temperatures,
+         * because they are affine and `docs/GRAMMAR.md` §3.8 is about them; and the everyday
+         * length, mass and time symbols a bare expression is expected to understand. The full
+         * catalogue belongs to `:feature:converter` (P1-05).
+         */
+        val BUILTIN: UnitRegistry = UnitRegistry(CoreUnits.ALL)
+    }
 }

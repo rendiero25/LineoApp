@@ -16,7 +16,6 @@ import app.lineo.engine.parser.Ast
 import app.lineo.engine.parser.BinaryOperator
 import app.lineo.engine.parser.PostfixOperator
 import app.lineo.engine.parser.UnaryOperator
-import app.lineo.engine.unit.UnitRegistry
 import app.lineo.engine.unit.UnitTerm
 import java.math.BigDecimal
 
@@ -29,7 +28,7 @@ class Evaluator(private val context: EvalContext) {
 
     /** Names visible to a bare identifier, used for the nearest-match suggestion. */
     private val knownNames: Set<String>
-        get() = context.variables.keys + Constants.names + context.functions.names + UnitRegistry.symbols
+        get() = context.variables.keys + Constants.names + context.functions.names + context.units.symbols
 
     fun evaluate(node: Ast): CalcResult<Quantity> = when (node) {
         is Ast.NumberLiteral -> Quantity(node.value).ok()
@@ -51,7 +50,7 @@ class Evaluator(private val context: EvalContext) {
     private fun resolve(name: String, span: IntRange): CalcResult<Quantity> {
         val variable = context.variables[name]
         val constant = Constants.find(name)
-        val unit = UnitRegistry.find(name)
+        val unit = context.units.find(name)
 
         return when {
             variable != null -> variable.ok()
@@ -131,7 +130,7 @@ class Evaluator(private val context: EvalContext) {
     private fun unitOf(node: Ast): UnitTerm? {
         val identifier = node as? Ast.Identifier ?: return null
         if (identifier.name in context.variables || identifier.name in Constants.names) return null
-        return UnitRegistry.find(identifier.name)?.let { UnitTerm.of(it) }
+        return context.units.find(identifier.name)?.let { UnitTerm.of(it) }
     }
 
     private fun attachUnit(value: Quantity, unit: UnitTerm, span: IntRange): CalcResult<Quantity> =
@@ -207,7 +206,7 @@ class Evaluator(private val context: EvalContext) {
         if (!operand.isDimensionless) {
             return CalcError.DomainError(DEGREE_NAME, DomainReason.OUT_OF_RANGE, span).err()
         }
-        val degree = UnitRegistry.find(DEGREE_SYMBOL)
+        val degree = context.units.find(DEGREE_SYMBOL)
             ?: return CalcError.DomainError(DEGREE_NAME, DomainReason.UNDEFINED, span).err()
         return Quantity(operand.value, UnitTerm.of(degree)).ok()
     }

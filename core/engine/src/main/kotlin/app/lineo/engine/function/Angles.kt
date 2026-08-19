@@ -61,7 +61,9 @@ internal object Angles {
 
         exactQuarters(quantity.value, symbol)?.let { return Angle.Quarters(it).ok() }
 
-        val scale = requireNotNull(UnitRegistry.find(symbol)) { "unknown angle unit $symbol" }.scale
+        // The angle units are the engine's own: the grammar names them (§3.8) and no module may
+        // replace them, so this reads BUILTIN rather than the evaluation's registry.
+        val scale = requireNotNull(UnitRegistry.BUILTIN.find(symbol)) { "unknown angle unit $symbol" }.scale
         val radians = Precision.toFiniteDouble(quantity.value.multiply(scale, MATH_CONTEXT))
             ?: return CalcError.DomainError(fn, DomainReason.OUT_OF_RANGE, span).err()
         return Angle.Radians(radians).ok()

@@ -1,6 +1,7 @@
 package app.lineo.engine
 
 import app.lineo.engine.function.FunctionRegistry
+import app.lineo.engine.unit.UnitRegistry
 import java.util.Locale
 
 /** Angle mode. DEG by default and always visible in the UI (`docs/CONVENTIONS.md` §4). */
@@ -21,4 +22,5 @@ data class EvalContext(
     val variables: Map<String, Quantity> = emptyMap(),
     val lineResults: Map<LineId, Quantity> = emptyMap(),
     val functions: FunctionRegistry = FunctionRegistry.BUILTIN,
+    val units: UnitRegistry = UnitRegistry.BUILTIN,
 )
