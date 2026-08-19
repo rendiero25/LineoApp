@@ -32,3 +32,7 @@ locale=en-US
 
 # `in` is the inch unit only in unit position, docs/GRAMMAR.md §3.3
 5 in 3                      | !Syntax@5..5
+
+# `in` after a conversion keyword is the inch: a target cannot be a conversion (§3.3)
+5 cm to in                  | 1.968503937007874015748031496062992 in
+1 m^2 to in^2               | 1550.0031000062000124000248000496 in^2

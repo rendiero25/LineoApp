@@ -90,9 +90,13 @@ A suffix binds only when **all** hold:
 ### 3.3 Conversion keyword vs unit — `5 in 3`
 
 `to`, `in`, and `as` are **reserved as operators** and cannot be used as variable names.
-`in` as the inch unit is only recognised when it appears in unit position — that is,
-directly after a numeric literal (`5 in` → five inches) rather than between two
-complete expressions (`5 cm in mm` → conversion).
+`in` as the inch unit is recognised in two positions:
+
+- **Unit position** — directly after a numeric literal (`5 in` → five inches) rather than
+  between two complete expressions (`5 cm in mm` → conversion).
+- **Conversion target** — immediately after `to`, `in` or `as` (`5 cm to in` → inches).
+  A conversion target cannot itself be a conversion, so nothing else `in` could mean is
+  available there. Everything after it parses as usual, so `to in^2` and `to in/s` work.
 
 If a user types `5 in 3`, the parser reports `Syntax` on `3`, since `3` is not a
 valid unit expression.

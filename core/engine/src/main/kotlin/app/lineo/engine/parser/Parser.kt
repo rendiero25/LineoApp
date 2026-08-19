@@ -100,7 +100,7 @@ class Parser(
         }
 
         TokenType.KEYWORD if operator.text in CONVERSION_KEYWORDS -> {
-            val target = parseExpression(bindingPower)
+            val target = parseConversionTarget(bindingPower)
             requireUnitExpression(target)
             Ast.Conversion(left, target, left.span.first..target.span.last)
         }
@@ -108,6 +108,27 @@ class Parser(
         else -> {
             val right = parseExpression(bindingPower)
             Ast.Binary(binaryOperator(operator), left, right, left.span.first..right.span.last)
+        }
+    }
+
+    /**
+     * The right-hand side of `to`, `in` or `as`, where `in` can only be the inch.
+     *
+     * `5 cm to in` was a syntax error: §3.3 makes a bare `in` the conversion keyword and only
+     * the inch directly after a number, and a target starting with a keyword parses as
+     * nothing. But a conversion target cannot *be* a conversion — `5 cm to in mm` has no
+     * reading in which the first `in` converts — so in this one position the ambiguity the
+     * rule exists to resolve does not arise, and the unit wins.
+     *
+     * Everything after it parses as usual, so `to in^2` and `to in/s` work too. `5 in 3` is
+     * untouched and still reports `Syntax` on the `3`.
+     */
+    private fun parseConversionTarget(bindingPower: Int): Ast {
+        val token = peek()
+        if (token.type != TokenType.KEYWORD || token.text != INCH) return parseExpression(bindingPower)
+        var target: Ast = Ast.Identifier(INCH, advance().span)
+        while (true) {
+            target = extend(target, bindingPower) ?: return target
         }
     }
 
