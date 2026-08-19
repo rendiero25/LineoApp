@@ -47,7 +47,7 @@ fun AccessoryRow(state: AccessoryRowState, modifier: Modifier = Modifier) {
             .background(RoleColors.of(LineoRole.Editor).container)
             .dockedBottomPadding()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = LineoDimens.KeyGap, vertical = LineoDimens.Grid),
+            .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.Grid),
         horizontalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {

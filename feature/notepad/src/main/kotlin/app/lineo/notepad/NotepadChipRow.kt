@@ -64,7 +64,7 @@ internal fun NotepadChipRow(
             .background(RoleColors.of(LineoRole.Editor).container)
             .then(if (docked) Modifier.dockedBottomPadding() else Modifier)
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = LineoDimens.KeyGap, vertical = LineoDimens.Grid),
+            .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.Grid),
         horizontalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {

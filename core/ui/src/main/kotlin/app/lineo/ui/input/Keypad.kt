@@ -48,21 +48,38 @@ fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
             .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.KeyGap),
     ) {
         val size = keySize(state.rows, this.maxWidth, this.maxHeight)
+        val gap = gapFor(state.rows, this.maxWidth, size)
         Column(verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap)) {
             ModeKey(key = state.modeKey, onPress = state::press)
             state.rows.forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        space = LineoDimens.KeyGap,
-                        alignment = Alignment.CenterHorizontally,
-                    ),
+                    // Spread, never centred. Where the height is the binding constraint the
+                    // keys are narrower than their columns, and centring the leftover moved
+                    // the whole grid inwards — `AC` no longer sat under `ABC`, which is the
+                    // one alignment `KeypadState` promises. The slack goes into the gaps, so
+                    // the leading key keeps the pane's edge and so does the trailing one.
+                    horizontalArrangement = Arrangement.spacedBy(gap),
                 ) {
                     row.forEach { key -> Key(key = key, onPress = state::press, size = size) }
                 }
             }
         }
     }
+}
+
+/**
+ * The gap between keys: whatever the row has left over once the keys have their size.
+ *
+ * At least [LineoDimens.KeyGap], which is what it works out to whenever the width is the
+ * binding constraint — so the phone keypad is unchanged and only a grid sized by its height
+ * spreads further apart. Spreading rather than centring is what keeps the leading key on the
+ * pane's edge, under `ABC` and in line with the chip row above it.
+ */
+private fun gapFor(rows: List<List<KeypadKey>>, maxWidth: Dp, size: Dp): Dp {
+    val columns = rows.maxOfOrNull { it.size } ?: return LineoDimens.KeyGap
+    if (columns < 2) return LineoDimens.KeyGap
+    return ((maxWidth - size * columns) / (columns - 1)).coerceAtLeast(LineoDimens.KeyGap)
 }
 
 /**
@@ -117,8 +134,8 @@ private fun ModeKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
  * One key, at the size [keySize] decided for the whole grid.
  *
  * Every key is the same size whatever its label is, so the grid stays aligned — a decimal
- * separator that changes from `.` to `,` must not shift the column — and a row shorter than
- * the others centres what is left over rather than stretching to fill it.
+ * separator that changes from `.` to `,` must not shift the column — and a row with fewer
+ * keys than the widest one starts at the leading edge with the rest of them.
  */
 @Composable
 private fun Key(key: KeypadKey, onPress: (KeypadKey) -> Unit, size: Dp) {
