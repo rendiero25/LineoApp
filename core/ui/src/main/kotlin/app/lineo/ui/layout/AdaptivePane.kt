@@ -47,9 +47,12 @@ fun AdaptivePane(
     document: @Composable () -> Unit,
     input: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    minDocumentHeight: Dp = MIN_DOCUMENT_HEIGHT,
 ) {
     when (LocalWindowWidthClass.current) {
-        WindowWidthClass.Compact, WindowWidthClass.Medium -> StackedPanes(document, input, modifier)
+        WindowWidthClass.Compact, WindowWidthClass.Medium ->
+            StackedPanes(document, input, modifier, minDocumentHeight)
+
         WindowWidthClass.Expanded -> SideBySidePanes(document, input, modifier)
     }
 }
@@ -66,9 +69,10 @@ private fun StackedPanes(
     document: @Composable () -> Unit,
     input: @Composable () -> Unit,
     modifier: Modifier,
+    minDocumentHeight: Dp,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(RoleColors.of(LineoRole.Editor).container)) {
-        val ceiling = (maxHeight - MIN_DOCUMENT_HEIGHT).coerceAtLeast(LineoDimens.MinTouchTarget)
+        val ceiling = (maxHeight - minDocumentHeight).coerceAtLeast(LineoDimens.MinTouchTarget)
         Column(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxWidth().weight(1f)) { document() }
             // The ceiling is what stops an input pane from taking the window. A keypad's
