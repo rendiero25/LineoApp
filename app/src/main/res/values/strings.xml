@@ -2,6 +2,10 @@
     <string name="app_name">Lineo</string>
 
     <!-- Spoken label for the overflow affordance in the top corner. -->
+    <string name="history_title">History</string>
+    <string name="history_empty">Nothing yet. Calculations you finish appear here.</string>
+    <string name="history_clear">Clear history</string>
+
     <string name="menu_more_options">More options</string>
 
     <!--

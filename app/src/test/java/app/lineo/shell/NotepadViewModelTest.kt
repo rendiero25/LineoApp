@@ -45,6 +45,7 @@ class NotepadViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repository = InMemoryDocumentRepository()
     private val store = NotepadStore(repository)
+    private val history = RecordingHistoryRepository()
 
     @Before
     fun setMainDispatcher() {
@@ -59,7 +60,7 @@ class NotepadViewModelTest {
 
     @Test
     fun `nothing is published until the document has been read`() = runTest(dispatcher) {
-        val viewModel = NotepadViewModel(store, backgroundScope)
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
 
         viewModel.open("Notepad", CONTEXT)
 
@@ -68,7 +69,7 @@ class NotepadViewModelTest {
 
     @Test
     fun `opening creates the document and publishes a line to type on`() = runTest(dispatcher) {
-        val viewModel = NotepadViewModel(store, backgroundScope)
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
 
         viewModel.open("Notepad", CONTEXT)
         advanceUntilIdle()
@@ -79,7 +80,7 @@ class NotepadViewModelTest {
 
     @Test
     fun `opening twice does not read the document again`() = runTest(dispatcher) {
-        val viewModel = NotepadViewModel(store, backgroundScope)
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
         viewModel.open("Notepad", CONTEXT)
         advanceUntilIdle()
         val first = viewModel.notepad.value?.state
@@ -94,7 +95,7 @@ class NotepadViewModelTest {
 
     @Test
     fun `a stop writes what has been typed`() = runTest(dispatcher) {
-        val viewModel = NotepadViewModel(store, backgroundScope)
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
         viewModel.open("Notepad", CONTEXT)
         advanceUntilIdle()
         val state = requireNotNull(viewModel.notepad.value).state
@@ -104,6 +105,48 @@ class NotepadViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf("6 * 7"), store.openOrCreate("Notepad").document.lines.map { it.source })
+    }
+
+    @Test
+    fun `a stop puts the line the caret is in on the tape`() = runTest(dispatcher) {
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
+        viewModel.open("Notepad", CONTEXT)
+        advanceUntilIdle()
+        val state = requireNotNull(viewModel.notepad.value).state
+        "6 * 7".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
+
+        viewModel.flush()
+        advanceUntilIdle()
+
+        assertEquals(listOf("6 * 7" to "42"), history.recorded)
+    }
+
+    @Test
+    fun `reusing a history entry writes it on a new line`() = runTest(dispatcher) {
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
+        viewModel.open("Notepad", CONTEXT)
+        advanceUntilIdle()
+        val state = requireNotNull(viewModel.notepad.value).state
+        "5".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
+
+        viewModel.reuse("2 + 3")
+        advanceUntilIdle()
+
+        // The line being typed is left alone — half-typed work is not something to overwrite.
+        assertEquals(listOf("5", "2 + 3"), state.uiState.value.lines.map { it.text })
+    }
+
+    @Test
+    fun `reusing into an empty line writes into it rather than below it`() = runTest(dispatcher) {
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
+        viewModel.open("Notepad", CONTEXT)
+        advanceUntilIdle()
+        val state = requireNotNull(viewModel.notepad.value).state
+
+        viewModel.reuse("2 + 3")
+        advanceUntilIdle()
+
+        assertEquals(listOf("2 + 3"), state.uiState.value.lines.map { it.text })
     }
 
     private companion object {

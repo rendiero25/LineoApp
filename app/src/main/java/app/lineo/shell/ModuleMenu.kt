@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import app.lineo.R
 import app.lineo.registry.CalculatorModule
 
 /**
@@ -29,12 +30,22 @@ import app.lineo.registry.CalculatorModule
 internal fun ModuleMenu(
     modules: List<CalculatorModule>,
     onOpenModule: (String) -> Unit,
+    onOpenHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         OverflowMenuButton(onClick = { expanded = !expanded })
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            // History first: it is about the work already done, while the modules are places
+            // to do more, and it is the entry reached most often.
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.history_title)) },
+                onClick = {
+                    expanded = false
+                    onOpenHistory()
+                },
+            )
             modules.forEach { module ->
                 DropdownMenuItem(
                     text = { Text(stringResource(module.titleRes)) },

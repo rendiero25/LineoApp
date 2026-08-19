@@ -14,6 +14,8 @@ import app.lineo.engine.EvalContext
 import app.lineo.engine.unit.UnitRegistry
 import app.lineo.registry.ModuleRegistry
 import app.lineo.registry.Tier
+import app.lineo.shell.HistoryRoute
+import app.lineo.shell.HistoryViewModel
 import app.lineo.shell.LineoAppShell
 import app.lineo.shell.ModuleMenu
 import app.lineo.shell.ModuleRoute
@@ -43,6 +45,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     private val notepad: NotepadViewModel by viewModels()
+    private val history: HistoryViewModel by viewModels()
 
     @Inject
     lateinit var modules: ModuleRegistry
@@ -56,14 +59,30 @@ class MainActivity : ComponentActivity() {
             val locale = LocalConfiguration.current.locales[0]
             val visible = modules.visible(Tier.FREE, locale)
             var openModuleId: String? by rememberSaveable { mutableStateOf(null) }
+            var historyOpen: Boolean by rememberSaveable { mutableStateOf(false) }
             val open = visible.firstOrNull { it.id == openModuleId }
 
             LineoAppShell(
                 overflow = {
-                    ModuleMenu(modules = visible, onOpenModule = { openModuleId = it })
+                    ModuleMenu(
+                        modules = visible,
+                        onOpenModule = { openModuleId = it },
+                        onOpenHistory = { historyOpen = true },
+                    )
                 },
             ) {
-                if (open == null) {
+                if (historyOpen) {
+                    HistoryRoute(
+                        viewModel = history,
+                        // Reuse lands in the notepad, so the tape leaves the module behind as
+                        // well as itself: the expression goes where a line can hold it.
+                        onReuse = { expression ->
+                            openModuleId = null
+                            notepad.reuse(expression)
+                        },
+                        onLeave = { historyOpen = false },
+                    )
+                } else if (open == null) {
                     NotepadRoute(
                         viewModel = notepad,
                         // Every module's functions *and* units, so a name typed in the notepad

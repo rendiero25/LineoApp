@@ -2,12 +2,15 @@ package app.lineo.shell
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.lineo.data.repository.HistoryRepository
 import app.lineo.di.ApplicationScope
 import app.lineo.engine.EvalContext
 import app.lineo.notepad.NotepadAutosave
 import app.lineo.notepad.NotepadEvaluator
 import app.lineo.notepad.NotepadState
 import app.lineo.notepad.NotepadStore
+import app.lineo.registry.EditorCommand
+import app.lineo.ui.format.QuantityFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,10 +34,14 @@ import javax.inject.Inject
 @HiltViewModel
 class NotepadViewModel @Inject constructor(
     private val store: NotepadStore,
+    private val history: HistoryRepository,
     @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     private val opened = MutableStateFlow<OpenedNotepad?>(null)
+
+    /** Records finished lines. Built with the open document, since it needs the locale. */
+    private var recorder: NotepadHistory? = null
 
     /**
      * The screen, or `null` while the first read is in flight.
@@ -61,6 +68,8 @@ class NotepadViewModel @Inject constructor(
      */
     fun open(title: String, context: EvalContext) {
         if (opened.value != null || autosave != null) return
+        val tape = NotepadHistory(history, QuantityFormat(context.locale))
+        recorder = tape
         autosave = viewModelScope.launch {
             val notepad = store.openOrCreate(title)
             val state = NotepadState(
@@ -68,12 +77,33 @@ class NotepadViewModel @Inject constructor(
                 evaluator = NotepadEvaluator(context),
             )
             opened.value = OpenedNotepad(state, NotepadAutosave(store, notepad.id, state))
+            // The tape runs beside the autosave rather than inside it: one writes the document
+            // the user is still editing, the other records the lines they have finished with,
+            // and neither should stop because the other did.
+            launch { tape.run(state.uiState) }
             opened.value?.autosave?.run()
         }
     }
 
     /**
-     * Writes the document now.
+     * Puts a history entry back into the document, as a new line.
+     *
+     * The expression and not the result: the expression is what can be recalculated and
+     * edited, which is what "reuse" means. It goes on a line of its own rather than into the
+     * line the caret is in — that line is the user's, and half-typed work is not something to
+     * overwrite. A blank line is written into rather than pushed down, since there is nothing
+     * there to keep.
+     */
+    fun reuse(expression: String) {
+        val state = opened.value?.state ?: return
+        val focused = state.uiState.value.focusedLine
+        if (focused == null) return
+        if (focused.text.isNotBlank()) state.apply(EditorCommand.NewLine)
+        state.setText(expression)
+    }
+
+    /**
+     * Writes the document now, and puts the line the caret is still in on the tape.
      *
      * Called when the screen stops — which covers back, the recents switcher, and the home
      * gesture. **Not** on `viewModelScope`: a back press stops the screen and finishes the
@@ -83,7 +113,13 @@ class NotepadViewModel @Inject constructor(
      */
     fun flush() {
         val notepad = opened.value ?: return
-        applicationScope.launch { notepad.autosave.flush() }
+        val tape = recorder
+        applicationScope.launch {
+            notepad.autosave.flush()
+            // The line the caret is still in has not been left, and the screen is going away:
+            // this is the last moment it can reach the tape.
+            tape?.flush(notepad.state.uiState.value)
+        }
     }
 }
 
