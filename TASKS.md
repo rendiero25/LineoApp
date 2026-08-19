@@ -274,10 +274,30 @@ its own task.*
     every snapshot; a six-row grid on a compact phone still shows the expression and its
     result — both verified on a device
 
-- [ ] **P1-05 · `:feature:converter`** — `M`
+*P1-05 spanned three modules as well: a module's units never reached the evaluator, data had
+no dimension, and nothing in `:app` bound the module. Split the same way as P1-04.*
+
+- [x] **P1-05-0 · Units an evaluation is given** — `M` — `:core:engine`
+  - `UnitRegistry` becomes a class with `BUILTIN` and `with()`, mirroring `FunctionRegistry`;
+    `EvalContext` carries one, so `ModuleRegistry.units()` finally reaches an expression
+  - `Dimensions.information`, so a byte is not a plain number
+  - **DoD:** the golden files pass untouched; a contributed unit is nameable and convertible
+
+- [x] **P1-05-0b · `in` after a conversion keyword** — `S` — `:core:engine`
+  - `5 cm to in` parses as inches: a conversion target cannot itself be a conversion, so the
+    ambiguity §3.3 exists to resolve does not arise there. `5 in 3` is unchanged
+  - **DoD:** two golden cases, and `to in^2` works for the same reason
+
+- [x] **P1-05-1 · `:feature:converter`** — `M` — depends on P1-05-0
   - Length, mass, volume, area, speed, temperature, data, time, pressure, energy
   - Registers `UnitDefinition`s so `5 km to mi` works in notepad
+  - The screen composes `<amount> <from> to <to>` and hands it to the engine — no arithmetic
   - **DoD:** ISO 80000 symbols; IEC binary prefixes correct (`KiB` = 1024)
+
+- [x] **P1-05-2 · The converter in the shell** — `S` — `:app` — depends on P1-05-1
+  - `@Provides @IntoSet`; the notepad is given the module units as well as the functions
+  - **DoD:** a conversion done on the converter screen and the same one typed in the notepad
+    agree, verified on a device
 
 - [ ] **P1-06 · History** — `S` — `:app`
   - Tape view, tap to reuse, capped at 50 for free tier
@@ -547,3 +567,9 @@ same question being re-litigated in a future session.
 | 2026-08-19 | P1-05-0 | Angle units and temperature deltas are looked up by name from inside `Angles` and `QuantityArithmetic`, neither of which is given an `EvalContext` | Both read `UnitRegistry.BUILTIN` explicitly. They are the grammar's own units — `docs/GRAMMAR.md` §3.8 names them, and no module may replace them — so the fixed set is the right one, and arithmetic stays free of a context parameter it has no other use for |
 | 2026-08-19 | P1-05-0 | Data has no dimension: `Dimensions` holds the seven SI base quantities plus currency | `information` added, for the same reason currency is there. Without it `5 KiB + 3 kg` would be accepted, and ISO 80000-13 treats information as a quantity of its own |
 | 2026-08-19 | P1-05-0 | `1 KiB / 2 s` evaluated to `0.5 KiB·s`, which looked like a unit-exponent bug | Not a bug. `docs/GRAMMAR.md` §2 puts implicit multiplication at the same level as `/` — `6/2(1+3)` is `12` — so it reads `(1 KiB / 2) × s`. The golden file already parenthesises `100 m / (10 s)` for this reason, and the new test does too |
+| 2026-08-19 | P1-05-0b | `5 cm to in` was a syntax error, so the converter could not offer inches at all: §3.3 makes a bare `in` the conversion keyword and only the inch directly after a number. Writing the target as `to 1 in` fails too — a conversion target must be a bare unit expression | The parser reads `in` as the inch when it opens a conversion target. A target cannot itself be a conversion, so the ambiguity the rule exists to resolve cannot arise there. `5 in 3` still reports `Syntax` on the `3`, and `to in^2` works because everything after the symbol parses as usual. Two golden cases added; §3.3 updated |
+| 2026-08-19 | P1-05-1 | Ten categories, but `m²` and `km/h` are not lexable symbols — `Char.isLetter()` rejects `²`, and `m2` is neither ISO nor a unit | A unit on the screen is a label and an expression: `m²` shows, `m^2` is typed. Registering `m2` would have put a fake symbol in the engine to save the screen a string |
+| 2026-08-19 | P1-05-1 | ISO 80000 gives `a` to both the are and the year | Neither is registered under it. Area gets `ha` and `acre`, time gets `wk` and `yr`, and a calculator that guessed between them would be silently wrong half the time |
+| 2026-08-19 | P1-05-1 | `gal`, `qt`, `pt`, `floz` and `cup` differ between the US and the imperial systems | US customary, since that is the market this ships to first, recorded in the file. The imperial gallon is a different unit, not a different spelling; if it is ever wanted it needs its own symbol |
+| 2026-08-19 | P1-05-2 | On a device the from/to pickers rendered at `[0,0][0,0]`: the converter's document is four rows tall, and `AdaptivePane` guarantees only one expression line and its result, so the last child was measured into nothing | `minDocumentHeight` becomes a parameter of `AdaptivePane`, defaulting to what it already promised. A screen knows how tall its document is; the pane does not, and guessing for everyone would shrink the keypad on screens that never needed it |
+| 2026-08-19 | P1-05-2 | Verified on the emulator (`sdk_gphone16k_x86_64`, API 37) | Converter: category chips, `cm → km` picker, `52 cm` renders `0.00052 km`. Notepad: `2 GiB to MB` renders `2147.483648 MB` — the module's catalogue reaching the other surface, which is the definition of done |
