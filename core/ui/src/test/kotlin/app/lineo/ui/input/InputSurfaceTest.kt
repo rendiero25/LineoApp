@@ -3,6 +3,7 @@ package app.lineo.ui.input
 import app.cash.turbine.test
 import app.lineo.registry.EditorCommand
 import app.lineo.registry.InputSurface
+import app.lineo.ui.theme.LineoRole
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -136,6 +137,26 @@ class InputSurfaceTest {
         assertTrue(wide.rows.flatten().map { it.label }.containsAll(listOf("(", ")", "^", "√")))
         // Operators keep the trailing edge; the new column is inserted before them.
         assertEquals(listOf("÷", "×", "−", "+", "="), wide.rows.map { it.last().label })
+    }
+
+    @Test
+    fun `a supplied layout replaces the grid and still speaks commands`() = runTest {
+        // What P1-04 needs from `:core:ui`: a module brings its own keys, and everything
+        // else about a keypad — the separator, the extra width, the command stream — is
+        // unchanged. The keys themselves stay in the module that owns them.
+        val layout = KeypadLayout { separator, hasRoom ->
+            listOf(listOf(KeypadKey("ln", LineoRole.Function, EditorCommand.InsertFunction("ln", 1)))) +
+                basicKeypadRows(separator, hasRoom)
+        }
+        val keypad = KeypadState(decimalSeparator = ',', hasRoomForFunctions = true, layout = layout)
+
+        assertEquals("ln", keypad.rows.first().single().label)
+        assertEquals(",", keypad.rows.last()[DECIMAL_KEY_COLUMN].label)
+        keypad.commands.test {
+            keypad.press(keypad.key("ln"))
+
+            assertEquals(EditorCommand.InsertFunction("ln", 1), awaitItem())
+        }
     }
 
     @Test

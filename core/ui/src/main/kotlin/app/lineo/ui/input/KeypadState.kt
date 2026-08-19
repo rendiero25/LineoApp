@@ -29,6 +29,7 @@ import app.lineo.ui.theme.LineoRole
 class KeypadState(
     decimalSeparator: Char = '.',
     hasRoomForFunctions: Boolean = false,
+    private val layout: KeypadLayout = KeypadLayout.Basic,
 ) : CommandInputSurface() {
 
     /**
@@ -49,7 +50,7 @@ class KeypadState(
 
     /** The grid, top row first. Derived, so only a real change rebuilds it. */
     val rows: List<List<KeypadKey>> by derivedStateOf {
-        keypadRows(this.decimalSeparator, this.hasRoomForFunctions)
+        layout.rows(this.decimalSeparator, this.hasRoomForFunctions)
     }
 
     /**
@@ -81,11 +82,18 @@ class KeypadState(
  *
  * The state survives recomposition and survives both of those changing — they are
  * assignments, not a new keypad, so the command stream and any collector stay attached.
+ *
+ * [layout] is not one of those: a different layout is a different keypad, so it rebuilds the
+ * state. Pass a layout that is stable across recompositions — an object or a remembered
+ * value — or the command stream is dropped on every frame.
  */
 @Composable
-fun rememberKeypadState(decimalSeparator: Char = '.'): KeypadState {
+fun rememberKeypadState(
+    decimalSeparator: Char = '.',
+    layout: KeypadLayout = KeypadLayout.Basic,
+): KeypadState {
     val hasRoom = LocalWindowWidthClass.current != WindowWidthClass.Compact
-    val state = remember { KeypadState(decimalSeparator, hasRoom) }
+    val state = remember(layout) { KeypadState(decimalSeparator, hasRoom, layout) }
     state.decimalSeparator = decimalSeparator
     state.hasRoomForFunctions = hasRoom
     return state
@@ -104,12 +112,16 @@ fun rememberKeypadState(decimalSeparator: Char = '.'): KeypadState {
  * `NewLine`, which is what committing a line means in a notepad calculator. `AC` clears the
  * line and not the document. `±` flips the sign of the number the caret is in.
  *
+ * Public because a module layout builds on it rather than restating it: `:feature:scientific`
+ * keeps these exact digits and operators and adds rows of its own above them, so the hand
+ * that learned the notepad keypad does not have to learn a second one.
+ *
  * **The fifth column is what a narrow phone cannot afford.** Brackets, power, root and the
  * argument separator go there, inserted before the operator column so the operators keep
  * the trailing edge. On a compact window they are reachable only from the accessory row —
  * a real gap, recorded in `TASKS.md`, and the reason this column exists at all.
  */
-internal fun keypadRows(
+fun basicKeypadRows(
     decimalSeparator: Char,
     hasRoomForFunctions: Boolean = false,
 ): List<List<KeypadKey>> {

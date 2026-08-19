@@ -31,6 +31,26 @@ class EditedLineTest {
     }
 
     @Test
+    fun `a two-argument function lands with its separator already typed`() {
+        val line = EditedLine("")
+
+        val edited = line.applying(EditorCommand.InsertFunction("nCr", arity = 2))
+
+        assertEquals(EditedLine("nCr(,)", 4), edited)
+    }
+
+    @Test
+    fun `the separator of an inserted call follows the decimal separator`() {
+        // Where the decimal separator is a comma the argument separator is a semicolon
+        // (`docs/CONVENTIONS.md` §2), so the same key must not type `nCr(,)` there.
+        val line = EditedLine("")
+
+        val edited = line.applying(EditorCommand.InsertFunction("nCr", arity = 2), decimalSeparator = ',')
+
+        assertEquals(EditedLine("nCr(;)", 4), edited)
+    }
+
+    @Test
     fun `backspace at the start of a line changes nothing`() {
         val line = EditedLine("5", caret = 0)
 
