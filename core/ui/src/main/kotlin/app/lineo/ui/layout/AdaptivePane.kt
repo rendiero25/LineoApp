@@ -1,13 +1,17 @@
 package app.lineo.ui.layout
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
 import app.lineo.ui.theme.RoleColors
@@ -63,9 +67,18 @@ private fun StackedPanes(
     input: @Composable () -> Unit,
     modifier: Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize().background(RoleColors.of(LineoRole.Editor).container)) {
-        Column(modifier = Modifier.fillMaxWidth().weight(1f)) { document() }
-        Column(modifier = Modifier.fillMaxWidth()) { input() }
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(RoleColors.of(LineoRole.Editor).container)) {
+        val ceiling = (maxHeight - MIN_DOCUMENT_HEIGHT).coerceAtLeast(LineoDimens.MinTouchTarget)
+        Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxWidth().weight(1f)) { document() }
+            // The ceiling is what stops an input pane from taking the window. A keypad's
+            // intrinsic height is rows × key width, so a layout with two more rows than the
+            // basic one asked for more than the screen and left the document nothing — the
+            // expression was measured, drawn, and clipped to invisibility on a phone. The
+            // keypad shrinks its keys to whatever it is given, so the ceiling costs key size
+            // rather than keys, and only for a grid that would not have fitted anyway.
+            Column(modifier = Modifier.fillMaxWidth().heightIn(max = ceiling)) { input() }
+        }
     }
 }
 
@@ -98,3 +111,17 @@ private fun SideBySidePanes(
  */
 private const val DOCUMENT_SHARE = 0.55f
 private const val INPUT_SHARE = 0.45f
+
+/**
+ * What the document pane is always left, however tall the input wants to be.
+ *
+ * One expression and its result: `LineoTypography.Expression` is 76 dp of line and
+ * `Result` is 62 dp, with `EditorPadding` above and below. It is stated as a height rather
+ * than as a share of the window, because what has to fit is a line of text and not a
+ * fraction of anything — and because a share large enough to protect it on a small phone
+ * would shrink the keypad on a big one, which is a change nobody asked for.
+ *
+ * The four-column keypad of P0-13 is smaller than the ceiling this leaves on a compact
+ * phone, so it is untouched. A grid that would have overflowed shrinks its keys instead.
+ */
+private val MIN_DOCUMENT_HEIGHT: Dp = 170.dp

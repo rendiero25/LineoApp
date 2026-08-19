@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,10 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import app.lineo.ui.layout.LocalWindowWidthClass
-import app.lineo.ui.layout.WindowWidthClass
 import app.lineo.ui.layout.dockedBottomPadding
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
@@ -44,36 +40,52 @@ import app.lineo.ui.theme.asExpression
  */
 @Composable
 fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
-    // In a side pane the keypad has a ceiling; stacked under a document it does not.
-    // Which dimension is scarce decides how a square key is sized, and getting it wrong
-    // is visible: five square keys measured from the width overflowed a landscape pane.
-    val heightIsScarce = LocalWindowWidthClass.current != WindowWidthClass.Compact
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (heightIsScarce) Modifier.fillMaxHeight() else Modifier)
             .background(RoleColors.of(LineoRole.Editor).container)
             .dockedBottomPadding()
             .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.KeyGap),
-        verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
     ) {
-        ModeKey(key = state.modeKey, onPress = state::press)
-        state.rows.forEach { row ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(if (heightIsScarce) Modifier.weight(1f) else Modifier),
-                horizontalArrangement = Arrangement.spacedBy(
-                    space = LineoDimens.KeyGap,
-                    alignment = Alignment.CenterHorizontally,
-                ),
-            ) {
-                row.forEach { key ->
-                    Key(key = key, onPress = state::press, sizedByHeight = heightIsScarce)
+        val size = keySize(state.rows, this.maxWidth, this.maxHeight)
+        Column(verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap)) {
+            ModeKey(key = state.modeKey, onPress = state::press)
+            state.rows.forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = LineoDimens.KeyGap,
+                        alignment = Alignment.CenterHorizontally,
+                    ),
+                ) {
+                    row.forEach { key -> Key(key = key, onPress = state::press, size = size) }
                 }
             }
         }
     }
+}
+
+/**
+ * How wide a key is: the scarcer of what the width allows and what the height allows.
+ *
+ * Keys are circles, so one number decides both dimensions and the only question is which
+ * constraint binds. Both do, in different windows, and each was found by getting it wrong:
+ * five square keys measured from the width overflowed a landscape pane, and a scientific
+ * grid measured the same way asked for more height than a phone has and clipped the
+ * expression out of the window entirely.
+ *
+ * A pane with no ceiling — a keypad inside something scrollable, or a preview — falls back
+ * to the width, which is the behaviour every existing snapshot was recorded with.
+ */
+private fun keySize(rows: List<List<KeypadKey>>, maxWidth: Dp, maxHeight: Dp): Dp {
+    val columns = rows.maxOfOrNull { it.size } ?: return LineoDimens.MinTouchTarget
+    val gap = LineoDimens.KeyGap
+    val byWidth = (maxWidth - gap * (columns - 1)) / columns
+    if (maxHeight == Dp.Infinity) return byWidth
+    // The mode key sits above the grid and takes its own row's worth of height with it.
+    val forRows = maxHeight - LineoDimens.MinTouchTarget - gap * rows.size
+    val byHeight = forRows / rows.size
+    return minOf(byWidth, byHeight)
 }
 
 /**
@@ -102,29 +114,19 @@ private fun ModeKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
 }
 
 /**
- * One key.
+ * One key, at the size [keySize] decided for the whole grid.
  *
- * Every key takes an equal share of the row, so the grid stays aligned whatever the labels
- * are — a decimal separator that changes from `.` to `,` must not shift the column.
+ * Every key is the same size whatever its label is, so the grid stays aligned — a decimal
+ * separator that changes from `.` to `,` must not shift the column — and a row shorter than
+ * the others centres what is left over rather than stretching to fill it.
  */
 @Composable
-private fun RowScope.Key(key: KeypadKey, onPress: (KeypadKey) -> Unit, sizedByHeight: Boolean) {
+private fun Key(key: KeypadKey, onPress: (KeypadKey) -> Unit, size: Dp) {
     val colors = RoleColors.of(key.role)
     val description = key.contentDescription?.let { stringResource(it) }
     Box(
         modifier = Modifier
-            // Keys are circles either way; what changes is which dimension sets the
-            // diameter. Stacked under a document, width is the scarce one and the row
-            // divides it. In a side pane the pane's height is the ceiling, so the key
-            // takes the row's height and the row centres what is left over.
-            .then(
-                if (sizedByHeight) {
-                    Modifier.fillMaxHeight()
-                } else {
-                    Modifier.weight(1f)
-                },
-            )
-            .aspectRatio(1f)
+            .size(size)
             .clip(CircleShape)
             .background(colors.container)
             .clickable { onPress(key) }
