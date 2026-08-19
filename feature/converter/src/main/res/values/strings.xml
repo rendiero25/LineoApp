@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="converter_title">Converter</string>
+
+    <!-- Category names. The quantity, not the units: "Length", never "m, km, mi". -->
+    <string name="converter_length">Length</string>
+    <string name="converter_mass">Mass</string>
+    <string name="converter_volume">Volume</string>
+    <string name="converter_area">Area</string>
+    <string name="converter_speed">Speed</string>
+    <string name="converter_temperature">Temperature</string>
+    <string name="converter_data">Data</string>
+    <string name="converter_time">Time</string>
+    <string name="converter_pressure">Pressure</string>
+    <string name="converter_energy">Energy</string>
+
+    <!--
+        Spoken for the pickers. A unit symbol on its own says nothing about which side of the
+        conversion it is, and the two chips are otherwise identical to TalkBack.
+    -->
+    <string name="converter_from_description">Convert from</string>
+    <string name="converter_to_description">Convert to</string>
+    <string name="converter_swap_description">Swap the units</string>
+</resources>

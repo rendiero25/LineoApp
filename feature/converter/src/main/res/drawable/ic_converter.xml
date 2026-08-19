@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Two arrows, one each way — what a conversion is. Drawn as paths rather than pulled from an
+    icon library, which would be a shipped dependency and a decision `AGENTS.md` §7 reserves
+    for a human.
+
+    Tinted by the caller, so it carries no colour of its own.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Upper arrow, pointing to the trailing edge. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4,9 L20,9 M16,5 L20,9 L16,13" />
+
+    <!-- Lower arrow, pointing back. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M20,17 L4,17 M8,13 L4,17 L8,21" />
+</vector>
