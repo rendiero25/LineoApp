@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":feature:notepad"))
     implementation(project(":feature:scientific"))
+    implementation(project(":feature:converter"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

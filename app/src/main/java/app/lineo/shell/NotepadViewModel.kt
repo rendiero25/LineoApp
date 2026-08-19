@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.lineo.di.ApplicationScope
 import app.lineo.engine.EvalContext
-import app.lineo.engine.function.FunctionRegistry
 import app.lineo.notepad.NotepadAutosave
 import app.lineo.notepad.NotepadEvaluator
 import app.lineo.notepad.NotepadState
@@ -54,18 +53,19 @@ class NotepadViewModel @Inject constructor(
      *
      * @param title what an unnamed document is called. Read where there is a `Context` to
      *   read it with, since this class has none (`docs/ANDROID_STANDARDS.md` §1).
-     * @param functions every function the build offers, module contributions included. Passed
-     *   in for the same reason as the title: the registry is filtered by the user's locale,
-     *   and the locale is the caller's to know. Without it the notepad would evaluate against
-     *   the built-ins alone and a module's function would read as an unknown name.
+     * @param context what every line is evaluated against: the locale, and the functions and
+     *   units the build offers, module contributions included. Passed in for the same reason
+     *   as the title — both registries are filtered by the user's locale, and the locale is
+     *   the caller's to know. Without it the notepad would evaluate against the built-ins
+     *   alone, and a module's function or unit would read as an unknown name.
      */
-    fun open(title: String, functions: FunctionRegistry) {
+    fun open(title: String, context: EvalContext) {
         if (opened.value != null || autosave != null) return
         autosave = viewModelScope.launch {
             val notepad = store.openOrCreate(title)
             val state = NotepadState(
                 document = notepad.document,
-                evaluator = NotepadEvaluator(EvalContext(functions = functions)),
+                evaluator = NotepadEvaluator(context),
             )
             opened.value = OpenedNotepad(state, NotepadAutosave(store, notepad.id, state))
             opened.value?.autosave?.run()

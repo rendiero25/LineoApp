@@ -3,7 +3,9 @@ package app.lineo.shell
 import app.lineo.data.model.Document
 import app.lineo.data.model.Line
 import app.lineo.data.repository.DocumentRepository
+import app.lineo.engine.EvalContext
 import app.lineo.engine.LineId
+import app.lineo.engine.unit.UnitRegistry
 import app.lineo.notepad.NotepadStore
 import app.lineo.registry.EditorCommand
 import app.lineo.registry.ModuleRegistry
@@ -59,7 +61,7 @@ class NotepadViewModelTest {
     fun `nothing is published until the document has been read`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
 
-        viewModel.open("Notepad", FUNCTIONS)
+        viewModel.open("Notepad", CONTEXT)
 
         assertNull(viewModel.notepad.value)
     }
@@ -68,7 +70,7 @@ class NotepadViewModelTest {
     fun `opening creates the document and publishes a line to type on`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
 
-        viewModel.open("Notepad", FUNCTIONS)
+        viewModel.open("Notepad", CONTEXT)
         advanceUntilIdle()
 
         assertEquals(1, repository.getDocumentsStream().first().size)
@@ -78,11 +80,11 @@ class NotepadViewModelTest {
     @Test
     fun `opening twice does not read the document again`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
-        viewModel.open("Notepad", FUNCTIONS)
+        viewModel.open("Notepad", CONTEXT)
         advanceUntilIdle()
         val first = viewModel.notepad.value?.state
 
-        viewModel.open("Notepad", FUNCTIONS)
+        viewModel.open("Notepad", CONTEXT)
         advanceUntilIdle()
 
         // Same object, so the caret and the draft the user is halfway through survive.
@@ -93,7 +95,7 @@ class NotepadViewModelTest {
     @Test
     fun `a stop writes what has been typed`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
-        viewModel.open("Notepad", FUNCTIONS)
+        viewModel.open("Notepad", CONTEXT)
         advanceUntilIdle()
         val state = requireNotNull(viewModel.notepad.value).state
         "6 * 7".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
@@ -106,11 +108,17 @@ class NotepadViewModelTest {
 
     private companion object {
         /**
-         * What the activity passes in: the built-ins plus every module this build contains.
-         * The notepad has to evaluate against the same set its module screens call, and the
-         * view model is where that set arrives.
+         * What the activity passes in: the built-ins plus every module this build contains,
+         * functions and units alike. The notepad has to evaluate against the same set its
+         * module screens call, and the view model is where that set arrives.
          */
-        val FUNCTIONS = ModuleRegistry(setOf(ScientificModule())).functionRegistry(Tier.FREE, Locale.US)
+        val CONTEXT = ModuleRegistry(setOf(ScientificModule())).let { registry ->
+            EvalContext(
+                locale = Locale.US,
+                functions = registry.functionRegistry(Tier.FREE, Locale.US),
+                units = UnitRegistry.BUILTIN.with(registry.units(Tier.FREE, Locale.US)),
+            )
+        }
     }
 }
 

@@ -10,6 +10,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
+import app.lineo.engine.EvalContext
+import app.lineo.engine.unit.UnitRegistry
 import app.lineo.registry.ModuleRegistry
 import app.lineo.registry.Tier
 import app.lineo.shell.LineoAppShell
@@ -64,9 +66,14 @@ class MainActivity : ComponentActivity() {
                 if (open == null) {
                     NotepadRoute(
                         viewModel = notepad,
-                        // Every module's functions, so a name typed in the notepad resolves to
-                        // the same function its own screen calls (`AGENTS.md` §1).
-                        functions = modules.functionRegistry(Tier.FREE, locale),
+                        // Every module's functions *and* units, so a name typed in the notepad
+                        // resolves to the same thing its own screen calls (`AGENTS.md` §1):
+                        // `sec(60)` from the scientific module, `5 km to mi` from the converter.
+                        context = EvalContext(
+                            locale = locale,
+                            functions = modules.functionRegistry(Tier.FREE, locale),
+                            units = UnitRegistry.BUILTIN.with(modules.units(Tier.FREE, locale)),
+                        ),
                     )
                 } else {
                     ModuleRoute(

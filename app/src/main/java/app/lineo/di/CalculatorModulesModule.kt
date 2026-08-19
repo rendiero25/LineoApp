@@ -1,5 +1,6 @@
 package app.lineo.di
 
+import app.lineo.converter.ConverterModule
 import app.lineo.registry.CalculatorModule
 import app.lineo.scientific.ScientificModule
 import dagger.Module
@@ -27,4 +28,9 @@ object CalculatorModulesModule {
     @Singleton
     @IntoSet
     fun scientificModule(): CalculatorModule = ScientificModule()
+
+    @Provides
+    @Singleton
+    @IntoSet
+    fun converterModule(): CalculatorModule = ConverterModule()
 }

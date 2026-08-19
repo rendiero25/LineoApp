@@ -4,6 +4,7 @@ import app.lineo.di.CalculatorModulesModule
 import app.lineo.engine.CalcResult
 import app.lineo.engine.Engine
 import app.lineo.engine.EvalContext
+import app.lineo.engine.unit.UnitRegistry
 import app.lineo.notepad.LineEvaluation
 import app.lineo.notepad.NotepadDocument
 import app.lineo.notepad.NotepadEvaluator
@@ -24,26 +25,55 @@ import java.util.Locale
  */
 class ModuleWiringTest {
 
-    private val registry = ModuleRegistry(setOf(CalculatorModulesModule.scientificModule()))
+    private val registry = ModuleRegistry(
+        setOf(CalculatorModulesModule.scientificModule(), CalculatorModulesModule.converterModule()),
+    )
     private val functions = registry.functionRegistry(Tier.FREE, Locale.US)
+    private val units = UnitRegistry.BUILTIN.with(registry.units(Tier.FREE, Locale.US))
 
     @Test
-    fun `the build contains the scientific module`() {
-        assertEquals(listOf("scientific"), registry.all.map { it.id })
+    fun `the build contains the modules it ships`() {
+        assertEquals(listOf("converter", "scientific"), registry.all.map { it.id })
         assertTrue(registry.visible(Tier.FREE, Locale.US).isNotEmpty())
     }
 
     @Test
-    fun `no module function is dropped as a duplicate`() {
-        // A dropped name is silent by design (`ModuleRegistry`), so it is asserted here
-        // rather than noticed when a key stops working.
+    fun `no module function or unit is dropped as a duplicate`() {
+        // A dropped name is silent by design (`ModuleRegistry`, `UnitRegistry`), so it is
+        // asserted here rather than noticed when a key or a category stops working.
         assertEquals(emptyList<String>(), registry.conflicts(Tier.FREE, Locale.US))
+        assertEquals(emptyList<String>(), UnitRegistry.BUILTIN.conflicts(registry.units(Tier.FREE, Locale.US)))
+    }
+
+    @Test
+    fun `a module unit typed into the notepad converts`() {
+        val document = NotepadDocument().append("5 km to mi")
+        val evaluator = NotepadEvaluator(EvalContext(functions = functions, units = units))
+
+        val line = evaluator.evaluate(document).results.values.last()
+
+        // 5 / 1.609344, to the engine's full precision — the same number the converter screen
+        // shows, because it is the same expression.
+        assertTrue(
+            (line as LineEvaluation.Value).value.canonicalString(),
+            line.value.canonicalString().startsWith("3.106855961"),
+        )
+    }
+
+    @Test
+    fun `a data unit reaches the notepad with its binary prefix intact`() {
+        val document = NotepadDocument().append("1 GiB to MB")
+        val evaluator = NotepadEvaluator(EvalContext(functions = functions, units = units))
+
+        val line = evaluator.evaluate(document).results.values.last()
+
+        assertEquals("1073.741824 MB", (line as LineEvaluation.Value).value.canonicalString())
     }
 
     @Test
     fun `a module function typed into the notepad evaluates`() {
         val document = NotepadDocument().append("sec(60)")
-        val evaluator = NotepadEvaluator(EvalContext(functions = functions))
+        val evaluator = NotepadEvaluator(EvalContext(functions = functions, units = units))
 
         val line = evaluator.evaluate(document).results.values.last()
 
@@ -53,7 +83,7 @@ class ModuleWiringTest {
     @Test
     fun `the notepad and a module screen answer the same call the same way`() {
         val document = NotepadDocument().append("cot(45)")
-        val evaluator = NotepadEvaluator(EvalContext(functions = functions))
+        val evaluator = NotepadEvaluator(EvalContext(functions = functions, units = units))
 
         val inNotepad = evaluator.evaluate(document).results.values.last()
         val onScreen = Engine.evaluate("cot(45)", EvalContext(functions = functions))
