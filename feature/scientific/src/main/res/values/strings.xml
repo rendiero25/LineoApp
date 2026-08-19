@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="scientific_title">Scientific</string>
+
+    <!--
+        Spoken labels for the function keys. Every one of them is spoken, even where the label
+        is a word: "sin" read as a syllable is not the word "sine", and "n!" is not read at all.
+    -->
+    <string name="key_sine_description">Sine</string>
+    <string name="key_cosine_description">Cosine</string>
+    <string name="key_tangent_description">Tangent</string>
+    <string name="key_arcsine_description">Inverse sine</string>
+    <string name="key_arccosine_description">Inverse cosine</string>
+    <string name="key_arctangent_description">Inverse tangent</string>
+    <string name="key_secant_description">Secant</string>
+    <string name="key_cosecant_description">Cosecant</string>
+    <string name="key_cotangent_description">Cotangent</string>
+    <string name="key_natural_log_description">Natural logarithm</string>
+    <string name="key_log_description">Logarithm base ten</string>
+    <string name="key_log2_description">Logarithm base two</string>
+    <string name="key_exponential_description">E to the power of</string>
+    <string name="key_factorial_description">Factorial</string>
+    <string name="key_pi_description">Pi</string>
+    <string name="key_power_description">To the power of</string>
+    <string name="key_square_root_description">Square root</string>
+</resources>

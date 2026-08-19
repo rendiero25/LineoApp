@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A radical sign over a wave: the two things that mark this module apart from the plain
+    keypad. Drawn as paths rather than pulled from an icon library, which would be a shipped
+    dependency and a decision `AGENTS.md` §7 reserves for a human.
+
+    Tinted by the caller, so it carries no colour of its own.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- The radical: a short entry stroke, the tick, the rise, and the bar over the term. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M3,11 L5.5,11 L8,17 L11.5,5 L21,5" />
+
+    <!-- One period of a sine, sitting under the bar where the term would be. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M13,15 C14,11 15.5,11 16.5,15 C17.5,19 19,19 20,15" />
+</vector>
