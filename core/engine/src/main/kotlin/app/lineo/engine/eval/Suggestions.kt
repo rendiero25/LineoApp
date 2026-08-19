@@ -10,17 +10,43 @@ package app.lineo.engine.eval
  * Transposition counts as one edit rather than two. Swapped letters are the commonest typo,
  * and under plain Levenshtein `sni` is as far from `sin` as it is from the unit `s` — which
  * would make the chip offer `s`.
+ *
+ * **The threshold scales with the name.** A flat two edits is generous for `lenght` and
+ * meaningless for `x`: every unit symbol in the registry is a candidate, and at two edits a
+ * one-letter name matches most of them. On a device that produced "Unknown name 'x' → Use
+ * 'K'", where `K` had won only for sorting first. A name has to be long enough to be worth
+ * guessing about — see [maxDistanceFor].
  */
 object Suggestions {
     private const val MAX_DISTANCE = 2
 
-    fun nearest(name: String, candidates: Iterable<String>): String? = candidates
-        .asSequence()
-        .filter { it != name }
-        .map { candidate -> candidate to distance(name.lowercase(), candidate.lowercase()) }
-        .filter { (_, distance) -> distance <= MAX_DISTANCE }
-        .minWithOrNull(compareBy({ it.second }, { it.first.length }, { it.first }))
-        ?.first
+    fun nearest(name: String, candidates: Iterable<String>): String? {
+        val limit = maxDistanceFor(name)
+        if (limit == 0) return null
+        return candidates
+            .asSequence()
+            .filter { it != name }
+            .map { candidate -> candidate to distance(name.lowercase(), candidate.lowercase()) }
+            .filter { (_, distance) -> distance <= limit }
+            // Nearest first; then the candidate closest in length to what was typed, which is
+            // what makes `sni` prefer `sin` over `sinh`. Case-insensitive last, so a candidate
+            // is never picked for being uppercase — that is what offered `K` for `x`.
+            .minWithOrNull(
+                compareBy<Pair<String, Int>> { it.second }
+                    .thenBy { kotlin.math.abs(it.first.length - name.length) }
+                    .thenBy(String.CASE_INSENSITIVE_ORDER) { it.first },
+            )
+            ?.first
+    }
+
+    /**
+     * How far a guess may be from [name] before it stops being a guess about [name].
+     *
+     * One edit fewer than the name is long, capped at [MAX_DISTANCE]: a single letter gets no
+     * suggestion at all, two letters allow one edit, and anything from three letters up keeps
+     * the full tolerance that lets `sni` reach `sin`.
+     */
+    private fun maxDistanceFor(name: String): Int = minOf(MAX_DISTANCE, name.length - 1)
 
     /** Optimal string alignment: insert, delete, substitute, or swap two adjacent letters. */
     fun distance(left: String, right: String): Int {
