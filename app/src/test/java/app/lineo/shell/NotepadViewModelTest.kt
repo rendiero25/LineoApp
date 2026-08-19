@@ -6,6 +6,9 @@ import app.lineo.data.repository.DocumentRepository
 import app.lineo.engine.LineId
 import app.lineo.notepad.NotepadStore
 import app.lineo.registry.EditorCommand
+import app.lineo.registry.ModuleRegistry
+import app.lineo.registry.Tier
+import app.lineo.scientific.ScientificModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +27,7 @@ import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
+import java.util.Locale
 
 /**
  * The wiring between the screen and storage: when the document is read, and when it is
@@ -55,7 +59,7 @@ class NotepadViewModelTest {
     fun `nothing is published until the document has been read`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
 
-        viewModel.open("Notepad")
+        viewModel.open("Notepad", FUNCTIONS)
 
         assertNull(viewModel.notepad.value)
     }
@@ -64,7 +68,7 @@ class NotepadViewModelTest {
     fun `opening creates the document and publishes a line to type on`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
 
-        viewModel.open("Notepad")
+        viewModel.open("Notepad", FUNCTIONS)
         advanceUntilIdle()
 
         assertEquals(1, repository.getDocumentsStream().first().size)
@@ -74,11 +78,11 @@ class NotepadViewModelTest {
     @Test
     fun `opening twice does not read the document again`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
-        viewModel.open("Notepad")
+        viewModel.open("Notepad", FUNCTIONS)
         advanceUntilIdle()
         val first = viewModel.notepad.value?.state
 
-        viewModel.open("Notepad")
+        viewModel.open("Notepad", FUNCTIONS)
         advanceUntilIdle()
 
         // Same object, so the caret and the draft the user is halfway through survive.
@@ -89,7 +93,7 @@ class NotepadViewModelTest {
     @Test
     fun `a stop writes what has been typed`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, backgroundScope)
-        viewModel.open("Notepad")
+        viewModel.open("Notepad", FUNCTIONS)
         advanceUntilIdle()
         val state = requireNotNull(viewModel.notepad.value).state
         "6 * 7".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
@@ -100,6 +104,14 @@ class NotepadViewModelTest {
         assertEquals(listOf("6 * 7"), store.openOrCreate("Notepad").document.lines.map { it.source })
     }
 
+    private companion object {
+        /**
+         * What the activity passes in: the built-ins plus every module this build contains.
+         * The notepad has to evaluate against the same set its module screens call, and the
+         * view model is where that set arrives.
+         */
+        val FUNCTIONS = ModuleRegistry(setOf(ScientificModule())).functionRegistry(Tier.FREE, Locale.US)
+    }
 }
 
 /**

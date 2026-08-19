@@ -31,11 +31,13 @@ import app.lineo.ui.theme.LineoTheme
  * grows towards it as the line gets longer. A reserved band costs the height of one button
  * and cannot collide with anything.
  *
+ * @param overflow what sits in that band. The shell reserves the space; what the button
+ *   opens is the host's, since only the host knows which destinations exist.
  * @param content the screen. It composes `AdaptivePane` itself, because which panes exist
  *   is a screen's decision and not the shell's.
  */
 @Composable
-fun LineoAppShell(content: @Composable () -> Unit) {
+fun LineoAppShell(overflow: @Composable () -> Unit = { OverflowMenuButton() }, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalWindowWidthClass provides rememberWindowWidthClass()) {
         LineoTheme {
             // Painted before the inset padding, so the surface runs edge to edge and the
@@ -54,7 +56,7 @@ fun LineoAppShell(content: @Composable () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End,
                     ) {
-                        OverflowMenuButton()
+                        overflow()
                     }
                     Box(modifier = Modifier.weight(1f)) { content() }
                 }

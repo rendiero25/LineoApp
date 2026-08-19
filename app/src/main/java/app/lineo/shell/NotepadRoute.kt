@@ -10,6 +10,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lineo.R
+import app.lineo.engine.function.FunctionRegistry
 import app.lineo.notepad.NotepadScreen
 
 /**
@@ -22,11 +23,15 @@ import app.lineo.notepad.NotepadScreen
  * Nothing is rendered while the first read is in flight. An empty notepad is a real state —
  * the first run — and showing one for the length of a disk read would put the caret in a line
  * that is about to be replaced by the user's own.
+ *
+ * @param functions every function the build offers, module contributions included. It is the
+ *   caller that has the locale to filter the registry with, and the notepad that must resolve
+ *   the same names a module's own screen calls.
  */
 @Composable
-internal fun NotepadRoute(viewModel: NotepadViewModel) {
+internal fun NotepadRoute(viewModel: NotepadViewModel, functions: FunctionRegistry) {
     val title = stringResource(R.string.notepad_default_title)
-    LaunchedEffect(viewModel) { viewModel.open(title) }
+    LaunchedEffect(viewModel) { viewModel.open(title, functions) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, viewModel) {

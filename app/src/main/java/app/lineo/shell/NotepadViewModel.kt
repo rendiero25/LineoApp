@@ -3,7 +3,10 @@ package app.lineo.shell
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.lineo.di.ApplicationScope
+import app.lineo.engine.EvalContext
+import app.lineo.engine.function.FunctionRegistry
 import app.lineo.notepad.NotepadAutosave
+import app.lineo.notepad.NotepadEvaluator
 import app.lineo.notepad.NotepadState
 import app.lineo.notepad.NotepadStore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,12 +52,21 @@ class NotepadViewModel @Inject constructor(
      * Opens the notepad, once. Later calls are ignored, so a recomposition cannot reload the
      * document out from under the caret.
      *
+     * @param title what an unnamed document is called. Read where there is a `Context` to
+     *   read it with, since this class has none (`docs/ANDROID_STANDARDS.md` §1).
+     * @param functions every function the build offers, module contributions included. Passed
+     *   in for the same reason as the title: the registry is filtered by the user's locale,
+     *   and the locale is the caller's to know. Without it the notepad would evaluate against
+     *   the built-ins alone and a module's function would read as an unknown name.
      */
-    fun open(title: String) {
+    fun open(title: String, functions: FunctionRegistry) {
         if (opened.value != null || autosave != null) return
         autosave = viewModelScope.launch {
             val notepad = store.openOrCreate(title)
-            val state = NotepadState(notepad.document)
+            val state = NotepadState(
+                document = notepad.document,
+                evaluator = NotepadEvaluator(EvalContext(functions = functions)),
+            )
             opened.value = OpenedNotepad(state, NotepadAutosave(store, notepad.id, state))
             opened.value?.autosave?.run()
         }
