@@ -32,10 +32,17 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:registry"))
     implementation(project(":core:ui"))
+    implementation(project(":feature:notepad"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    // Declared rather than inherited: `LocalLifecycleOwner`, `collectAsStateWithLifecycle` and
+    // `viewModelScope` are used directly here. Both are already on the release classpath and
+    // already in the licence allowlist, so this adds no artifact and no licence decision.
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

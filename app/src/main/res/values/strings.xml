@@ -3,4 +3,11 @@
 
     <!-- Spoken label for the overflow affordance in the top corner. -->
     <string name="menu_more_options">More options</string>
+
+    <!--
+        Title of the document created on the first run. Not shown anywhere yet — the document
+        list is P3-06 — but it is stored, so it is written in the user's language from the
+        start rather than migrated later.
+    -->
+    <string name="notepad_default_title">Notepad</string>
 </resources>
