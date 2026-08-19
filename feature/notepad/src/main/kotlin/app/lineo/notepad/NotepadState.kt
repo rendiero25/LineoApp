@@ -1,5 +1,6 @@
 package app.lineo.notepad
 
+import app.lineo.engine.CalcError
 import app.lineo.engine.LineId
 import app.lineo.registry.EditorCommand
 import app.lineo.ui.editor.EditedLine
@@ -100,7 +101,43 @@ class NotepadState(
     /** Replaces the focused line wholesale — the system keyboard typing into the field. */
     fun setText(text: String, caret: Int = text.length) {
         val id = focused ?: return
-        write(id, text, caret)
+        val segments = text.split('\n')
+        if (segments.size == 1) {
+            write(id, text, caret)
+            return
+        }
+        // A newline inside one line is not a line: it arrives from a paste, and the document
+        // has a shape for it already. Storing it as typed would give one line two expressions
+        // and one result, and the second half would never be evaluated.
+        write(id, segments.first(), segments.first().length)
+        segments.drop(1).forEach { segment -> appendBelowFocus(segment) }
+        evaluate()
+    }
+
+    /** Puts [displayText] on a new line under the focused one, and moves the caret to it. */
+    private fun appendBelowFocus(displayText: String) {
+        val index = document.lines.indexOfFirst { it.id == focused }
+        if (index < 0) return
+        document = document.insertAt(index + 1, canonical(displayText))
+        focused = document.lines[index + 1].id
+        draft = displayText
+        caret = displayText.length
+    }
+
+    /**
+     * Replaces the name an error points at with the engine's nearest match — the fix chip.
+     *
+     * The line is focused first if it was not: the replacement is made against the draft, and
+     * the draft only exists for the focused line. Tapping a chip on another line is therefore
+     * a move of the caret as well as an edit, which is also what the user expects to see.
+     */
+    fun applySuggestion(id: LineId, error: CalcError.UnknownIdentifier) {
+        val suggestion = error.suggestion ?: return
+        if (focused != id) focus(id)
+        if (focused != id) return
+        val start = error.span.first.coerceIn(0, draft.length)
+        val end = (error.span.last + 1).coerceIn(start, draft.length)
+        write(id, draft.replaceRange(start, end, suggestion), start + suggestion.length)
     }
 
     /**
@@ -188,7 +225,37 @@ class NotepadState(
         focused = focused,
         caret = caret,
         textInputActive = textInputActive,
+        suggestions = suggestionsInScope(),
     )
+
+    /**
+     * The names in scope at the caret: the variables defined above the focused line, nearest
+     * definition first, then the units the lines above have produced values in.
+     *
+     * Above and not below, because that is where a name is visible from — §3.1 and the
+     * P1-02-1 decision. Nearest first because a name defined two lines up is the one being
+     * worked with, while the one at the top of the document was finished with long ago; where
+     * a name is defined twice the nearest also wins in the parser, so the chip inserts what
+     * the line will actually read.
+     *
+     * Units come from what the document has already computed rather than from the unit
+     * registry. Every unit Lineo knows would be hundreds of chips and none of them evidence
+     * of what this user is working in.
+     */
+    private fun suggestionsInScope(): List<NotepadSuggestion> {
+        val id = focused ?: return emptyList()
+        val above = document.lines.takeWhile { it.id != id }.asReversed()
+        val definitions = evaluation.graph.definitions
+        val variables = above.mapNotNull { definitions[it.id] }
+            .distinct()
+            .map { NotepadSuggestion(it, NotepadSuggestion.Kind.Variable) }
+        val units = above.mapNotNull { (evaluation[it.id] as? LineEvaluation.Value)?.value?.unit }
+            .filterNot { it.isEmpty }
+            .map { it.symbol }
+            .distinct()
+            .map { NotepadSuggestion(it, NotepadSuggestion.Kind.Unit) }
+        return variables + units
+    }
 
     private fun displayTextOf(id: LineId): String = document.displayTextOf(id).orEmpty()
 

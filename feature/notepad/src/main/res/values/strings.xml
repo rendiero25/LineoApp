@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        A line that reads a line with no value. Not an error: docs/ARCHITECTURE.md §3 asks for
+        "depends on line 3" rather than red, because this line is not what the user got wrong.
+    -->
+    <string name="notepad_blocked">Depends on line %1$d</string>
+    <string name="notepad_blocked_missing">Depends on a line that is gone</string>
+
+    <!-- Spoken for the number in the gutter, which is what a reference names. -->
+    <string name="notepad_line_number_description">Line %1$d</string>
+
+    <string name="notepad_suggestion_variable_description">Insert %1$s, defined above</string>
+    <string name="notepad_suggestion_unit_description">Insert the unit %1$s</string>
+</resources>
