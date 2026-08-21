@@ -4,11 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.selectableGroup
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.lineo.R
 import app.lineo.data.settings.DECIMAL_PLACES_RANGE
@@ -31,6 +31,7 @@ import app.lineo.data.settings.ThemePreference
 import app.lineo.data.settings.UnitSystem
 import app.lineo.data.settings.UserSettings
 import app.lineo.engine.AngleMode
+import app.lineo.ui.input.ChoiceChip
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
 import app.lineo.ui.theme.RoleColors
@@ -166,30 +167,22 @@ private fun <T> ChoiceRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
+                // The row is one group of options, so TalkBack announces the title once and
+                // then walks the chips, instead of leaving each chip to introduce itself.
+                .semantics { this.selectableGroup() }
                 .padding(top = LineoDimens.Grid),
             horizontalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
         ) {
             options.forEach { option ->
-                val role = if (option == selected) LineoRole.Equals else LineoRole.SuggestionChip
-                val colors = RoleColors.of(role)
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(ChipCornerRadius))
-                        .background(colors.container)
-                        .clickable { onSelect(option) }
-                        .defaultMinSize(
-                            minWidth = LineoDimens.MinTouchTarget,
-                            minHeight = LineoDimens.MinTouchTarget,
-                        )
-                        .padding(horizontal = LineoDimens.LineGap),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = label(option),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colors.content,
-                    )
-                }
+                ChoiceChip(
+                    label = label(option),
+                    selected = option == selected,
+                    onSelect = { onSelect(option) },
+                    // "1,5" and "1.5" say nothing out loud on their own, and neither does a
+                    // bare number of decimal places: each chip is read as an answer to the
+                    // question its title asked.
+                    description = "$title: ${label(option)}",
+                )
             }
         }
     }

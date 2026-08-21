@@ -27,6 +27,16 @@
     <string name="settings_licences_subtitle">What ships inside Lineo, and under which terms</string>
     <string name="licences_missing_text">No bundled text for %1$s</string>
 
+    <!--
+        Spoken accessibility labels. An action label finishes the sentence TalkBack starts
+        with "double tap to", so each one is a verb phrase and not a title.
+    -->
+    <string name="licences_show_text">show the licence</string>
+    <string name="licences_hide_text">hide the licence</string>
+    <string name="licences_state_shown">Licence shown</string>
+    <string name="licences_state_hidden">Licence hidden</string>
+    <string name="history_reuse_action">put this calculation back in the notepad</string>
+
     <string name="menu_more_options">More options</string>
 
     <!--

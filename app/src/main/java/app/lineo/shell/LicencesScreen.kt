@@ -20,6 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import app.lineo.R
 import app.lineo.licenses.LicenceTexts
 import app.lineo.licenses.LicensedDependency
@@ -67,10 +69,20 @@ internal fun LicencesScreen(
 /** One library: its coordinate, its licence, and — when open — the licence in full. */
 @Composable
 private fun DependencyRow(dependency: LicensedDependency, expanded: Boolean, onClick: () -> Unit) {
+    val action = stringResource(
+        if (expanded) R.string.licences_hide_text else R.string.licences_show_text,
+    )
+    val state = stringResource(
+        if (expanded) R.string.licences_state_shown else R.string.licences_state_hidden,
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            // The row is a disclosure, so it says which way it is facing and what tapping it
+            // will do. Without both, a screen reader hears a library name and a licence name
+            // with no hint that the full text is one tap away.
+            .clickable(onClickLabel = action, onClick = onClick)
+            .semantics { stateDescription = state }
             .padding(vertical = LineoDimens.Grid),
     ) {
         Text(

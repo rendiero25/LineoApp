@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.lineo.R
@@ -83,7 +84,11 @@ private fun HistoryRow(entry: HistoryEntry, onReuse: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(RowCornerRadius))
-            .clickable(onClick = onReuse)
+            // A row is one thing to a screen reader — the calculation — so it is read as one
+            // node, and the tap is *labelled*: "double tap to activate" says nothing about
+            // what activating does, while "put this back in the notepad" does.
+            .clickable(onClickLabel = stringResource(R.string.history_reuse_action), onClick = onReuse)
+            .semantics(mergeDescendants = true) {}
             .padding(LineoDimens.Grid),
         horizontalAlignment = Alignment.End,
     ) {
