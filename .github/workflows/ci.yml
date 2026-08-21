@@ -43,6 +43,20 @@ jobs:
       - name: Dependency licences
         run: ./gradlew checkDependencyLicenses --stacktrace
 
+      # The measured build, and the module that measures it. Compiling both on every PR is
+      # what stops a benchmark from rotting while nobody runs it — the numbers themselves
+      # need a device and are taken on one (P1-10).
+      - name: Release build and benchmarks compile
+        run: ./gradlew :app:assembleRelease :benchmark:assembleBenchmark --stacktrace
+
+      - name: APK size
+        # The 12 MB ceiling of docs/ANDROID_STANDARDS.md §3, enforced rather than remembered.
+        run: |
+          apk=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          bytes=$(stat -c%s "$apk")
+          echo "$apk is $((bytes / 1024)) KiB"
+          test "$bytes" -lt 12582912
+
       - name: Upload reports
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

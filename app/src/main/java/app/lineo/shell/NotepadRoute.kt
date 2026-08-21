@@ -1,5 +1,6 @@
 package app.lineo.shell
 
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,5 +58,10 @@ internal fun NotepadRoute(viewModel: NotepadViewModel, context: EvalContext) {
     }
 
     val notepad by viewModel.notepad.collectAsStateWithLifecycle()
+    // Startup is over when the app is *usable*, not when it is visible: the document has been
+    // read and there is a line to type on. `docs/ANDROID_STANDARDS.md` §3 asks for the report,
+    // and Macrobenchmark measures `fullyDrawn` from it — without it, startup would be timed to
+    // the first frame, which is a notepad with nothing in it yet.
+    ReportDrawnWhen { notepad != null }
     notepad?.let { NotepadScreen(state = it.state) }
 }

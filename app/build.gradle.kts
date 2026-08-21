@@ -5,6 +5,8 @@ plugins {
     // Screens live here now — settings, history, licences — and P1-06 recorded that they
     // would go unsnapshotted until this was applied. Test-only, so nothing reaches the APK.
     alias(libs.plugins.paparazzi)
+    // Consumes the profile `:benchmark` generates and ships it in the release build.
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -55,6 +57,10 @@ dependencies {
     // already in the licence allowlist, so this adds no artifact and no licence decision.
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    // Installs the baseline profile on first run, which is the whole point of having one.
+    // The only part of the benchmark work that reaches the APK (P1-10).
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":benchmark"))
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
