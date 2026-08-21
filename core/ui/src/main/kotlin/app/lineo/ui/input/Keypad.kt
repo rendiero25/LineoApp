@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -129,10 +130,15 @@ private fun ModeKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
     val description = key.contentDescription?.let { stringResource(it) }
     Box(
         modifier = Modifier
-            .size(LineoDimens.MinTouchTarget)
+            // A minimum rather than a size: this is the one key whose label is a *word*, so
+            // it is the one key whose label grows with the system font. Pinned to 48 dp it
+            // showed `AB` at the largest accessibility size — found in a snapshot at 2×
+            // (P1-08b). Growing, it becomes a pill and stays readable.
+            .defaultMinSize(minWidth = LineoDimens.MinTouchTarget, minHeight = LineoDimens.MinTouchTarget)
             .clip(CircleShape)
             .background(colors.container)
             .clickable { onPress(key) }
+            .padding(horizontal = LineoDimens.Grid)
             .semanticsLabel(description),
         contentAlignment = Alignment.Center,
     ) {
