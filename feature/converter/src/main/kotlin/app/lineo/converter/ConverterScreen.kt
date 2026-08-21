@@ -37,6 +37,7 @@ import app.lineo.engine.unit.UnitRegistry
 import app.lineo.ui.format.LocalNumberLocale
 import app.lineo.ui.format.LocalQuantityFormat
 import app.lineo.ui.format.QuantityFormat
+import app.lineo.ui.input.ChoiceChip
 import app.lineo.ui.input.Keypad
 import app.lineo.ui.input.LocalDecimalSeparator
 import app.lineo.ui.input.rememberKeypadState
@@ -101,12 +102,12 @@ private fun CategoryRow(state: ConverterState) {
         horizontalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
     ) {
         ConverterCategory.entries.forEach { category ->
-            val selected = category == state.category
-            val role = if (selected) LineoRole.Equals else LineoRole.SuggestionChip
-            Chip(
+            // The shared chip, so "selected" is a bolder label and a spoken state rather than
+            // a colour a reader has to see (`docs/CONVENTIONS.md` §8).
+            ChoiceChip(
                 label = stringResource(category.titleRes),
-                role = role,
-                onClick = { state.select(category) },
+                selected = category == state.category,
+                onSelect = { state.select(category) },
             )
         }
     }
