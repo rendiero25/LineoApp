@@ -21,6 +21,9 @@ turbine = "1.2.1"
 androidxTest = "1.7.0"
 window = "1.5.0"
 paparazzi = "2.0.0-alpha05"
+benchmark = "1.5.0-rc01"
+profileinstaller = "1.4.1"
+uiautomator = "2.4.0"
 
 [libraries]
 # Gradle plugins consumed as libraries by the convention plugins in build-logic.
@@ -81,12 +84,24 @@ androidx-test-core = { group = "androidx.test", name = "core", version.ref = "an
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 
+# Startup and frame timing on a device, and the journey that drives it (P1-10). Test-only:
+# the benchmark module is `com.android.test` and nothing here reaches the APK.
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+
+# The one half that does ship: it installs the baseline profile on first run, which is the
+# whole point of generating one.
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
 
 # Convention plugins, implemented in build-logic. Modules apply these, never the raw ones.
 lineo-android-application = { id = "lineo.android.application" }

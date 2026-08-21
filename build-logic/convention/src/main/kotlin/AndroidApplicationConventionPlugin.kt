@@ -28,6 +28,18 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                     // translation exists. Debug only: nothing pseudo reaches a release APK.
                     isPseudoLocalesEnabled = true
                 }
+                buildTypes.named("release") {
+                    // R8, in the full mode AGP 8 made the default: what ships is only the
+                    // code that is reachable, which is what `docs/ANDROID_STANDARDS.md` §3
+                    // means by an APK under 12 MB. Shrinking resources with it, since a
+                    // drawable nothing draws costs the same as one that ships.
+                    isMinifyEnabled = true
+                    isShrinkResources = true
+                    proguardFiles(
+                        getDefaultProguardFile("proguard-android-optimize.txt"),
+                        "proguard-rules.pro",
+                    )
+                }
             }
         }
     }
