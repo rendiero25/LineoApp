@@ -2,11 +2,23 @@ plugins {
     alias(libs.plugins.lineo.android.application)
     alias(libs.plugins.lineo.android.compose)
     alias(libs.plugins.lineo.android.hilt)
+    // Screens live here now — settings, history, licences — and P1-06 recorded that they
+    // would go unsnapshotted until this was applied. Test-only, so nothing reaches the APK.
+    alias(libs.plugins.paparazzi)
 }
 
 android {
     namespace = "app.lineo"
     defaultConfig.applicationId = "app.lineo"
+}
+
+// Paparazzi 2.0 ships Java 21 bytecode, while the shared test toolchain is 17 (the version
+// detekt is pinned to). The override is local to the modules that render snapshots, as it is
+// in :core:ui and :feature:notepad, rather than a build-wide bump.
+tasks.withType<Test>().configureEach {
+    javaLauncher.set(
+        javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) },
+    )
 }
 
 // The attribution list is generated from the shipped licence allowlist on every build, and
