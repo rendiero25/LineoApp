@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The locales Lineo ships translations for.
+
+    One entry today, and that is the honest number: `en` is the base and nothing else has
+    been translated yet (`AGENTS.md` §5). It is declared anyway, because the declaration is
+    what lets the system offer a per-app language and what lets `adb shell cmd locale
+    set-app-locales` reach the app at all — which is how the pseudo-locales of P1-09 are
+    tested without changing the whole device.
+
+    A locale is added here in the same commit as its `values-xx` folder, never before: a
+    language offered in the picker that resolves to English is worse than one not offered.
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+</locale-config>
