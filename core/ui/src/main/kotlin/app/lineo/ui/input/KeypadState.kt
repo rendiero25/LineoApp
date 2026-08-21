@@ -89,7 +89,7 @@ class KeypadState(
  */
 @Composable
 fun rememberKeypadState(
-    decimalSeparator: Char = '.',
+    decimalSeparator: Char = LocalDecimalSeparator.current,
     layout: KeypadLayout = KeypadLayout.Basic,
 ): KeypadState {
     val hasRoom = LocalWindowWidthClass.current != WindowWidthClass.Compact

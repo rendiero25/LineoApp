@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import app.lineo.engine.CalcError
 import app.lineo.ui.R
+import app.lineo.ui.format.LocalQuantityFormat
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
 import app.lineo.ui.theme.LineoTypography
@@ -95,11 +96,11 @@ private fun ExpressionField(state: EditorState, focusRequester: FocusRequester?)
 /** The computed value, muted, directly under the expression it belongs to. */
 @Composable
 private fun ResultLine(result: EditorEvaluation.Result) {
-    // canonicalString is locale-free. docs/CONVENTIONS.md §1 puts display formatting —
-    // grouping and the locale separator — at this boundary, and that formatter does not
-    // exist yet; it is recorded in TASKS.md as its own task rather than improvised here.
+    // The display boundary of docs/CONVENTIONS.md §1: grouping, the locale separator and the
+    // decimal-place ceiling, resolved once by the shell from the user's settings. The engine
+    // stays locale-free above and below this line.
     Text(
-        text = result.value.canonicalString(),
+        text = LocalQuantityFormat.current.format(result.value).display(),
         style = LineoTypography.Result.asExpression(),
         color = RoleColors.of(LineoRole.Result).content,
         textAlign = TextAlign.End,

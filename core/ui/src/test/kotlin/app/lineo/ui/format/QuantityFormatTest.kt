@@ -32,8 +32,20 @@ class QuantityFormatTest {
     }
 
     @Test
-    fun `Indian grouping is the platform's, not ours`() {
+    fun `Indian grouping is lakh-crore, whatever the platform can express`() {
         assertEquals("12,34,567.89", format(Locale.forLanguageTag("hi-IN"), "1234567.89"))
+    }
+
+    @Test
+    fun `a crore keeps pairs all the way up, and a sign in front of them`() {
+        assertEquals("-1,23,45,67,890", format(Locale.forLanguageTag("hi-IN"), "-1234567890"))
+    }
+
+    @Test
+    fun `an Indian separator override moves the grouping character with it`() {
+        val comma = QuantityFormat(Locale.forLanguageTag("hi-IN"), decimalSeparator = ',')
+
+        assertEquals("12.34.567,89", comma.format(quantity("1234567.89")).text)
     }
 
     @Test

@@ -31,7 +31,7 @@ class AccessoryRowState(decimalSeparator: Char = '.') : CommandInputSurface() {
 }
 
 @Composable
-fun rememberAccessoryRowState(decimalSeparator: Char = '.'): AccessoryRowState =
+fun rememberAccessoryRowState(decimalSeparator: Char = LocalDecimalSeparator.current): AccessoryRowState =
     remember(decimalSeparator) { AccessoryRowState(decimalSeparator) }
 
 /**

@@ -1,9 +1,6 @@
 package app.lineo.ui.format
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalConfiguration
 import app.lineo.engine.Quantity
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -28,22 +25,29 @@ import java.util.Locale
  *   setting of §2 that P1-07 owns. The grouping separator follows it — a dot decimal groups
  *   with commas and a comma decimal groups with dots — so the two can never be the same
  *   character.
+ * @param decimalPlaces how many decimals a result may show before it is cut and marked.
+ *   A **ceiling**, not a width: `0.5` stays `0.5` rather than being padded, because a
+ *   calculator that padded every answer would overstate how precise it was.
  */
 @Immutable
 class QuantityFormat(
     private val locale: Locale,
     private val decimalSeparator: Char? = null,
+    private val decimalPlaces: Int = MAX_FRACTION_DIGITS,
 ) {
+
+    /** Whether §3's lakh-crore grouping applies, decided once from the language. */
+    private val indianGrouping: Boolean = locale.language in INDIAN_GROUPING
 
     private val numbers: DecimalFormat = (NumberFormat.getInstance(locale) as? DecimalFormat ?: DecimalFormat())
         .apply {
-            // §3 makes Indian grouping a requirement rather than an enhancement, and the JVM's
-            // own data does not supply it for `hi-IN` — it grouped 1234567 as `1,234,567`,
-            // which is what this line exists to prevent. The pattern is applied rather than
-            // the digits being grouped by hand, so the insertion is still the platform's.
-            if (locale.language in INDIAN_GROUPING) applyPattern(INDIAN_PATTERN)
-            isGroupingUsed = true
-            maximumFractionDigits = MAX_FRACTION_DIGITS
+            // §3 makes Indian grouping a requirement rather than an enhancement, and the JVM
+            // cannot express it: `java.text.DecimalFormat` keeps a single grouping size, so
+            // `#,##,##0` is read as plain groups of three and `hi-IN` prints `1,234,567`.
+            // Applying the pattern is therefore not enough — the digits are regrouped in
+            // [groupIndian] instead, with the separators CLDR gives for the locale.
+            isGroupingUsed = !indianGrouping
+            maximumFractionDigits = decimalPlaces.coerceIn(0, MAX_FRACTION_DIGITS)
             // HALF_UP, not banker's rounding: §4 calls it out by name, because half-to-even
             // contradicts what anyone outside accounting expects a calculator to do.
             roundingMode = RoundingMode.HALF_UP
@@ -57,13 +61,39 @@ class QuantityFormat(
      * in every locale — translating `km` would be a different unit, not a different spelling.
      */
     fun format(quantity: Quantity): FormattedQuantity {
-        val rounded = quantity.value.setScale(MAX_FRACTION_DIGITS, RoundingMode.HALF_UP)
-        val digits = numbers.format(quantity.value)
+        val places = decimalPlaces.coerceIn(0, MAX_FRACTION_DIGITS)
+        val rounded = quantity.value.setScale(places, RoundingMode.HALF_UP)
+        val formatted = numbers.format(quantity.value)
+        val digits = if (indianGrouping) groupIndian(formatted) else formatted
         val unit = quantity.unit?.takeIf { !it.isEmpty }?.symbol
         return FormattedQuantity(
             text = if (unit == null) digits else "$digits $unit",
             truncated = rounded.compareTo(quantity.value) != 0,
         )
+    }
+
+    /**
+     * Regroups the integer part of [text] as `12,34,567`: three digits, then pairs.
+     *
+     * Only the *placement* is ours. Which characters are used is still the locale's — the
+     * grouping and decimal separators are read back from the formatter, so an override made
+     * in [symbolsFor] is honoured here as well.
+     */
+    private fun groupIndian(text: String): String {
+        val symbols = numbers.decimalFormatSymbols
+        val start = text.indexOfFirst(Char::isDigit).takeIf { it >= 0 } ?: return text
+        val end = text.indexOf(symbols.decimalSeparator).takeIf { it >= 0 } ?: text.length
+        val integer = text.substring(start, end)
+        if (integer.length <= FIRST_INDIAN_GROUP) return text
+
+        var index = integer.length - FIRST_INDIAN_GROUP
+        val grouped = StringBuilder(integer.substring(index))
+        while (index > 0) {
+            val from = (index - INDIAN_GROUP).coerceAtLeast(0)
+            grouped.insert(0, symbols.groupingSeparator).insert(0, integer.substring(from, index))
+            index = from
+        }
+        return text.substring(0, start) + grouped + text.substring(end)
     }
 
     private fun symbolsFor(separator: Char): DecimalFormatSymbols =
@@ -72,19 +102,26 @@ class QuantityFormat(
             groupingSeparator = if (separator == ',') '.' else ','
         }
 
-    private companion object {
+    companion object {
 
         /**
          * `1/3` shows as `0.333333333` and says it was cut, per §4. Nine is what that row
          * spells out; it is also about as many digits as anyone reads without counting.
+         *
+         * It is also the ceiling on the P1-07 setting: a user may show fewer decimals, never
+         * more, because beyond this the digits are the `Double` boundary's noise rather than
+         * the answer.
          */
         const val MAX_FRACTION_DIGITS = 9
 
         /** The languages `docs/CONVENTIONS.md` §3 lists as grouping `12,34,567`. */
         val INDIAN_GROUPING = setOf("hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa")
 
-        /** Two digits per group above the first three — the lakh-crore pattern. */
-        const val INDIAN_PATTERN = "#,##,##0"
+        /** The lowest group of the lakh-crore pattern — the hundreds, as everywhere else. */
+        const val FIRST_INDIAN_GROUP = 3
+
+        /** Every group above it: two digits, so `1234567` reads `12,34,567`. */
+        const val INDIAN_GROUP = 2
     }
 }
 
@@ -104,16 +141,4 @@ data class FormattedQuantity(val text: String, val truncated: Boolean) {
     private companion object {
         const val TRUNCATION_MARK = "…"
     }
-}
-
-/**
- * The formatter for the current locale.
- *
- * Read from the configuration rather than from `Locale.getDefault()`, so that a locale
- * change recomposes what is on screen instead of waiting for the process to restart.
- */
-@Composable
-fun rememberQuantityFormat(decimalSeparator: Char? = null): QuantityFormat {
-    val locale = LocalConfiguration.current.locales[0]
-    return remember(locale, decimalSeparator) { QuantityFormat(locale, decimalSeparator) }
 }
