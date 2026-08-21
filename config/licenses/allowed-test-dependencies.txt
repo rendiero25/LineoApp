@@ -52,6 +52,8 @@ com.ibm.icu:icu4j  # Unicode-3.0 (test only, transitive via Robolectric)
 com.squareup.moshi:moshi  # Apache-2.0 (test only, transitive via Paparazzi)
 com.squareup.moshi:moshi-adapters  # Apache-2.0 (test only, transitive via Paparazzi)
 com.squareup.moshi:moshi-kotlin  # Apache-2.0 (test only, transitive via Paparazzi)
+com.squareup.okio:okio  # Apache-2.0
+com.squareup.okio:okio-jvm  # Apache-2.0
 com.sun.activation:javax.activation  # CDDL-1.0 or GPL-2.0-with-classpath-exception (test only, transitive via Paparazzi)
 com.sun.istack:istack-commons-runtime  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
 com.sun.xml.fastinfoset:FastInfoset  # Apache-2.0 (test only, transitive via Paparazzi)
@@ -62,6 +64,7 @@ dev.drewhamilton.poko:poko-annotations-jvm  # Apache-2.0 (test only, transitive 
 jakarta.activation:jakarta.activation-api  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
 jakarta.xml.bind:jakarta.xml.bind-api  # EDL-1.0, a BSD-3-Clause text (test only, transitive via Paparazzi)
 javax.annotation:javax.annotation-api  # CDDL-1.1 or GPL-2.0-with-classpath-exception (test only, transitive via Robolectric)
+javax.inject:javax.inject  # Apache-2.0
 junit:junit  # EPL-1.0 (test only, approved by name in docs/ARCHITECTURE.md §7)
 kxml2:kxml2  # BSD-3-Clause, declared as "BSD style" (test only, transitive via Paparazzi)
 net.bytebuddy:byte-buddy  # Apache-2.0 (test only, transitive via Paparazzi)
