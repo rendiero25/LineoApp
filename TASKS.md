@@ -334,14 +334,23 @@ of them present.*
     row is one node with a labelled tap; a licence row says which way it is facing
   - **DoD:** no action is announced as "activate" alone, and no chip is read as a bare glyph
 
-- [~] **P1-08-3 · The device pass** — `S` — all — **blocked, see the log**
-  - TalkBack end to end, and `ar-XB` for RTL
+- [~] **P1-08-3 · The device pass** — `S` — all — **one line left, see the log**
+  - `ShellSemanticsTest` runs on a device: a chip publishes its selected state and reads as
+    an answer to its title, a tape row is one node with a labelled tap, a licence row says
+    which way it is facing. `ar-XB` is covered by the pseudo-locale snapshots P1-09 added
+  - **Left:** a human listening to TalkBack walk the whole flow. Nothing else asserts that
+    the order is sensible or that the result is bearable to listen to
   - **DoD:** full task flow completable with TalkBack only
 
-- [ ] **P1-09 · Localisation plumbing** — `S`
-  - No hardcoded user-facing strings; `en` base complete
-  - Pseudo-locale `en-XA` shows no truncation
-  - **DoD:** lint rule fails the build on a hardcoded string
+- [x] **P1-09 · Localisation plumbing** — `S`
+  - `checkHardcodedText` fails the build on user-facing text written into Kotlin. Android's
+    own `HardcodedText` reads layouts, and there are none here
+  - `isPseudoLocalesEnabled` on the debug build, `android:localeConfig` declared, and
+    snapshots in `en-XA` (expanded) and `ar-XB` (expanded and mirrored)
+  - `ABC` and `123` moved to `strings.xml` — they name a script and a number system. Every
+    other key label is notation and stays in code
+  - **DoD:** the check fails on a hardcoded string — verified by writing one; no truncation
+    in `en-XA`
 
 - [ ] **P1-08b · Font scaling and large-screen pass** — `S` — all
   - Maximum system font scale causes no clipping in display or keypad
@@ -617,3 +626,11 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-08-0 | `keySize` took the smaller of what width and height allowed, with no floor — a landscape pane with the keyboard up produced a 34 dp key | Floored at 48 dp. A grid that cannot fit overflows its pane instead, which is visible; a key too small to hit is not. The snapshots could not see this, so the function is `internal` now and `KeySizeTest` asserts it in the windows no snapshot covers |
 | open | P1-08-3 | TalkBack's spoken output cannot be captured from the shell, and `uiautomator dump` never returns on this emulator — `UiAutomation` times out connecting, on a wedged snapshot and on a cold boot alike | **Unresolved.** The labels are asserted in code and in unit tests; what is *not* asserted is that TalkBack reaches every one of them in order. Either instrumented Compose tests (`ui-test-junit4` plus an `androidTest` source set — a dependency decision under §7, and the two libraries are already in the version catalog unused) or a human with a real device. **Needs a human decision** |
 | open | P1-08-3 | `ar-XB` could not be applied: `cmd locale set-app-locales` needs `android:localeConfig`, which the manifest does not declare, and the system locale needs root, which a Play system image does not give | RTL layout itself is covered by Paparazzi in `:core:ui`, `:feature:notepad` and `:feature:converter`, which render right-to-left. What is missing is the pseudo-locale's text expansion and real bidi. **Declaring `localeConfig` belongs to P1-09**, which owns localisation plumbing — do the `ar-XB` run there, on the manifest P1-09 leaves behind |
+| 2026-08-21 | P1-08-3 | Instrumented tests and Paparazzi on `:app` — the two decisions §7 reserves | Both approved by the product owner. `ui-test-junit4`, `espresso-core` and `androidx.test:junit` were already declared in `:app` from the P0-01 template and unused; Paparazzi is already applied in two modules and is test-only. Neither reaches the APK |
+| 2026-08-21 | P1-08-3 | TalkBack could not be driven from the shell: `uiautomator dump` never returns on this emulator, and swipe gestures injected with `input swipe` do not reach TalkBack's gesture detector | `ShellSemanticsTest` asserts the tree TalkBack walks instead — labels, selected state, click labels, state descriptions. **Still open**: a human listening to it. A test can prove a label exists; it cannot prove the order makes sense out loud |
+| 2026-08-21 | P1-09 | Nothing fails the build on a hardcoded string: Android's `HardcodedText` reads layout XML, and every screen here is Compose, where a literal is an ordinary argument | `checkHardcodedText` in `build-logic`, hung off `check`. It reads seven argument names — `text`, `label`, `title`, `subtitle`, `description`, `contentDescription`, `onClickLabel`, `stateDescription` — and flags a literal only when it still contains two letters in a row once interpolations are removed, so `"$title: ${label(option)}"` passes and `"Clear history"` does not. A line may opt out with `not-translatable: <why>`. Verified by writing a violation and watching the build fail |
+| 2026-08-21 | P1-09 | `ABC` on the keypad and `123` on the accessory row are words, not notation — a Cyrillic user should see their own three letters | `KeypadKey.labelRes`, resolved by `keyLabel` where the key is drawn, so a layout stays a pure function with no `Context`. Every other label — `×`, `√`, `sin⁻¹`, `log₂` — is ISO notation and stays in code, as named constants so the distinction is stated once rather than argued with per line |
+| 2026-08-21 | P1-09 | `TokenShowcase` lives in `src/main` but is reachable only from its own snapshot test, and its sample text tripped the new check | Moved to `src/test`. It is a fixture that exists to be photographed; nothing in the app has ever composed it, and calling it main source was the thing that was untrue |
+| 2026-08-21 | P1-09 | `ar-XB` on a device needs root on a Play image, and `cmd locale set-app-locales` needs a `localeConfig` | Both fixed the way P1-09 owns: `isPseudoLocalesEnabled` generates `en-XA` and `ar-XB` for the debug build, and `android:localeConfig` is declared with the one locale that actually has strings. The pseudo-locales are then rendered as snapshots — `DeviceConfig.copy(locale = "b+ar+XB", layoutDirection = RTL)` — which is where a truncation can be looked at rather than glimpsed. This closes the `ar-XB` half of P1-08-3 |
+| 2026-08-21 | P1-09 | A Paparazzi device config in `ar-XB` mirrors the *resources* but leaves the layout left-to-right: layoutlib does not derive `LocalLayoutDirection` from the configured locale | The mirrored snapshots override `LocalLayoutDirection` as well, so the picture shows what a device shows — both flips at once. Recorded because the next person to write one will otherwise think the override is redundant |
+| 2026-08-21 | P1-09 | Paparazzi refuses two `@Rule` instances in one class — "Acquiring different scenes from same thread without releases", and every test in the class fails, not just the second | One device per class. The pseudo-locale snapshots live in `ShellExpandedLocalePaparazziTest` and `ShellMirroredLocalePaparazziTest`, with the fixtures they share in `ShellFixtures.kt` |
