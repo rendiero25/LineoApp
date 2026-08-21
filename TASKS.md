@@ -312,9 +312,30 @@ no dimension, and nothing in `:app` bound the module. Split the same way as P1-0
   - **DoD:** changing separator updates the keypad immediately; the licences screen lists
     every shipped dependency and can open the full text of each licence it names
 
-- [ ] **P1-08 · Accessibility pass** — `M` — all
-  - TalkBack reads `2^3` semantically from the AST
-  - RTL verified with `ar-XB`; 48 dp minimum targets; no colour-only meaning
+*P1-08 spans every module, the same shape as P1-04 and P1-05. Split: the reader and the
+shared chip in `:core:ui`, then one task per surface, then the device pass that needs all
+of them present.*
+
+- [x] **P1-08-0 · What a screen reader is given** — `M` — `:core:ui`
+  - `ExpressionSpeech` walks the AST: `2^3` is "2 to the power of 3", brackets are spoken
+    only where they change the answer, and `5 km` stays a quantity
+  - `ChoiceChip`: selection is a bolder label as well as a colour, and `selectable` says so
+  - `keySize` floored at 48 dp — it had no floor, and a short pane produced a smaller key
+  - **DoD:** every case goes through the real parser; the floor has a test in the windows
+    no snapshot covers
+
+- [x] **P1-08-1 · The notepad reads its lines** — `S` — `:feature:notepad`
+  - A line that is not being edited is described from the tree the evaluation already
+    parsed. The focused line keeps its raw text — a field must read what is in it
+  - **DoD:** the tree reaches the screen, and a line that does not parse has none
+
+- [x] **P1-08-2 · The other surfaces say what they do** — `S` — `:feature:converter`, `:app`
+  - Category, separator, theme and unit-system rows are selectable groups of chips; a tape
+    row is one node with a labelled tap; a licence row says which way it is facing
+  - **DoD:** no action is announced as "activate" alone, and no chip is read as a bare glyph
+
+- [~] **P1-08-3 · The device pass** — `S` — all — **blocked, see the log**
+  - TalkBack end to end, and `ar-XB` for RTL
   - **DoD:** full task flow completable with TalkBack only
 
 - [ ] **P1-09 · Localisation plumbing** — `S`
@@ -589,3 +610,10 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-07 | With Imperial chosen, the converter still opened on `m → km` — the unit-system setting reached the screen and did nothing | A class-initialisation cycle. Every `ConverterCategory` constant is built by `converterUnits`, a top-level function in the same file, so constructing the constants runs the file's initialiser and `IMPERIAL_PAIRS` was built while every constant was still null — eight entries keyed on null, every lookup a miss, no error anywhere. It is `by lazy` now, and three tests cover the pairs. **The trap is the file layout**, and the same file already carries a comment about it for the companion object |
 | 2026-08-21 | P1-07 | `AUTO` for the unit system was resolved inside `MainActivity`, where no test can reach it | Moved to `ResolvedSettings`, which is where every other locale question is answered. It resolves against the *chosen* locale rather than the reading one: a separator override can move the reading locale to Germany, and choosing a comma is not a statement about whether the user weighs things in pounds |
 | 2026-08-21 | P1-07 | Verified on the emulator (`Pixel_10`, cold boot) | The separator setting changes the decimal key and the argument separator on return from settings, and the reading locale with them — the comma line that parsed before now reports `Unexpected ','`, which is the two agreeing rather than disagreeing. Imperial opens the converter on `ft → mi`. `sin(30)` is `0.5` in DEG and `-1…` in RAD, cut at the one decimal place the settings ask for. The licences screen lists `androidx.activity:activity` as Apache-2.0 and opens the full text |
+| 2026-08-21 | P1-08 | The pass touches `:core:ui` and every surface at once — rule 3 again | Split as P1-08-0 (the reader and the shared chip), P1-08-1 (notepad), P1-08-2 (the other surfaces) and P1-08-3 (the device pass, which needs all of them present). The same shape as P1-04 and P1-05 |
+| 2026-08-21 | P1-08-0 | What TalkBack says has to come from the AST, and the AST lives in `:core:engine` — a module `CLAUDE.md` puts behind plan mode | Nothing in the engine changed. `Engine.parse` is already public and `Ast` is already a sealed interface with every node exposed, so the reader is a walk over a tree the engine hands out, written in `:core:ui` where the words are. The engine stays a library that knows no locale and no screen |
+| 2026-08-21 | P1-08-0 | Does the editable line get a spoken description too? | No. In a text field TalkBack reads what is actually there, character by character, and a description would fight the caret — the two would stop agreeing mid-edit. Only a line that is *not* being edited is spoken from its tree, which is also the only line a reader is reading rather than writing |
+| 2026-08-21 | P1-08-0 | A selected chip differed from an unselected one by container colour alone, which §8 forbids outright | `ChoiceChip` in `:core:ui`: bolder label plus the accent, and `Modifier.selectable` so the state is spoken. Three screens were drawing the same box; one shared chip means the next fix reaches all of them. Converter snapshots re-recorded for the bolder label |
+| 2026-08-21 | P1-08-0 | `keySize` took the smaller of what width and height allowed, with no floor — a landscape pane with the keyboard up produced a 34 dp key | Floored at 48 dp. A grid that cannot fit overflows its pane instead, which is visible; a key too small to hit is not. The snapshots could not see this, so the function is `internal` now and `KeySizeTest` asserts it in the windows no snapshot covers |
+| open | P1-08-3 | TalkBack's spoken output cannot be captured from the shell, and `uiautomator dump` never returns on this emulator — `UiAutomation` times out connecting, on a wedged snapshot and on a cold boot alike | **Unresolved.** The labels are asserted in code and in unit tests; what is *not* asserted is that TalkBack reaches every one of them in order. Either instrumented Compose tests (`ui-test-junit4` plus an `androidTest` source set — a dependency decision under §7, and the two libraries are already in the version catalog unused) or a human with a real device. **Needs a human decision** |
+| open | P1-08-3 | `ar-XB` could not be applied: `cmd locale set-app-locales` needs `android:localeConfig`, which the manifest does not declare, and the system locale needs root, which a Play system image does not give | RTL layout itself is covered by Paparazzi in `:core:ui`, `:feature:notepad` and `:feature:converter`, which render right-to-left. What is missing is the pseudo-locale's text expansion and real bidi. **Declaring `localeConfig` belongs to P1-09**, which owns localisation plumbing — do the `ar-XB` run there, on the manifest P1-09 leaves behind |
