@@ -10,9 +10,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import app.lineo.engine.AngleMode
 import app.lineo.engine.Engine
 import app.lineo.engine.EvalContext
 import app.lineo.registry.EditorCommand
@@ -20,8 +20,11 @@ import app.lineo.registry.ModuleRegistry
 import app.lineo.registry.Tier
 import app.lineo.ui.editor.EditorState
 import app.lineo.ui.editor.ExpressionEditor
+import app.lineo.ui.editor.LocalAngleMode
+import app.lineo.ui.format.LocalNumberLocale
 import app.lineo.ui.input.AccessoryRow
 import app.lineo.ui.input.Keypad
+import app.lineo.ui.input.LocalDecimalSeparator
 import app.lineo.ui.input.rememberAccessoryRowState
 import app.lineo.ui.input.rememberKeypadState
 import app.lineo.ui.layout.AdaptivePane
@@ -47,13 +50,18 @@ import java.util.Locale
  */
 @Composable
 internal fun ScientificScreen(modifier: Modifier = Modifier) {
-    val locale = LocalConfiguration.current.locales[0]
+    // From the settings, never from the device configuration: the separator setting resolves
+    // to a reading locale, and a screen that read the configuration would offer a comma key
+    // and then report a syntax error on the comma it had just typed.
+    val locale = LocalNumberLocale.current
+    val angleMode = LocalAngleMode.current
+    val decimalSeparator = LocalDecimalSeparator.current
     // The line, kept across a rotation and across process death. `EditorState` is not
     // saveable and a rotation recreates it, so what is saved is the two things it holds that
     // the user typed — found on a device, where turning the phone emptied the line.
     var savedText by rememberSaveable { mutableStateOf("") }
     var savedCaret by rememberSaveable { mutableStateOf(0) }
-    val editor = rememberScientificEditor(locale, savedText, savedCaret)
+    val editor = rememberScientificEditor(locale, angleMode, decimalSeparator, savedText, savedCaret)
     // The layout is an object, so the keypad is remembered across recompositions and the
     // command stream survives them.
     val keypad = rememberKeypadState(layout = ScientificKeypadLayout)
@@ -118,9 +126,20 @@ internal fun ScientificScreen(modifier: Modifier = Modifier) {
  * module's functions have to resolve.
  */
 @Composable
-private fun rememberScientificEditor(locale: Locale, text: String, caret: Int): EditorState = remember(locale) {
+private fun rememberScientificEditor(
+    locale: Locale,
+    angleMode: AngleMode,
+    decimalSeparator: Char,
+    text: String,
+    caret: Int,
+): EditorState = remember(locale, angleMode, decimalSeparator) {
     val functions = ModuleRegistry(setOf(ScientificModule())).functionRegistry(Tier.FREE, locale)
     EditorState(
-        evaluate = { source -> Engine.evaluate(source, EvalContext(locale = locale, functions = functions)) },
+        decimalSeparator = decimalSeparator,
+        // The angle mode is the user's, not this screen's: `sin(30)` has to mean here what it
+        // means in the notepad, and the setting is the only thing that decides which.
+        evaluate = { source ->
+            Engine.evaluate(source, EvalContext(locale = locale, angleMode = angleMode, functions = functions))
+        },
     ).apply { if (text.isNotEmpty()) setText(text, caret) }
 }
