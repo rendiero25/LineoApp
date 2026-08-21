@@ -21,6 +21,13 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                     versionName = "1.0"
                     testInstrumentationRunner = ANDROID_TEST_RUNNER
                 }
+                buildTypes.named("debug") {
+                    // Generates the `en-XA` and `ar-XB` resources P1-09 asks for. They are
+                    // built by aapt2 from the base strings, so they cost nothing to maintain
+                    // and they are the only way to see truncation and bidi before a
+                    // translation exists. Debug only: nothing pseudo reaches a release APK.
+                    isPseudoLocalesEnabled = true
+                }
             }
         }
     }

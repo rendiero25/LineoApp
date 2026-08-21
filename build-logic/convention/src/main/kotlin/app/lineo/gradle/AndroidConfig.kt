@@ -45,6 +45,9 @@ internal fun Project.configureAndroid(extension: CommonExtension) {
     configureTests()
     configureDetekt()
     configureLicenseCheck()
+    // Android's own HardcodedText reads layouts, and there are none here: every screen is
+    // Compose. This is the half lint cannot see (`AGENTS.md` §5).
+    configureHardcodedTextCheck()
 }
 
 /** JVM target for Android modules. Kotlin is applied by AGP's built-in Kotlin support. */
