@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import app.lineo.data.settings.UnitSystem
 import app.lineo.engine.CalcResult
 import app.lineo.engine.Engine
 import app.lineo.engine.EvalContext
@@ -31,6 +32,7 @@ import app.lineo.ui.editor.applying
 @Stable
 internal class ConverterState(
     category: ConverterCategory = ConverterCategory.LENGTH,
+    private val unitSystem: UnitSystem = UnitSystem.METRIC,
     private val decimalSeparator: Char = '.',
     private val evaluate: (String) -> CalcResult<Quantity> = { Engine.evaluate(it, EvalContext()) },
 ) {
@@ -38,10 +40,10 @@ internal class ConverterState(
     var category: ConverterCategory by mutableStateOf(category)
         private set
 
-    var from: ConverterUnit by mutableStateOf(category.defaultFrom)
+    var from: ConverterUnit by mutableStateOf(category.defaultPair(unitSystem).first)
         private set
 
-    var to: ConverterUnit by mutableStateOf(category.defaultTo)
+    var to: ConverterUnit by mutableStateOf(category.defaultPair(unitSystem).second)
         private set
 
     /** What the user has typed. Empty is a real state: the screen shows nothing rather than zero. */
@@ -72,11 +74,15 @@ internal class ConverterState(
         amount = amount.applying(command, decimalSeparator)
     }
 
-    /** Switching category takes its first two units: the old pair belongs to another dimension. */
+    /**
+     * Switching category takes that category's starting pair: the old one belongs to another
+     * dimension, and which pair is the starting one depends on how the user writes units.
+     */
     fun select(category: ConverterCategory) {
         this.category = category
-        from = category.defaultFrom
-        to = category.defaultTo
+        val (start, target) = category.defaultPair(unitSystem)
+        from = start
+        to = target
     }
 
     fun selectFrom(unit: ConverterUnit) {

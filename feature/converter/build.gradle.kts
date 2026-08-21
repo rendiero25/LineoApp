@@ -25,6 +25,9 @@ dependencies {
     // The editor, the keypad and the layout the screen is assembled from. Nothing here
     // draws a key of its own.
     api(project(":core:ui"))
+    // The unit-system preference only. Room stays behind the repository contracts, none of
+    // which this module touches.
+    implementation(project(":core:data"))
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

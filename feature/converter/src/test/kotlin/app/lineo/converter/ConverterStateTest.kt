@@ -1,5 +1,6 @@
 package app.lineo.converter
 
+import app.lineo.data.settings.UnitSystem
 import app.lineo.engine.Engine
 import app.lineo.engine.EvalContext
 import app.lineo.engine.unit.UnitRegistry
@@ -144,5 +145,33 @@ class ConverterStateTest {
 
         assertEquals("5 cm to in", state.expression)
         assertEquals("1.968503937007874015748031496062992", state.result?.value?.toPlainString())
+    }
+
+    @Test
+    fun `a customary user starts on the pair they reach for`() {
+        val state = ConverterState(category = ConverterCategory.LENGTH, unitSystem = UnitSystem.IMPERIAL)
+
+        assertEquals("ft", state.from.label)
+        assertEquals("mi", state.to.label)
+    }
+
+    @Test
+    fun `the unit system follows a category change`() {
+        val state = ConverterState(category = ConverterCategory.LENGTH, unitSystem = UnitSystem.IMPERIAL)
+
+        state.select(ConverterCategory.MASS)
+
+        assertEquals("lb", state.from.label)
+        assertEquals("oz", state.to.label)
+    }
+
+    @Test
+    fun `a category with no customary reading is the same in both systems`() {
+        // Data and time: a byte is a byte, and a second is a second.
+        val metric = ConverterState(category = ConverterCategory.DATA, unitSystem = UnitSystem.METRIC)
+        val imperial = ConverterState(category = ConverterCategory.DATA, unitSystem = UnitSystem.IMPERIAL)
+
+        assertEquals(metric.from.label, imperial.from.label)
+        assertEquals(metric.to.label, imperial.to.label)
     }
 }

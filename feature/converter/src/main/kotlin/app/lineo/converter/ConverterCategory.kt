@@ -1,6 +1,7 @@
 package app.lineo.converter
 
 import androidx.annotation.StringRes
+import app.lineo.data.settings.UnitSystem
 
 /**
  * One row of the converter: a quantity, and the units it can be expressed in.
@@ -90,7 +91,24 @@ internal enum class ConverterCategory(
     ),
     ;
 
-    /** The unit a fresh selection converts from, and the one it converts to. */
+    /**
+     * The pair a fresh selection starts on, in [system].
+     *
+     * Metric takes the first two units, which are ordered metric-first; imperial takes the
+     * pair a customary user actually reaches for — feet to miles rather than metres to
+     * kilometres. Where a category has no imperial reading (data, time) both are the same,
+     * and saying so here is cheaper than a setting that quietly does nothing to five of the
+     * ten rows.
+     */
+    fun defaultPair(system: UnitSystem): Pair<ConverterUnit, ConverterUnit> {
+        val imperial = IMPERIAL_PAIRS[this]
+        return if (system == UnitSystem.IMPERIAL && imperial != null) {
+            ConverterUnit(imperial.first) to ConverterUnit(imperial.second)
+        } else {
+            units[0] to units[1]
+        }
+    }
+
     val defaultFrom: ConverterUnit get() = units.first()
     val defaultTo: ConverterUnit get() = units[1]
 
@@ -99,6 +117,31 @@ internal enum class ConverterCategory(
         /** Unknown ids fall back to length rather than failing: a saved id can outlive a build. */
         fun of(id: String?): ConverterCategory = entries.firstOrNull { it.id == id } ?: LENGTH
     }
+}
+
+/**
+ * What each category starts on for someone who writes in customary units.
+ *
+ * Only the categories where it differs: a byte is a byte, and a second is a second.
+ *
+ * **`by lazy`, and it has to be.** Every constant of [ConverterCategory] is built by
+ * `converterUnits`, a top-level function in this file, so constructing the constants runs
+ * this file's initializer — while the constants themselves are still null. Built eagerly,
+ * this map would key eight entries on null and every lookup would miss, which is exactly how
+ * an imperial user was silently shown `m → km`. Deferring it to the first lookup, which
+ * cannot happen before the constants exist, is what makes the keys real.
+ */
+private val IMPERIAL_PAIRS: Map<ConverterCategory, Pair<String, String>> by lazy {
+    mapOf(
+        ConverterCategory.LENGTH to ("ft" to "mi"),
+        ConverterCategory.MASS to ("lb" to "oz"),
+        ConverterCategory.VOLUME to ("gal" to "floz"),
+        ConverterCategory.AREA to ("acre" to "ha"),
+        ConverterCategory.SPEED to ("mi/h" to "km/h"),
+        ConverterCategory.TEMPERATURE to ("°F" to "°C"),
+        ConverterCategory.PRESSURE to ("psi" to "bar"),
+        ConverterCategory.ENERGY to ("BTU" to "kJ"),
+    )
 }
 
 /**

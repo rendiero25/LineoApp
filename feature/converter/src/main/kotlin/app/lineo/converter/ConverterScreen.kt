@@ -26,7 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -35,8 +34,11 @@ import androidx.compose.ui.unit.dp
 import app.lineo.engine.Engine
 import app.lineo.engine.EvalContext
 import app.lineo.engine.unit.UnitRegistry
+import app.lineo.ui.format.LocalNumberLocale
+import app.lineo.ui.format.LocalQuantityFormat
 import app.lineo.ui.format.QuantityFormat
 import app.lineo.ui.input.Keypad
+import app.lineo.ui.input.LocalDecimalSeparator
 import app.lineo.ui.input.rememberKeypadState
 import app.lineo.ui.layout.AdaptivePane
 import app.lineo.ui.theme.LineoDimens
@@ -55,11 +57,11 @@ import app.lineo.ui.theme.asExpression
  */
 @Composable
 internal fun ConverterScreen(modifier: Modifier = Modifier) {
-    val locale = LocalConfiguration.current.locales[0]
+    val locale = LocalNumberLocale.current
     var savedCategory by rememberSaveable { mutableStateOf(ConverterCategory.LENGTH.id) }
     val state = rememberConverterState(savedCategory)
     val keypad = rememberKeypadState()
-    val format = remember(locale) { QuantityFormat(locale) }
+    val format = LocalQuantityFormat.current
 
     LaunchedEffect(keypad, state) { keypad.commands.collect(state::apply) }
     LaunchedEffect(state.category) { savedCategory = state.category.id }
@@ -231,11 +233,17 @@ private fun Chip(label: String, role: LineoRole, onClick: () -> Unit, descriptio
  */
 @Composable
 private fun rememberConverterState(categoryId: String): ConverterState {
-    val locale = LocalConfiguration.current.locales[0]
-    return remember(locale) {
+    val locale = LocalNumberLocale.current
+    val system = LocalUnitSystem.current
+    // The character the keypad types has to be the character the amount is edited with, or
+    // `±` would walk past the decimal point it does not recognise.
+    val decimalSeparator = LocalDecimalSeparator.current
+    return remember(locale, system, decimalSeparator) {
         val units = UnitRegistry.BUILTIN.with(ConverterUnits.ALL)
         ConverterState(
             category = ConverterCategory.of(categoryId),
+            unitSystem = system,
+            decimalSeparator = decimalSeparator,
             evaluate = { source -> Engine.evaluate(source, EvalContext(locale = locale, units = units)) },
         )
     }
