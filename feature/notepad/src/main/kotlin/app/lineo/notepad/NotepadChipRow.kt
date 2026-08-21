@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.lineo.registry.EditorCommand
 import app.lineo.ui.input.KeypadKey
+import app.lineo.ui.input.keyLabel
 import app.lineo.ui.layout.dockedBottomPadding
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
@@ -70,7 +71,7 @@ internal fun NotepadChipRow(
     ) {
         keys.forEach { key ->
             Chip(
-                label = key.label,
+                label = keyLabel(key),
                 role = key.role,
                 description = key.contentDescription?.let { stringResource(it) },
                 onPress = { onCommand(key.command) },

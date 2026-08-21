@@ -66,11 +66,11 @@ internal object ScientificKeypadLayout : KeypadLayout {
             function("log", R.string.key_log_description),
         ),
         listOf(
-            function("asin", R.string.key_arcsine_description, label = "sin⁻¹"),
-            function("acos", R.string.key_arccosine_description, label = "cos⁻¹"),
-            function("atan", R.string.key_arctangent_description, label = "tan⁻¹"),
-            function("log2", R.string.key_log2_description, label = "log₂"),
-            function("exp", R.string.key_exponential_description, label = "eˣ"),
+            function("asin", R.string.key_arcsine_description, label = ARCSINE),
+            function("acos", R.string.key_arccosine_description, label = ARCCOSINE),
+            function("atan", R.string.key_arctangent_description, label = ARCTANGENT),
+            function("log2", R.string.key_log2_description, label = LOG_BASE_TWO),
+            function("exp", R.string.key_exponential_description, label = EXPONENTIAL),
         ),
         listOf(
             function("sec", R.string.key_secant_description),
@@ -94,4 +94,21 @@ internal object ScientificKeypadLayout : KeypadLayout {
         command = EditorCommand.InsertFunction(name, arity = 1),
         contentDescription = description,
     )
+
+    /**
+     * Labels that are notation rather than words.
+     *
+     * ISO 80000-2 writes these the same way in every language, so they stay in code while
+     * `ABC` and `123` — which name a script and a number system — live in `strings.xml`
+     * (`AGENTS.md` §5). Named constants rather than literals at the call sites, so the
+     * distinction is stated once and the hardcoded-text check has nothing to argue with.
+     *
+     * What a screen reader says about each of them is a different question, and a translated
+     * one: it comes from `contentDescription`, not from these.
+     */
+    private const val ARCSINE = "sin⁻¹"
+    private const val ARCCOSINE = "cos⁻¹"
+    private const val ARCTANGENT = "tan⁻¹"
+    private const val LOG_BASE_TWO = "log₂"
+    private const val EXPONENTIAL = "eˣ"
 }
