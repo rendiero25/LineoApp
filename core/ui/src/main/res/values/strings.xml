@@ -25,6 +25,30 @@
     <string name="key_argument_separator_description">Argument separator</string>
     <string name="key_numeric_keypad_description">Calculator keypad</string>
 
+    <!--
+        How an expression is spoken (docs/CONVENTIONS.md §8). These are read out loud in a
+        sentence, so they are lower case and carry no punctuation: TalkBack supplies the
+        pauses. A translator is translating words in a sentence, not labels on keys.
+    -->
+    <string name="speech_plus">plus</string>
+    <string name="speech_minus">minus</string>
+    <string name="speech_times">times</string>
+    <string name="speech_divided_by">divided by</string>
+    <string name="speech_modulo">modulo</string>
+    <string name="speech_to_the_power_of">to the power of</string>
+    <string name="speech_percent_of">of</string>
+    <string name="speech_negative">negative</string>
+    <string name="speech_percent">percent</string>
+    <string name="speech_factorial">factorial</string>
+    <string name="speech_degrees">degrees</string>
+    <string name="speech_of">of</string>
+    <string name="speech_and">and</string>
+    <string name="speech_to">to</string>
+    <string name="speech_assigned">is</string>
+    <string name="speech_open_bracket">open bracket</string>
+    <string name="speech_close_bracket">close bracket</string>
+    <string name="speech_line">line</string>
+
 
     <!--
         Error messages. One per CalcError variant, because the editor must never render an

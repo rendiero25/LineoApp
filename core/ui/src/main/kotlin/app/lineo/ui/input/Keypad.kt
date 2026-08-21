@@ -94,16 +94,26 @@ private fun gapFor(rows: List<List<KeypadKey>>, maxWidth: Dp, size: Dp): Dp {
  * A pane with no ceiling — a keypad inside something scrollable, or a preview — falls back
  * to the width, which is the behaviour every existing snapshot was recorded with.
  */
-private fun keySize(rows: List<List<KeypadKey>>, maxWidth: Dp, maxHeight: Dp): Dp {
+internal fun keySize(rows: List<List<KeypadKey>>, maxWidth: Dp, maxHeight: Dp): Dp {
     val columns = rows.maxOfOrNull { it.size } ?: return LineoDimens.MinTouchTarget
     val gap = LineoDimens.KeyGap
     val byWidth = (maxWidth - gap * (columns - 1)) / columns
-    if (maxHeight == Dp.Infinity) return byWidth
+    if (maxHeight == Dp.Infinity) return byWidth.atLeastATarget()
     // The mode key sits above the grid and takes its own row's worth of height with it.
     val forRows = maxHeight - LineoDimens.MinTouchTarget - gap * rows.size
     val byHeight = forRows / rows.size
-    return minOf(byWidth, byHeight)
+    return minOf(byWidth, byHeight).atLeastATarget()
 }
+
+/**
+ * A floor of 48 dp, whatever the arithmetic above worked out (`docs/CONVENTIONS.md` §8).
+ *
+ * Shrinking to fit is the right instinct everywhere except through the minimum target: a key
+ * too small to hit reliably is not a smaller key, it is a key that fails. A grid that cannot
+ * fit at this size overflows its pane instead, which is visible and reportable — a 34 dp key
+ * on a landscape phone was neither.
+ */
+private fun Dp.atLeastATarget(): Dp = coerceAtLeast(LineoDimens.MinTouchTarget)
 
 /**
  * The surface switch, above the grid and the size of a chip rather than a key.
