@@ -3,14 +3,17 @@ package app.lineo.shell
 import app.lineo.data.model.Document
 import app.lineo.data.model.Line
 import app.lineo.data.repository.DocumentRepository
+import app.lineo.engine.AngleMode
 import app.lineo.engine.EvalContext
 import app.lineo.engine.LineId
 import app.lineo.engine.unit.UnitRegistry
+import app.lineo.notepad.LineEvaluation
 import app.lineo.notepad.NotepadStore
 import app.lineo.registry.EditorCommand
 import app.lineo.registry.ModuleRegistry
 import app.lineo.registry.Tier
 import app.lineo.scientific.ScientificModule
+import app.lineo.ui.format.QuantityFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -62,7 +65,7 @@ class NotepadViewModelTest {
     fun `nothing is published until the document has been read`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, history, backgroundScope)
 
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
 
         assertNull(viewModel.notepad.value)
     }
@@ -71,7 +74,7 @@ class NotepadViewModelTest {
     fun `opening creates the document and publishes a line to type on`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, history, backgroundScope)
 
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
         advanceUntilIdle()
 
         assertEquals(1, repository.getDocumentsStream().first().size)
@@ -81,11 +84,11 @@ class NotepadViewModelTest {
     @Test
     fun `opening twice does not read the document again`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, history, backgroundScope)
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
         advanceUntilIdle()
         val first = viewModel.notepad.value?.state
 
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
         advanceUntilIdle()
 
         // Same object, so the caret and the draft the user is halfway through survive.
@@ -96,7 +99,7 @@ class NotepadViewModelTest {
     @Test
     fun `a stop writes what has been typed`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, history, backgroundScope)
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
         advanceUntilIdle()
         val state = requireNotNull(viewModel.notepad.value).state
         "6 * 7".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
@@ -110,7 +113,7 @@ class NotepadViewModelTest {
     @Test
     fun `a stop puts the line the caret is in on the tape`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, history, backgroundScope)
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
         advanceUntilIdle()
         val state = requireNotNull(viewModel.notepad.value).state
         "6 * 7".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
@@ -124,7 +127,7 @@ class NotepadViewModelTest {
     @Test
     fun `reusing a history entry writes it on a new line`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, history, backgroundScope)
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
         advanceUntilIdle()
         val state = requireNotNull(viewModel.notepad.value).state
         "5".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
@@ -139,7 +142,7 @@ class NotepadViewModelTest {
     @Test
     fun `reusing into an empty line writes into it rather than below it`() = runTest(dispatcher) {
         val viewModel = NotepadViewModel(store, history, backgroundScope)
-        viewModel.open("Notepad", CONTEXT)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
         advanceUntilIdle()
         val state = requireNotNull(viewModel.notepad.value).state
 
@@ -149,7 +152,70 @@ class NotepadViewModelTest {
         assertEquals(listOf("2 + 3"), state.uiState.value.lines.map { it.text })
     }
 
+    @Test
+    fun `a settings change re-reads the open document`() = runTest(dispatcher) {
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
+        advanceUntilIdle()
+        val state = requireNotNull(viewModel.notepad.value).state
+        "sin(30)".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
+        advanceUntilIdle()
+
+        viewModel.apply(CONTEXT.copy(angleMode = AngleMode.RAD), DISPLAY, decimalSeparator = '.')
+
+        // Degrees answered 0.5. The answer left over from the old mode would be wrong on
+        // screen with nothing to say so, which is why every line is read again.
+        val evaluation = state.uiState.value.lines.first().evaluation as LineEvaluation.Value
+        assertEquals("-0.98803", evaluation.value.canonicalString().take(8))
+    }
+
+    @Test
+    fun `settings that arrive during the first read still reach the document`() = runTest(dispatcher) {
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
+
+        // What a cold start does: the first composition passes the defaults, and DataStore
+        // emits the stored settings while the document is still being read.
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
+        viewModel.apply(
+            CONTEXT.copy(locale = Locale.GERMANY),
+            QuantityFormat(Locale.GERMANY),
+            decimalSeparator = ',',
+        )
+        advanceUntilIdle()
+
+        val state = requireNotNull(viewModel.notepad.value).state
+        "1,5+1".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
+
+        // Found on a device: the document was evaluated against the defaults and a
+        // comma-separator user's first line read as `Unexpected ','`.
+        val evaluation = state.uiState.value.lines.first().evaluation as LineEvaluation.Value
+        assertEquals("2.5", evaluation.value.canonicalString())
+    }
+
+    @Test
+    fun `the tape follows the settings the screen is showing`() = runTest(dispatcher) {
+        val viewModel = NotepadViewModel(store, history, backgroundScope)
+        viewModel.open("Notepad", CONTEXT, DISPLAY, decimalSeparator = '.')
+        advanceUntilIdle()
+        val state = requireNotNull(viewModel.notepad.value).state
+        // Two decimals, and a locale that writes them after a comma.
+        viewModel.apply(
+            CONTEXT.copy(locale = Locale.GERMANY),
+            QuantityFormat(Locale.GERMANY, decimalPlaces = 2),
+            decimalSeparator = ',',
+        )
+        "1/3".forEach { state.apply(EditorCommand.InsertText(it.toString())) }
+
+        viewModel.flush()
+        advanceUntilIdle()
+
+        assertEquals(listOf("1/3" to "0,33"), history.recorded)
+    }
+
     private companion object {
+        /** What the shell resolves from the settings: US conventions, nine decimals. */
+        val DISPLAY = QuantityFormat(Locale.US)
+
         /**
          * What the activity passes in: the built-ins plus every module this build contains,
          * functions and units alike. The notepad has to evaluate against the same set its

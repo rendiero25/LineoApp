@@ -2,6 +2,9 @@ package app.lineo.shell
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import app.lineo.converter.LocalUnitSystem
+import app.lineo.data.settings.UnitSystem
 import app.lineo.registry.CalculatorModule
 import app.lineo.registry.ModuleNav
 
@@ -20,15 +23,20 @@ import app.lineo.registry.ModuleNav
 @Composable
 internal fun ModuleRoute(
     module: CalculatorModule,
+    unitSystem: UnitSystem,
     onLeave: () -> Unit,
     onOpenModule: (String) -> Unit,
 ) {
     BackHandler(onBack = onLeave)
-    module.Screen(
-        nav = object : ModuleNav {
-            override fun back() = onLeave()
+    // Resolved, never AUTO: what "auto" means is a locale question, and the locale is the
+    // host's. A module screen is told the answer rather than handed the question.
+    CompositionLocalProvider(LocalUnitSystem provides unitSystem) {
+        module.Screen(
+            nav = object : ModuleNav {
+                override fun back() = onLeave()
 
-            override fun openModule(id: String) = onOpenModule(id)
-        },
-    )
+                override fun openModule(id: String) = onOpenModule(id)
+            },
+        )
+    }
 }

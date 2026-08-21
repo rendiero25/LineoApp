@@ -12,6 +12,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lineo.R
 import app.lineo.engine.EvalContext
 import app.lineo.notepad.NotepadScreen
+import app.lineo.ui.format.LocalQuantityFormat
+import app.lineo.ui.input.LocalDecimalSeparator
 
 /**
  * The notepad, opened from storage and kept there.
@@ -31,7 +33,16 @@ import app.lineo.notepad.NotepadScreen
 @Composable
 internal fun NotepadRoute(viewModel: NotepadViewModel, context: EvalContext) {
     val title = stringResource(R.string.notepad_default_title)
-    LaunchedEffect(viewModel) { viewModel.open(title, context) }
+    // The display boundary the shell resolved, handed to the view model because the tape and
+    // the `±` key need it and neither is composed. Read here, where the composition is.
+    val display = LocalQuantityFormat.current
+    val decimalSeparator = LocalDecimalSeparator.current
+    LaunchedEffect(viewModel) { viewModel.open(title, context, display, decimalSeparator) }
+    // A settings change reaches a document that is already open: the angle mode and the
+    // reading locale are what every line was evaluated against, and they have just changed.
+    LaunchedEffect(context, display, decimalSeparator) {
+        viewModel.apply(context, display, decimalSeparator)
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, viewModel) {

@@ -43,6 +43,12 @@ class NotepadViewModel @Inject constructor(
     /** Records finished lines. Built with the open document, since it needs the locale. */
     private var recorder: NotepadHistory? = null
 
+    /** What the document was last read against, so an unchanged context costs nothing. */
+    private var lastContext: EvalContext? = null
+
+    /** What `±` treats as part of a number, kept beside the context it arrived with. */
+    private var lastSeparator: Char = '.'
+
     /**
      * The screen, or `null` while the first read is in flight.
      *
@@ -55,26 +61,61 @@ class NotepadViewModel @Inject constructor(
     private var autosave: Job? = null
 
     /**
+     * Re-reads the open document under a changed context — a new angle mode, or the new
+     * reading locale a separator setting resolves to.
+     *
+     * Called from the route whenever the context changes, which is how a settings change
+     * reaches a notepad that is already open: `sin(30)` means something different in RAD, and
+     * an answer left over from the old mode would be wrong on screen with nothing to say so.
+     * An unchanged context costs nothing.
+     *
+     * @param display how results are written now. The tape is given the new formatter too, so
+     *   a line finished after the change is recorded the way the user saw it.
+     */
+    fun apply(context: EvalContext, display: QuantityFormat, decimalSeparator: Char) {
+        if (context == lastContext) return
+        lastContext = context
+        lastSeparator = decimalSeparator
+        recorder?.format = display
+        // May be null: the stored settings arrive from DataStore while the first read is still
+        // in flight, and there is no document to re-read yet. Nothing is lost — [open] builds
+        // the state from these fields, so the document is evaluated against what is stored
+        // here rather than against the defaults the first composition passed in. Found on a
+        // device: a comma-separator user's first line read as `Unexpected ','` until they
+        // changed something.
+        opened.value?.state?.evaluateWith(NotepadEvaluator(context), decimalSeparator)
+    }
+
+    /**
      * Opens the notepad, once. Later calls are ignored, so a recomposition cannot reload the
      * document out from under the caret.
      *
      * @param title what an unnamed document is called. Read where there is a `Context` to
      *   read it with, since this class has none (`docs/ANDROID_STANDARDS.md` §1).
-     * @param context what every line is evaluated against: the locale, and the functions and
-     *   units the build offers, module contributions included. Passed in for the same reason
-     *   as the title — both registries are filtered by the user's locale, and the locale is
-     *   the caller's to know. Without it the notepad would evaluate against the built-ins
-     *   alone, and a module's function or unit would read as an unknown name.
+     * @param context what every line is evaluated against: the locale, the angle mode, and the
+     *   functions and units the build offers, module contributions included. Passed in for the
+     *   same reason as the title — all of it is resolved from settings the caller holds, and
+     *   without it the notepad would evaluate against the built-ins in the platform's locale.
+     * @param display how a result is written: the formatter the screen renders with, so the
+     *   tape records the digits the user actually saw.
+     * @param decimalSeparator what `±` treats as part of a number, from the same settings the
+     *   keypad reads (`docs/CONVENTIONS.md` §2).
      */
-    fun open(title: String, context: EvalContext) {
+    fun open(title: String, context: EvalContext, display: QuantityFormat, decimalSeparator: Char) {
         if (opened.value != null || autosave != null) return
-        val tape = NotepadHistory(history, QuantityFormat(context.locale))
+        lastContext = context
+        lastSeparator = decimalSeparator
+        val tape = NotepadHistory(history, display)
         recorder = tape
         autosave = viewModelScope.launch {
             val notepad = store.openOrCreate(title)
+            // The newest settings, not the ones this call carried: the first composition passes
+            // the defaults, and the stored settings arrive from DataStore a moment later —
+            // usually while this read is still in flight.
             val state = NotepadState(
                 document = notepad.document,
-                evaluator = NotepadEvaluator(context),
+                evaluator = NotepadEvaluator(lastContext ?: context),
+                decimalSeparator = lastSeparator,
             )
             opened.value = OpenedNotepad(state, NotepadAutosave(store, notepad.id, state))
             // The tape runs beside the autosave rather than inside it: one writes the document

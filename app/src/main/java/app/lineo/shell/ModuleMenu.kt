@@ -31,6 +31,7 @@ internal fun ModuleMenu(
     modules: List<CalculatorModule>,
     onOpenModule: (String) -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -55,6 +56,15 @@ internal fun ModuleMenu(
                     },
                 )
             }
+            // Settings last, where a menu keeps it: it is about the app rather than about
+            // the work, and it is the entry reached least often.
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.settings_title)) },
+                onClick = {
+                    expanded = false
+                    onOpenSettings()
+                },
+            )
         }
     }
 }

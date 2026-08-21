@@ -6,6 +6,27 @@
     <string name="history_empty">Nothing yet. Calculations you finish appear here.</string>
     <string name="history_clear">Clear history</string>
 
+    <string name="settings_title">Settings</string>
+    <string name="settings_separator">Decimal separator</string>
+    <string name="settings_separator_auto">Auto</string>
+    <string name="settings_separator_dot">1.5</string>
+    <string name="settings_separator_comma">1,5</string>
+    <string name="settings_angle_mode">Angle mode</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_unit_system">Unit system</string>
+    <string name="settings_unit_system_auto">Auto</string>
+    <string name="settings_unit_system_metric">Metric</string>
+    <string name="settings_unit_system_imperial">Imperial</string>
+    <string name="settings_decimal_places">Decimal places</string>
+    <string name="settings_dynamic_color">Follow wallpaper colours</string>
+    <string name="settings_dynamic_color_subtitle">Use the colours of your wallpaper instead of Lineo&#8217;s palette</string>
+    <string name="settings_licences">Open-source licences</string>
+    <string name="settings_licences_subtitle">What ships inside Lineo, and under which terms</string>
+    <string name="licences_missing_text">No bundled text for %1$s</string>
+
     <string name="menu_more_options">More options</string>
 
     <!--

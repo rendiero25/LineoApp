@@ -27,8 +27,17 @@ import kotlinx.coroutines.flow.Flow
  */
 internal class NotepadHistory(
     private val repository: HistoryRepository,
-    private val format: QuantityFormat,
+    format: QuantityFormat,
 ) {
+
+    /**
+     * How a result is written on the tape — the same formatter the screen renders with.
+     *
+     * A `var`, because the settings can change while the notepad is open. What is already on
+     * the tape is left alone: it says what the user saw at the time, and that does not change
+     * because a setting did.
+     */
+    var format: QuantityFormat = format
 
     private var lastRecorded: Pair<LineId, String>? = null
     private var previouslyFocused: LineId? = null
