@@ -40,6 +40,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import app.lineo.engine.CalcError
 import app.lineo.engine.LineId
+import app.lineo.ui.a11y.ExpressionSpeech
+import app.lineo.ui.a11y.rememberSpeechWords
 import app.lineo.ui.editor.calcErrorMessage
 import app.lineo.ui.format.LocalQuantityFormat
 import app.lineo.ui.theme.LineoDimens
@@ -188,6 +190,12 @@ private fun Expression(
             visualTransformation = errorSpanTransformation(span, underline),
         )
     } else {
+        // Spoken from the tree, never from the characters: `2^3` is "2 to the power of 3"
+        // (`docs/CONVENTIONS.md` §8). Only a line that is *not* being edited is described
+        // this way — in the field above, TalkBack has to read what is actually there,
+        // character by character, or the caret and what is spoken stop agreeing.
+        val words = rememberSpeechWords()
+        val spoken = line.ast?.let { ast -> remember(ast, words) { ExpressionSpeech.of(ast, words) } }
         Text(
             text = line.text.underlining(span, underline),
             style = style,
@@ -197,7 +205,10 @@ private fun Expression(
             modifier = Modifier
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = LineoDimens.MinTouchTarget)
-                .clickable(onClick = onFocus),
+                .clickable(onClick = onFocus)
+                .then(
+                    if (spoken == null) Modifier else Modifier.semantics { contentDescription = spoken },
+                ),
         )
     }
 }

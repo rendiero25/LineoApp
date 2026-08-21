@@ -245,6 +245,7 @@ class NotepadState(
                 ordinal = index + 1,
                 text = if (line.id == focused) draft else displayTextOf(line.id),
                 evaluation = evaluation[line.id],
+                ast = evaluation.astOf(line.id),
             )
         },
         focused = focused,

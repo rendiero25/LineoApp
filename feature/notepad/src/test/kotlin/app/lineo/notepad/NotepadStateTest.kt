@@ -1,8 +1,11 @@
 package app.lineo.notepad
 
+import app.lineo.engine.parser.Ast
+import app.lineo.engine.parser.BinaryOperator
 import app.lineo.registry.EditorCommand
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -214,6 +217,27 @@ class NotepadStateTest {
         val blocked = state.uiState.value.lines[1].evaluation
 
         assertTrue(blocked.toString(), blocked is LineEvaluation.Blocked)
+    }
+
+    @Test
+    fun `a line carries the tree the screen reader speaks it from`() {
+        val state = NotepadState()
+
+        state.type("2^3")
+
+        // `docs/CONVENTIONS.md` §8: what TalkBack says comes from the tree, so the tree has
+        // to reach the screen. It is the parse the evaluation already did, not a second one.
+        val ast = state.line(1).ast
+        assertEquals(BinaryOperator.POWER, (ast as? Ast.Binary)?.operator)
+    }
+
+    @Test
+    fun `a line that does not parse has no tree to speak`() {
+        val state = NotepadState()
+
+        state.type("2 +")
+
+        assertNull(state.line(1).ast)
     }
 
     /** Types [text] into the focused line, clearing it first unless told otherwise. */

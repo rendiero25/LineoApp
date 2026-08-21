@@ -1,6 +1,7 @@
 package app.lineo.notepad
 
 import app.lineo.engine.LineId
+import app.lineo.engine.parser.Ast
 
 /**
  * One line as the screen should show it.
@@ -16,4 +17,12 @@ data class NotepadLineUiState(
     val ordinal: Int,
     val text: String,
     val evaluation: LineEvaluation,
+    /**
+     * How the parser read this line, or `null` while it does not parse.
+     *
+     * For the screen reader and nothing else (`docs/CONVENTIONS.md` §8): `2^3` is spoken as
+     * "2 to the power of 3", and only the tree knows that the `^` was a power rather than
+     * a character. It rides on the state because the evaluation already parsed the line.
+     */
+    val ast: Ast? = null,
 )
