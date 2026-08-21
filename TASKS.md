@@ -360,14 +360,34 @@ of them present.*
   - **DoD:** verified on a foldable — typed `12+3`, Enter, `7*6`, walked back up with the
     arrows and typed into the line above, all from the keyboard alone
 
-- [ ] **P1-10 · Performance pass** — `M`
-  - Baseline Profile + Startup Profile from a Macrobenchmark journey covering cold start
-    and typing a document
-  - R8 full mode; release build tested, not just debug
-  - `reportFullyDrawn()` called; Macrobenchmark wired into CI
-  - Room: `lines.documentId` indexed; no synchronous main-thread reads
-  - **DoD:** cold start under 500 ms on an API 26 device; APK under 12 MB; no dropped
-    frames while typing
+*P1-10 splits into the harness and the numbers. The harness is code and is done; the numbers
+need hardware this machine does not have, and are the part still open.*
+
+- [x] **P1-10-0 · The release build, and what it weighs** — `S` — `:app`, `build-logic`
+  - R8 in full mode with resource shrinking; `proguard-rules.pro` keeps line numbers and
+    nothing else, because a keep rule without a reason is one nobody can ever delete
+  - `ReportDrawnWhen { notepad != null }`: startup ends when the document is on screen, not
+    when the first frame is
+  - CI builds the release APK and fails over 12 MB rather than remembering the number
+  - **DoD:** the release build is 1.6 MB, R8 clean, and the ceiling is enforced
+
+- [x] **P1-10-1 · The instrument** — `M` — `:benchmark`
+  - `StartupBenchmark` (cold, with and without a baseline profile), `TypingBenchmark`
+    (frame timing) and `BaselineProfileGenerator`, all driving one shared journey
+  - `:app` consumes the generated profile and ships `profileinstaller`, which installs it
+  - CI compiles both, so a benchmark cannot rot while nobody runs it
+  - **DoD:** `:benchmark:assembleBenchmark` and `:app:assembleRelease` both build
+
+- [x] **P1-10-2 · The database was already right** — `S` — `:core:data`
+  - `lines.documentId` has been indexed since P0-11, together with `(documentId, ordinal)`
+  - Every DAO method is `suspend` or returns a `Flow`, and nothing calls
+    `allowMainThreadQueries`, so a main-thread read is not expressible
+  - **DoD:** verified by reading, and recorded rather than re-done
+
+- [~] **P1-10-3 · The numbers** — `S` — **blocked on hardware, see the log**
+  - Cold start on an API 26 device, frame timings while typing, and a generated profile
+    committed to `app/src/release/generated/baselineProfiles`
+  - **DoD:** cold start under 500 ms on an API 26 device; no dropped frames while typing
 
 - [ ] **P1-10b · Security and privacy pass** — `M` — `:app`
   - Permission list is exactly `INTERNET` + `ACCESS_NETWORK_STATE`
@@ -642,3 +662,12 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-08b | The `ABC` key showed `AB` at the maximum accessibility font size | It was pinned to a 48 dp square while its label scaled — the one key whose label is a word rather than notation. A minimum size now, so it becomes a pill. The grid keys were never at risk: their labels are sized from the key, not from the system font |
 | 2026-08-21 | P1-08b | Verified on the emulator (`Pixel_Fold`, inner display, 2076×2152) | `12+3` typed with nothing focused lands on line 1 and answers 15; Enter opens line 2 and `7*6` answers 42; down then up returns to line 1 and `0` is inserted at the caret; two rights and `9` give `0129+3`. A screencap on this AVD needs `-d <display-id>`, since a foldable reports two |
 | open | P1-08b | The tablet snapshot shows the keypad taking the upper half of a 1000 dp-tall pane, with the lower half empty | Left alone. `AdaptivePane` gives the input pane what it asks for and the keypad asks for its grid; stretching keys to fill a tablet would make them targets the thumb cannot reach anyway. **Worth a design decision before P1-11** — a docked keypad at the bottom of the pane is the obvious alternative |
+| 2026-08-21 | P1-10 | The task is a harness and a set of numbers, and only one of them is code | Split: P1-10-0 (the release build), P1-10-1 (the benchmark module), P1-10-2 (the database, which was already right) and P1-10-3 (the measurements, which need hardware). The first three are done; the last is what "performance pass" still owes |
+| 2026-08-21 | P1-10-0 | R8 was never on: the convention plugin configured `debug` and left `release` at AGP's defaults, so nothing had ever been shrunk or tested | `isMinifyEnabled` and `isShrinkResources` on release, with `proguard-android-optimize.txt` and a rules file that keeps line numbers and nothing else. The build is clean at 1.6 MB — an eighth of the 12 MB ceiling — and CI now fails on the ceiling rather than trusting it |
+| 2026-08-21 | P1-10-0 | Where does `reportFullyDrawn()` belong? The activity has no idea when the document has been read | `ReportDrawnWhen { notepad != null }` in `NotepadRoute`, which is the composable that knows. Startup then measures to the moment the app is *usable* rather than to the first frame, which is an empty notepad — the difference Macrobenchmark reports as `timeToFullDisplay` |
+| 2026-08-21 | P1-10-1 | `androidx.baselineprofile` 1.4.1, the stable line, cannot apply on AGP 9.3.1: it asks for the `TestExtension` type AGP 9 replaced | Raised to `1.5.0-rc01`, the line that targets AGP 9 — the same trade P0-12 made for Paparazzi, and for the same reason: the plugin and the macrobenchmark library are build-time and test-only, so nothing pre-release reaches the APK. `profileinstaller`, the half that *does* ship, stays on stable 1.4.1 and was already in the allowlist as a transitive of Compose |
+| 2026-08-21 | P1-10-1 | The benchmark module needs `minSdk 28`, while the app ships to 26 | Macrobenchmark reads the system traces it measures from, and those start at Android 9. It is the instrument that needs the newer device, not the app — but it means **the DoD's API 26 number cannot come from Macrobenchmark at all**. That measurement is `am start -W` on an API 26 device, and it is part of P1-10-3 |
+| 2026-08-21 | P1-10-1 | The journey presses keys by their *spoken* label — `By.desc("Add")` | The accessibility work of P1-08 is what makes the keypad drivable at all: a circle with a glyph has nothing else to find it by. Worth knowing before someone "tidies up" a content description |
+| open | P1-10-3 | No numbers were taken. The only system image on this machine is API 37 Google Play, which is not rooted, and the emulator is software-rendered | Three consequences, all hardware: `BaselineProfileRule` cannot generate a profile on a Play image (it needs root or a userdebug build); a Macrobenchmark run on a software-rendered emulator did not get past setup in twenty minutes; and API 26 is not installed, so the cold-start target has nothing to be measured on. **Needs a physical device**, or a decision to download a `google_apis` image and accept emulator numbers for the trend rather than the target |
+| open | P1-10-1 | `:benchmark` applies `com.android.test` directly rather than a convention plugin, so it is outside `detekt`, `lint` and the licence gate | Accepted for now: it ships nothing, and its dependencies landed in the test allowlist through `:app`. A `lineo.android.test` convention plugin would fix it and is worth writing when a second test module appears |
+| open | P0-01 | Navigation Compose or Navigation 3 — the row above says "decide before P1-10 (app shell)", and P1-10 has now been done without touching navigation | Still unresolved, and still not blocking: the shell is one `when` over `rememberSaveable` flags. The next thing that forces it is a screen that needs a back stack of its own. **Decide before P1-11**, which is where the store listing fixes what the app is |
