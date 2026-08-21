@@ -352,10 +352,13 @@ of them present.*
   - **DoD:** the check fails on a hardcoded string — verified by writing one; no truncation
     in `en-XA`
 
-- [ ] **P1-08b · Font scaling and large-screen pass** — `S` — all
-  - Maximum system font scale causes no clipping in display or keypad
-  - Hardware keyboard: full entry, arrow keys between lines, Enter for new line
-  - **DoD:** full flow completable on a tablet with a hardware keyboard
+- [x] **P1-08b · Font scaling and large-screen pass** — `S` — all
+  - Snapshots at 2× for the keypad, the notepad and the shell screens, and one of the
+    notepad on a tablet. The `ABC` key clipped to `AB` and is a minimum size now
+  - The notepad takes the keys no field wanted: typing with no line focused, the arrows
+    between lines and along one, Enter for a new line
+  - **DoD:** verified on a foldable — typed `12+3`, Enter, `7*6`, walked back up with the
+    arrows and typed into the line above, all from the keyboard alone
 
 - [ ] **P1-10 · Performance pass** — `M`
   - Baseline Profile + Startup Profile from a Macrobenchmark journey covering cold start
@@ -634,3 +637,8 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-09 | `ar-XB` on a device needs root on a Play image, and `cmd locale set-app-locales` needs a `localeConfig` | Both fixed the way P1-09 owns: `isPseudoLocalesEnabled` generates `en-XA` and `ar-XB` for the debug build, and `android:localeConfig` is declared with the one locale that actually has strings. The pseudo-locales are then rendered as snapshots — `DeviceConfig.copy(locale = "b+ar+XB", layoutDirection = RTL)` — which is where a truncation can be looked at rather than glimpsed. This closes the `ar-XB` half of P1-08-3 |
 | 2026-08-21 | P1-09 | A Paparazzi device config in `ar-XB` mirrors the *resources* but leaves the layout left-to-right: layoutlib does not derive `LocalLayoutDirection` from the configured locale | The mirrored snapshots override `LocalLayoutDirection` as well, so the picture shows what a device shows — both flips at once. Recorded because the next person to write one will otherwise think the override is redundant |
 | 2026-08-21 | P1-09 | Paparazzi refuses two `@Rule` instances in one class — "Acquiring different scenes from same thread without releases", and every test in the class fails, not just the second | One device per class. The pseudo-locale snapshots live in `ShellExpandedLocalePaparazziTest` and `ShellMirroredLocalePaparazziTest`, with the fixtures they share in `ShellFixtures.kt` |
+| 2026-08-21 | P1-08b | With a hardware keyboard and no line focused, typing `12+3` opened the settings screen: the keys reached whatever had view focus, which was the overflow button | The notepad screen is focusable and takes what no field wanted through `onKeyEvent` — *after* the focused field rather than before it, so a line being edited still gets its own keys first. Each character becomes the same `EditorCommand` the equivalent keypad key sends, so a keyboard and a thumb reach the document by one path (`docs/ARCHITECTURE.md` §5) |
+| 2026-08-21 | P1-08b | An arrow at the first line or the last was handed back to the platform, which looked polite and moved view focus onto the overflow button — after which the next character typed landed on a button | Up and down are consumed whatever they find. While a notepad is on screen they are the notepad's; Tab is how a keyboard leaves it. `NotepadState.moveFocusBy` still reports whether it moved, because that is a different question from whether the key was ours |
+| 2026-08-21 | P1-08b | The `ABC` key showed `AB` at the maximum accessibility font size | It was pinned to a 48 dp square while its label scaled — the one key whose label is a word rather than notation. A minimum size now, so it becomes a pill. The grid keys were never at risk: their labels are sized from the key, not from the system font |
+| 2026-08-21 | P1-08b | Verified on the emulator (`Pixel_Fold`, inner display, 2076×2152) | `12+3` typed with nothing focused lands on line 1 and answers 15; Enter opens line 2 and `7*6` answers 42; down then up returns to line 1 and `0` is inserted at the caret; two rights and `9` give `0129+3`. A screencap on this AVD needs `-d <display-id>`, since a foldable reports two |
+| open | P1-08b | The tablet snapshot shows the keypad taking the upper half of a 1000 dp-tall pane, with the lower half empty | Left alone. `AdaptivePane` gives the input pane what it asks for and the keypad asks for its grid; stretching keys to fill a tablet would make them targets the thumb cannot reach anyway. **Worth a design decision before P1-11** — a docked keypad at the bottom of the pane is the obvious alternative |
