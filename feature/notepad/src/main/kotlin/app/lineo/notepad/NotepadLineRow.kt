@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import app.lineo.engine.CalcError
 import app.lineo.engine.LineId
 import app.lineo.ui.editor.calcErrorMessage
+import app.lineo.ui.format.LocalQuantityFormat
 import app.lineo.ui.theme.LineoDimens
 import app.lineo.ui.theme.LineoRole
 import app.lineo.ui.theme.RoleColors
@@ -218,10 +219,10 @@ private fun Evaluation(
         LineEvaluation.Empty -> Unit
 
         is LineEvaluation.Value -> Text(
-            // canonicalString is locale-free. docs/CONVENTIONS.md §1 puts grouping and the
-            // locale separator at this boundary, and that formatter does not exist yet; it
-            // is recorded in TASKS.md as its own task rather than improvised here.
-            text = evaluation.value.canonicalString(),
+            // The display boundary of docs/CONVENTIONS.md §1: grouping and the locale
+            // separator, resolved once by the shell from the locale and the settings. A line
+            // that formatted numbers itself would answer an id-ID user in en-US.
+            text = LocalQuantityFormat.current.format(evaluation.value).display(),
             style = MaterialTheme.typography.headlineSmall.asExpression(),
             color = RoleColors.of(LineoRole.Result).content,
             textAlign = TextAlign.End,

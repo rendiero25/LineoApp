@@ -28,9 +28,13 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class NotepadState(
     document: NotepadDocument = NotepadDocument().append(),
-    private val evaluator: NotepadEvaluator = NotepadEvaluator(),
-    private val decimalSeparator: Char = '.',
+    evaluator: NotepadEvaluator = NotepadEvaluator(),
+    decimalSeparator: Char = '.',
 ) {
+
+    private var evaluator: NotepadEvaluator = evaluator
+
+    private var decimalSeparator: Char = decimalSeparator
 
     private var document: NotepadDocument = document
     private var evaluation: DocumentEvaluation = evaluator.evaluate(document)
@@ -55,6 +59,27 @@ class NotepadState(
 
     /** The document as stored — ids in the references, ready to persist. */
     val stored: NotepadDocument get() = document
+
+    /**
+     * Reads the document again against a new context — a changed angle mode, or a changed
+     * reading locale.
+     *
+     * Every line is recomputed, and deliberately: the old answers were read under rules that
+     * no longer apply, and `sin(30)` means something different in RAD. The parse cache goes
+     * with the old evaluator, since a cached parse is only valid for the scope it was read in.
+     *
+     * [decimalSeparator] travels with it, since both come from the same settings change and
+     * `±` has to look for the character the keypad now types.
+     *
+     * A no-op when nothing changed, so a recomposition cannot cost a full re-evaluation.
+     */
+    fun evaluateWith(evaluator: NotepadEvaluator, decimalSeparator: Char = this.decimalSeparator) {
+        this.decimalSeparator = decimalSeparator
+        if (evaluator === this.evaluator) return
+        this.evaluator = evaluator
+        evaluation = evaluator.evaluate(document)
+        state.value = snapshot()
+    }
 
     /**
      * Moves focus, and picks the surface that line is written in.
