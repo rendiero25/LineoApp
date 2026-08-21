@@ -136,7 +136,7 @@ private fun ModeKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
             .semanticsLabel(description),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = key.label, style = MaterialTheme.typography.titleMedium, color = colors.content)
+        Text(text = keyLabel(key), style = MaterialTheme.typography.titleMedium, color = colors.content)
     }
 }
 
@@ -165,7 +165,7 @@ private fun Key(key: KeypadKey, onPress: (KeypadKey) -> Unit, size: Dp) {
         // 38 sp labels came out clipped — AC read as a triangle and ± as a plus.
         BoxWithConstraints(contentAlignment = Alignment.Center) {
             Text(
-                text = key.label,
+                text = keyLabel(key),
                 style = LineoTypography.KeypadLabel
                     .asExpression()
                     .copy(fontSize = (maxWidth.value * LABEL_SHARE_OF_KEY).sp, lineHeight = TextUnit.Unspecified),

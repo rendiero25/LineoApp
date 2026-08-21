@@ -42,7 +42,13 @@ fun rememberAccessoryRowState(decimalSeparator: Char = LocalDecimalSeparator.cur
  * journey of `Aa` — the same [EditorCommand.ToggleTextInput], which is a toggle.
  */
 internal fun accessoryKeys(decimalSeparator: Char = '.'): List<KeypadKey> = listOf(
-    KeypadKey("123", LineoRole.InputSwitch, EditorCommand.ToggleTextInput, R.string.key_numeric_keypad_description),
+    KeypadKey(
+        // `123` names a number system, so it is a word like `ABC` and not notation.
+        labelRes = R.string.key_numeric_keypad_label,
+        role = LineoRole.InputSwitch,
+        command = EditorCommand.ToggleTextInput,
+        contentDescription = R.string.key_numeric_keypad_description,
+    ),
     KeypadKey("(", LineoRole.SuggestionChip, EditorCommand.InsertText("("), R.string.key_open_bracket_description),
     KeypadKey(")", LineoRole.SuggestionChip, EditorCommand.InsertText(")"), R.string.key_close_bracket_description),
     KeypadKey("^", LineoRole.SuggestionChip, EditorCommand.InsertText("^"), R.string.key_power_description),

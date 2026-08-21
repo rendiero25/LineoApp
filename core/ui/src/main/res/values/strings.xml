@@ -26,6 +26,14 @@
     <string name="key_numeric_keypad_description">Calculator keypad</string>
 
     <!--
+        The two key labels that are words rather than notation. `ABC` names a script and
+        `123` a number system, so both change with the language — a Cyrillic user is shown
+        their own three letters. Every other key label is notation and lives in code.
+    -->
+    <string name="key_text_keyboard_label">ABC</string>
+    <string name="key_numeric_keypad_label">123</string>
+
+    <!--
         How an expression is spoken (docs/CONVENTIONS.md §8). These are read out loud in a
         sentence, so they are lower case and carry no punctuation: TalkBack supplies the
         pauses. A translator is translating words in a sentence, not labels on keys.

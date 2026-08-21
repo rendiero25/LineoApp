@@ -3,6 +3,7 @@ package app.lineo.ui.input
 import app.cash.turbine.test
 import app.lineo.registry.EditorCommand
 import app.lineo.registry.InputSurface
+import app.lineo.ui.R
 import app.lineo.ui.theme.LineoRole
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -218,8 +219,11 @@ class InputSurfaceTest {
         val accessory = AccessoryRowState()
 
         assertEquals(EditorCommand.ToggleTextInput, keypad.modeKey.command)
-        assertEquals(EditorCommand.ToggleTextInput, accessory.key("123").command)
-        assertEquals("ABC", keypad.modeKey.label)
+        // Both labels are *words* — a script and a number system — so they are resource ids
+        // rather than text (`AGENTS.md` §5), and the switch is asserted by what it emits.
+        assertEquals(R.string.key_text_keyboard_label, keypad.modeKey.labelRes)
+        val back = accessory.keys.single { it.command == EditorCommand.ToggleTextInput }
+        assertEquals(R.string.key_numeric_keypad_label, back.labelRes)
     }
 
     @Test

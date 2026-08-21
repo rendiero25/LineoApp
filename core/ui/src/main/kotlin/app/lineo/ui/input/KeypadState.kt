@@ -65,7 +65,9 @@ class KeypadState(
      * rather than the mechanism. `123` on the accessory row is the same key coming back.
      */
     val modeKey: KeypadKey = KeypadKey(
-        label = "ABC",
+        // A word, not notation: `ABC` names the Latin script, and a Cyrillic or Greek user is
+        // shown their own three letters (`AGENTS.md` §5).
+        labelRes = R.string.key_text_keyboard_label,
         role = LineoRole.InputSwitch,
         command = EditorCommand.ToggleTextInput,
         contentDescription = R.string.key_text_keyboard_description,

@@ -77,7 +77,7 @@ private fun AccessoryKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = key.label,
+            text = keyLabel(key),
             style = MaterialTheme.typography.titleMedium.asExpression(),
             color = colors.content,
         )

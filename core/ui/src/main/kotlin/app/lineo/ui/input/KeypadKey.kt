@@ -12,7 +12,12 @@ import app.lineo.ui.theme.LineoRole
  * decided per key what a press means would have to be edited every time a key is added,
  * and `docs/ARCHITECTURE.md` §5 wants that mapping in one place.
  *
- * @param label what the user sees. A digit, an operator glyph, or a short word.
+ * @param label what the user sees, when it is the same in every language: a digit, an
+ *   operator glyph, `sin⁻¹`. Empty when [labelRes] names the label instead.
+ * @param labelRes the label as a string resource, for the few keys whose label is a *word*
+ *   rather than notation — `ABC` and `123`, which name a script and a number system and
+ *   change with the language (`AGENTS.md` §5). Resolved where the key is drawn, so the
+ *   layout stays a pure function with no `Context` in reach of it.
  * @param role the token mapping row from `docs/CONVENTIONS.md` §10 this key belongs to.
  * @param command what pressing it emits.
  * @param contentDescription string resource TalkBack reads when [label] is not a word —
@@ -21,8 +26,9 @@ import app.lineo.ui.theme.LineoRole
  */
 @Immutable
 data class KeypadKey(
-    val label: String,
+    val label: String = "",
     val role: LineoRole,
     val command: EditorCommand,
     @param:StringRes val contentDescription: Int? = null,
+    @param:StringRes val labelRes: Int? = null,
 )
