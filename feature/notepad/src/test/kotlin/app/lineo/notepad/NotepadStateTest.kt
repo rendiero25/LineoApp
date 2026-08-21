@@ -240,6 +240,59 @@ class NotepadStateTest {
         assertNull(state.line(1).ast)
     }
 
+    @Test
+    fun `an arrow key walks the document a line at a time`() {
+        val state = NotepadState()
+        state.type("111")
+        state.apply(EditorCommand.NewLine)
+        state.type("222")
+        state.apply(EditorCommand.NewLine)
+        state.type("333")
+
+        assertTrue(state.moveFocusBy(-1))
+        assertEquals(state.uiState.value.lines[1].id, state.uiState.value.focused)
+
+        assertTrue(state.moveFocusBy(1))
+        assertEquals(state.uiState.value.lines[2].id, state.uiState.value.focused)
+    }
+
+    @Test
+    fun `the column is kept where the new line is long enough for it`() {
+        val state = NotepadState()
+        state.type("123456")
+        state.apply(EditorCommand.NewLine)
+        state.type("99")
+        state.moveCaretTo(1)
+
+        // Up into a longer line: the caret stays in column 1 rather than jumping to the end.
+        state.moveFocusBy(-1)
+
+        assertEquals(1, state.uiState.value.caret)
+    }
+
+    @Test
+    fun `the column is clamped where the new line is shorter`() {
+        val state = NotepadState()
+        state.type("12")
+        state.apply(EditorCommand.NewLine)
+        state.type("123456")
+
+        state.moveFocusBy(-1)
+
+        assertEquals(2, state.uiState.value.caret)
+    }
+
+    @Test
+    fun `an arrow at the edge of the document is not ours to swallow`() {
+        // False hands the key back to the platform, which is what every other field does at
+        // the first line and the last.
+        val state = NotepadState()
+        state.type("1")
+
+        assertFalse(state.moveFocusBy(-1))
+        assertFalse(state.moveFocusBy(1))
+    }
+
     /** Types [text] into the focused line, clearing it first unless told otherwise. */
     private fun NotepadState.type(text: String, clear: Boolean = true) {
         if (clear) apply(EditorCommand.ClearLine)

@@ -23,6 +23,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -88,6 +94,7 @@ internal fun NotepadLineRow(
                 onFocus = actions.focus,
                 onTextChange = actions.setText,
                 onNewLine = actions.newLine,
+                onMoveFocusBy = actions.moveFocusBy,
                 keyboardWanted = keyboardWanted,
             )
             Evaluation(
@@ -114,6 +121,13 @@ internal data class NotepadLineActions(
     val newLine: () -> Unit,
     val applySuggestion: (CalcError.UnknownIdentifier) -> Unit,
     val ordinalOf: (LineId) -> Int?,
+    /**
+     * Moves the caret a line up or down, and says whether there was a line to move to.
+     *
+     * The arrow keys of a hardware keyboard (P1-08b). `false` hands the key back to the
+     * platform rather than swallowing it at the first line and the last.
+     */
+    val moveFocusBy: (Int) -> Boolean = { false },
 )
 
 /** The ordinal, in a fixed-width gutter so every line's expression starts at the same place. */
@@ -138,6 +152,7 @@ private fun Expression(
     onFocus: () -> Unit,
     onTextChange: (String, Int) -> Unit,
     onNewLine: () -> Unit,
+    onMoveFocusBy: (Int) -> Boolean,
     keyboardWanted: Boolean,
 ) {
     // The request is made here, by the composable that owns the field, and not by the screen.
@@ -184,7 +199,15 @@ private fun Expression(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .focusRequester(focusRequester),
+                .focusRequester(focusRequester)
+                // A hardware keyboard's arrows (P1-08b). Up and down leave the line, which is
+                // the document's business and not the field's; left and right stay inside it,
+                // where the field already walks characters better than this could.
+                //
+                // `onPreviewKeyEvent`, before the field sees them: the field is multi-line —
+                // it has to be, or the return key never arrives as text for `isReturnKeyOn`
+                // to read — so it would otherwise take up and down as caret moves of its own.
+                .onPreviewKeyEvent { event -> event.movesCaretBetweenLines(onMoveFocusBy) },
             textStyle = style,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             visualTransformation = errorSpanTransformation(span, underline),
@@ -341,3 +364,32 @@ private val ChipCornerRadius = 16.dp
  */
 private fun String.isReturnKeyOn(previous: String): Boolean =
     count { it == '\n' } == 1 && replaceFirst("\n", "") == previous
+
+/**
+ * Whether this key event is an arrow that walks the document, and walks it.
+ *
+ * Key *down* only: a key that is held repeats down events, which is the repeat a user
+ * expects, while acting on the up event as well would move two lines per press.
+ *
+ * Up and down are **always** consumed, even at the first line and the last, where [move]
+ * finds nothing to move to. Handing them back looked more polite and was worse: the platform
+ * moved view focus out of the document and onto the overflow button, and the next character
+ * typed went to a button instead of to a line. Seen on a foldable. While a notepad is on
+ * screen, up and down belong to the notepad; Tab is how a keyboard leaves it.
+ */
+private fun KeyEvent.movesCaretBetweenLines(move: (Int) -> Boolean): Boolean {
+    if (type != KeyEventType.KeyDown) return false
+    return when (key) {
+        Key.DirectionUp -> {
+            move(-1)
+            true
+        }
+
+        Key.DirectionDown -> {
+            move(1)
+            true
+        }
+
+        else -> false
+    }
+}

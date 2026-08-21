@@ -99,6 +99,27 @@ class NotepadState(
     }
 
     /**
+     * Moves the caret [lines] lines up or down, and says whether it went anywhere.
+     *
+     * What the arrow keys of a hardware keyboard do (P1-08b). Left and right belong to the
+     * text field — they walk characters, and the field already knows how — but up and down
+     * leave the line, and only the document knows what is above and below it.
+     *
+     * The column is kept where the new line is long enough for it, and clamped to the end
+     * where it is not, which is what every editor does. `false` at the first line and the
+     * last means the key was not ours: the caller lets the platform have it rather than
+     * swallowing it silently.
+     */
+    fun moveFocusBy(lines: Int): Boolean {
+        val id = focused ?: return false
+        val index = document.lines.indexOfFirst { it.id == id }
+        val target = document.lines.getOrNull(index + lines) ?: return false
+        val column = caret
+        focus(target.id, caret = column)
+        return true
+    }
+
+    /**
      * Applies one command to the focused line.
      *
      * Three of them are not line edits and are handled here: `NewLine` splits the line,

@@ -1,5 +1,6 @@
 package app.lineo.notepad
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +12,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import app.lineo.registry.EditorCommand
@@ -64,8 +75,18 @@ fun NotepadScreen(state: NotepadState, modifier: Modifier = Modifier) {
         if (uiState.textInputActive) keyboard?.show() else keyboard?.hide()
     }
 
+    // A hardware keyboard types into the document even when no line holds the caret (P1-08b).
+    // `onKeyEvent` and not `onPreviewKeyEvent`: a focused line's field gets first refusal, and
+    // only what it does not want arrives here. Found on a foldable — with the keypad showing,
+    // typing `12+3` reached whatever had view focus and opened the settings screen instead.
+    val typing = remember { FocusRequester() }
+    LaunchedEffect(inspecting) { if (!inspecting) typing.requestFocus() }
+
     AdaptivePane(
-        modifier = modifier,
+        modifier = modifier
+            .focusRequester(typing)
+            .focusable()
+            .onKeyEvent { event -> state.handleHardwareKey(event) },
         document = {
             NotepadLines(state = state, uiState = uiState)
         },
@@ -140,9 +161,80 @@ private fun NotepadLines(
                     newLine = { state.apply(EditorCommand.NewLine) },
                     applySuggestion = { error -> state.applySuggestion(line.id, error) },
                     ordinalOf = { id -> uiState.lines.firstOrNull { it.id == id }?.ordinal },
+                    // Up and down on a hardware keyboard walk the document (P1-08b).
+                    moveFocusBy = state::moveFocusBy,
                 ),
                 keyboardWanted = uiState.textInputActive,
             )
         }
     }
 }
+
+/**
+ * A hardware key that no field wanted, applied to the document. Returns whether it was ours.
+ *
+ * The arrows are handled here as well as in the focused line's field, and they have to be:
+ * with the keypad showing there is no field at all, and an arrow that reached the platform
+ * moved *view* focus onto a key instead — after which the next character typed went to a
+ * button rather than to the document. Found on a foldable.
+ *
+ * Left and right move the caret rather than the line, which is what they do in any editor
+ * and what `MoveCursor` already means to every other surface.
+ */
+private fun NotepadState.handleHardwareKey(event: KeyEvent): Boolean {
+    if (event.type != KeyEventType.KeyDown) return false
+    return when (event.key) {
+        // Consumed at the edges too: an arrow handed back moves view focus onto the overflow
+        // button, and the next character typed lands on a button instead of on a line.
+        Key.DirectionUp -> {
+            moveFocusBy(-1)
+            true
+        }
+
+        Key.DirectionDown -> {
+            moveFocusBy(1)
+            true
+        }
+
+        Key.DirectionLeft -> applied(EditorCommand.MoveCursor(-1))
+        Key.DirectionRight -> applied(EditorCommand.MoveCursor(1))
+        else -> event.asEditorCommand()?.let { applied(it) } ?: false
+    }
+}
+
+/** Applies [command] and says it was handled, so a `when` branch reads as one thing. */
+private fun NotepadState.applied(command: EditorCommand): Boolean {
+    apply(command)
+    return true
+}
+
+/**
+ * What a hardware key means to the document, or `null` for a key that is not ours.
+ *
+ * The keypad is the model: every key here maps to the same [EditorCommand] the equivalent
+ * key on screen sends, so a keyboard and a thumb reach the document by one path
+ * (`docs/ARCHITECTURE.md` §5) and the two cannot drift.
+ *
+ * Key *down* only, so a held key repeats the way the platform repeats it. `=` types a
+ * character rather than finishing the line: in a notepad it defines a name
+ * (`docs/GRAMMAR.md` §3.5), and the return key is what finishes a line.
+ */
+private fun KeyEvent.asEditorCommand(): EditorCommand? {
+    if (type != KeyEventType.KeyDown) return null
+    return when (key) {
+        Key.Enter, Key.NumPadEnter -> EditorCommand.NewLine
+        Key.Backspace -> EditorCommand.Backspace
+        else -> utf16CodePoint.toChar().takeIf { it.isTypable() }?.let { EditorCommand.InsertText(it.toString()) }
+    }
+}
+
+/**
+ * Whether a character belongs in an expression.
+ *
+ * Letters and digits for names and numbers, and the punctuation the grammar reads. A space
+ * is included because `5 km` needs one; a control character is not, which is what rules out
+ * tab, escape and the arrows that got this far without a code point.
+ */
+internal fun Char.isTypable(): Boolean = isLetterOrDigit() || this in TYPABLE_PUNCTUATION
+
+private const val TYPABLE_PUNCTUATION = "+-*/^%()., ;=<>!°"
