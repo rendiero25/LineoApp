@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.lineo.engine.AngleMode
 import kotlinx.coroutines.flow.Flow
@@ -60,6 +61,38 @@ class DataStoreSettingsRepositoryTest {
         dataStore.edit { it[stringPreferencesKey("angle_mode")] = "TURNS" }
 
         assertEquals(AngleMode.DEG, repository.getSettingsStream().first().angleMode)
+    }
+
+    @Test
+    fun `the settings P1-07 adds round-trip`() = runTest {
+        repository.setDynamicColor(true)
+        repository.setUnitSystem(UnitSystem.IMPERIAL)
+        repository.setDecimalPlaces(2)
+
+        val settings = repository.getSettingsStream().first()
+
+        assertEquals(true, settings.dynamicColor)
+        assertEquals(UnitSystem.IMPERIAL, settings.unitSystem)
+        assertEquals(2, settings.decimalPlaces)
+    }
+
+    @Test
+    fun `decimal places are clamped on the way in and on the way out`() = runTest {
+        // On the way in, so a caller cannot store 40; on the way out, so a file written by a
+        // build with a wider range cannot widen this one's.
+        repository.setDecimalPlaces(40)
+
+        assertEquals(DECIMAL_PLACES_RANGE.last, repository.getSettingsStream().first().decimalPlaces)
+
+        dataStore.edit { it[intPreferencesKey("decimal_places")] = -5 }
+
+        assertEquals(DECIMAL_PLACES_RANGE.first, repository.getSettingsStream().first().decimalPlaces)
+    }
+
+    @Test
+    fun `wallpaper colours are off until they are asked for`() = runTest {
+        // docs/CONVENTIONS.md §10: Lineo's palette is the default on every API level.
+        assertEquals(false, repository.getSettingsStream().first().dynamicColor)
     }
 
     @Test

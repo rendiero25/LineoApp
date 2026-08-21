@@ -2,8 +2,10 @@ package app.lineo.data.settings
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.lineo.engine.AngleMode
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +37,10 @@ internal class DataStoreSettingsRepository @Inject constructor(
                 angleMode = preferences[ANGLE_MODE].toEnum(AngleMode.DEG),
                 theme = preferences[THEME].toEnum(ThemePreference.SYSTEM),
                 separator = preferences[SEPARATOR].toEnum(SeparatorPreference.AUTO),
+                dynamicColor = preferences[DYNAMIC_COLOR] ?: false,
+                unitSystem = preferences[UNIT_SYSTEM].toEnum(UnitSystem.AUTO),
+                decimalPlaces = (preferences[DECIMAL_PLACES] ?: DEFAULT_DECIMAL_PLACES)
+                    .coerceIn(DECIMAL_PLACES_RANGE),
             )
         }
 
@@ -56,11 +62,26 @@ internal class DataStoreSettingsRepository @Inject constructor(
         dataStore.edit { it[SEPARATOR] = separator.name }
     }
 
+    override suspend fun setDynamicColor(enabled: Boolean) {
+        dataStore.edit { it[DYNAMIC_COLOR] = enabled }
+    }
+
+    override suspend fun setUnitSystem(system: UnitSystem) {
+        dataStore.edit { it[UNIT_SYSTEM] = system.name }
+    }
+
+    override suspend fun setDecimalPlaces(places: Int) {
+        dataStore.edit { it[DECIMAL_PLACES] = places.coerceIn(DECIMAL_PLACES_RANGE) }
+    }
+
     private companion object {
         val LOCALE_OVERRIDE = stringPreferencesKey("locale_override")
         val ANGLE_MODE = stringPreferencesKey("angle_mode")
         val THEME = stringPreferencesKey("theme")
         val SEPARATOR = stringPreferencesKey("separator")
+        val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val UNIT_SYSTEM = stringPreferencesKey("unit_system")
+        val DECIMAL_PLACES = intPreferencesKey("decimal_places")
     }
 }
 

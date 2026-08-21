@@ -20,4 +20,12 @@ interface SettingsRepository {
     suspend fun setTheme(theme: ThemePreference)
 
     suspend fun setSeparator(separator: SeparatorPreference)
+
+    /** Wallpaper colours instead of Lineo's palette. Off by default (`docs/CONVENTIONS.md` §10). */
+    suspend fun setDynamicColor(enabled: Boolean)
+
+    suspend fun setUnitSystem(system: UnitSystem)
+
+    /** Coerced into [DECIMAL_PLACES_RANGE], so a stored value from another build cannot widen it. */
+    suspend fun setDecimalPlaces(places: Int)
 }
