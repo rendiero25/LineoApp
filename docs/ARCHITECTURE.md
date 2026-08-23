@@ -27,6 +27,16 @@ Rules:
 - `:feature:*` modules never depend on each other. Cross-feature needs go through
   `:core:registry`.
 - `:app` is the only module that knows the full list of features.
+- **Navigation lives in `:app` and nowhere else.** A module is given `ModuleNav` (§4) and
+  never a controller, so which navigation library `:app` uses is invisible below it.
+
+### Navigation
+
+**Navigation 3, adopted 2026-08-23, not yet implemented.** The rationale and the trigger that
+starts the migration are in `ANDROID_STANDARDS.md` §1; this file records only the consequence
+for the graph, which is that there is none. `:app` currently navigates with a `when` over
+saved state, and whatever replaces it is an edit to `:app` alone — the rule above is what
+guarantees that.
 
 ---
 

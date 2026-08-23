@@ -48,12 +48,30 @@ From the same source, adopted verbatim:
   `OfflineFirstRateRepository`. Use `Default` only when nothing better fits
 - Test doubles are prefixed `Fake` — `FakeRateRepository`
 
-### Open decision — Navigation
+### Navigation — decided 2026-08-23
 
-Google now points multi-screen apps at [Navigation 3](https://developer.android.com/guide/navigation/navigation-3).
-`ARCHITECTURE.md` currently assumes Navigation Compose (type-safe). **This is an open
-decision** — do not pick one silently. Whoever resolves it records the outcome in the
-decisions log in `TASKS.md` and updates `ARCHITECTURE.md` §1.
+**Navigation 3, when something forces it. No navigation library ships before then.**
+
+The reason is not that Google points at [Navigation 3](https://developer.android.com/guide/navigation/navigation-3).
+It is that Lineo already navigates the way Nav 3 does: the back stack is state the host owns,
+and `ARCHITECTURE.md` §4 forbids a module from ever seeing a controller — `ModuleNav`, which
+is `back()` and `openModule(id)` and nothing else, is the whole surface. Nav 3 hands the back
+stack back to the caller; Navigation Compose keeps it, which is the awkward half when a
+layout is adaptive. Its Scenes are also what `:app` will want for the two-pane tablet and
+foldable layout.
+
+Navigation Compose was the standing assumption and was rejected on the same evidence: it
+would take the back stack away from a shell that already holds it correctly, and type-safe
+routes need `kotlinx.serialization`, which is not in the version catalog — two new
+dependencies rather than one.
+
+**Nothing is added yet, deliberately.** The shell is one `when` over saved state; it is
+adequate until a destination needs a back stack of its own or a deep link. Nav 3's one real
+weakness is its youth, and waiting until the trigger arrives is what reduces it.
+
+**The trigger:** the first of a destination with its own back stack (P3-06, notepad folders)
+or an entry point outside the app (P4-01 widget, P4-02 Quick Settings tile). Whichever
+arrives first owns the migration, and it is an edit to `:app` alone.
 
 ---
 

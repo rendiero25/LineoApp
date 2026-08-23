@@ -418,6 +418,18 @@ need hardware this machine does not have, and are the part still open.*
 
 - [ ] **P1-13 · Release 1.0** — staged rollout 5% → 20% → 50% → 100%
 
+- [ ] **P1-14 · One destination at a time** — `S` — `:app`
+  - `LineoApp`'s three saved flags — `openModuleId`, `historyOpen`, `settingsOpen` — become
+    one `sealed interface Destination`, so two destinations cannot be open at once. Today a
+    `when` orders them by priority and nothing enforces exclusivity; the bug is unreachable
+    only because no path opens two
+  - Not a navigation library. P0-01 chose Navigation 3 and deferred it — this is the shape
+    that migration will want, and it is right on its own regardless
+  - Must stay `rememberSaveable`: the flags survive process death today and the replacement
+    has to as well
+  - **DoD:** the illegal state does not compile; the shell survives process death with each
+    destination showing; snapshots unchanged
+
 ---
 
 ## Phase 2 — Monetisation and network
@@ -489,7 +501,7 @@ same question being re-litigated in a future session.
 
 | Date | Task | Question | Decision |
 |---|---|---|---|
-| open | P0-01 | Navigation Compose or Navigation 3? Google now points multi-screen apps at Nav 3; `ARCHITECTURE.md` §1 assumes Navigation Compose | **Unresolved — decide before P1-10 (app shell)** |
+| 2026-08-23 | P0-01 | Navigation Compose or Navigation 3? Google now points multi-screen apps at Nav 3; `ARCHITECTURE.md` §1 assumes Navigation Compose | **Decided: Navigation 3, and nothing added until something forces it.** See the row dated the same day near the end of this log for the reasoning; `ANDROID_STANDARDS.md` §1 and `ARCHITECTURE.md` §1 carry it |
 | open | P3-01 | Encrypt the Room database at rest? Notepad documents contain salaries and debts | **Unresolved — decide before Phase 3** |
 | 2026-08-13 | P0-03 | detekt 1.23.8 cannot run on JDK 25 — its bundled Kotlin compiler fails to parse the version string | detekt runs through its CLI, forked onto the Java 17 toolchain. The rest of the build stays on the daemon JVM |
 | 2026-08-13 | P0-03 | The licence gate cannot read licences from POMs deterministically without network access | Allowlist instead: `config/licenses/allowed-dependencies.txt` records every module and its licence, and an unlisted dependency fails the build — which is also what §7 wants, since adding one is a human decision |
@@ -677,7 +689,8 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-10-1 | The journey presses keys by their *spoken* label — `By.desc("Add")` | The accessibility work of P1-08 is what makes the keypad drivable at all: a circle with a glyph has nothing else to find it by. Worth knowing before someone "tidies up" a content description |
 | open | P1-10-3 | No numbers were taken. The only system image on this machine is API 37 Google Play, which is not rooted, and the emulator is software-rendered | Three consequences, all hardware: `BaselineProfileRule` cannot generate a profile on a Play image (it needs root or a userdebug build); a Macrobenchmark run on a software-rendered emulator did not get past setup in twenty minutes; and API 26 is not installed, so the cold-start target has nothing to be measured on. **Needs a physical device**, or a decision to download a `google_apis` image and accept emulator numbers for the trend rather than the target |
 | open | P1-10-1 | `:benchmark` applies `com.android.test` directly rather than a convention plugin, so it is outside `detekt`, `lint` and the licence gate | Accepted for now: it ships nothing, and its dependencies landed in the test allowlist through `:app`. A `lineo.android.test` convention plugin would fix it and is worth writing when a second test module appears |
-| open | P0-01 | Navigation Compose or Navigation 3 — the row above says "decide before P1-10 (app shell)", and P1-10 has now been done without touching navigation | Still unresolved, and still not blocking: the shell is one `when` over `rememberSaveable` flags. The next thing that forces it is a screen that needs a back stack of its own. **Decide before P1-11**, which is where the store listing fixes what the app is |
+| 2026-08-23 | P0-01 | Navigation Compose or Navigation 3 — the row above says "decide before P1-10 (app shell)", and P1-10 has now been done without touching navigation | **Decided by the owner: Navigation 3, implementation deferred.** The deadline had been moved twice and missed twice, so it is no longer a task number: the trigger is the first destination with a back stack of its own (P3-06) or an entry point outside the app (P4-01, P4-02). The reason for Nav 3 is not Google's preference but that Lineo already navigates that way — the host owns the back stack, and §4 forbids a module from seeing a controller, so `ModuleNav` is the whole surface and the migration is an edit to `:app` alone. Navigation Compose would take that back stack away and needs `kotlinx.serialization`, which is not in the catalog: two dependencies, not one. Nav 3's only real weakness is its youth, and deferring is what spends it down. Recorded in `ANDROID_STANDARDS.md` §1 and `ARCHITECTURE.md` §1 |
+| 2026-08-23 | P0-01 | `LineoApp` holds three independent destination flags — `openModuleId`, `historyOpen`, `settingsOpen` — and a `when` that orders them by priority. Nothing stops two being true at once | Latent rather than live: no path opens two today, so back from settings revealing history is a bug nobody can currently reach. But each destination adds a flag and a combination, and the shape is wrong regardless of which navigation library eventually wins — a `sealed interface` makes the illegal states unrepresentable and makes the Nav 3 migration smaller. **Its own task, P1-14**, because it edits `MainActivity` and P1-11 was not the place |
 | 2026-08-21 | P1-10b | Both backup files were the untouched Android Studio template, TODO comment and all — so every document a user had written was going to Google's cloud backup by default | Cloud backup now excludes every domain; device transfer keeps the database and files. The distinction is the point: a transfer copies to the new phone during setup, end-to-end encrypted and never on a server, which is what someone replacing a phone expects of their notepad. `allowBackup` stays true because turning it off would take the transfer with it and protect against neither |
 | 2026-08-21 | P1-10b | The permission list is *empty*, where the DoD says "exactly `INTERNET` + `ACCESS_NETWORK_STATE`" | Empty is the honest state: both are for currency rates and ads, and neither exists yet. `docs/ANDROID_STANDARDS.md` §5 is about minimisation, so a permission arrives with the change that needs it — P2-03. The one entry in the merged manifest is androidx.core's own signature-level `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, which it grants to itself to keep its runtime receivers unexported |
 | 2026-08-21 | P1-10b | A network security config with no network code looked like paperwork | Written anyway, and deliberately *first*: a config added before the first request cannot be forgotten by the change that makes the first request, and an `http://` URL then fails at the socket instead of quietly working in development. There are no per-domain exceptions and adding one is a §7 decision |
