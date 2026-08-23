@@ -438,16 +438,16 @@ so the code parts can be finished and the Console parts can wait on a human.*
   - **DoD:** the drafts exist and are defensible against the code. Hosting, the contact
     address and the Console itself are the human's — listed in `docs/STORE.md` §6
 
-- [~] **P1-11-3 · The licences survive the release build** — `S` — `:app` — **see the log**
-  - `LicencesReachableTest` walks overflow → Settings → licences and asserts every generated
-    coordinate is named and the Apache-2.0 text opens
-  - **Done without a device:** all 149 allowlisted coordinates survive R8 full mode in the
-    release DEX, and `raw/license_apache_2_0` survives resource shrinking — both read out of
-    `app-release.apk` itself
-  - **Left:** the test has never run. The only device attached is locked, and every Compose
-    test fails on it for that reason alone
-  - **DoD:** the licences screen is reachable in a release build and names all shipped
-    dependencies
+- [x] **P1-11-3 · The licences survive the release build** — `S` — `:app`
+  - `LicencesReachableTest` walks overflow → Settings → licences, scrolls to all 149
+    generated coordinates in turn, and opens the Apache-2.0 text
+  - What R8 could actually break was read out of `app-release.apk` rather than inferred: every
+    allowlisted coordinate is present in the DEX after full-mode R8, and
+    `raw/license_apache_2_0` survived resource shrinking — the real hazard, since that file is
+    reached through a map of SPDX ids and not a literal `R.raw` reference
+  - **DoD:** met. 10 instrumented tests green on `CPH2209` (Android 12), the UI walk on the
+    debug build and the shrinker evidence from the release APK. Running the walk itself
+    against a release build was tried and rejected — see the log
 
 - [ ] **P1-11-4 · The Console** — `M` — non-code — depends on P1-11-0, P1-11-2
   - Domain secured before the first upload — `applicationId` becomes permanent then
@@ -733,5 +733,7 @@ same question being re-litigated in a future session.
 | 2026-08-23 | P1-11-2 | Play's Data Safety form asks what the app collects, and the honest answer is "nothing" — which is exactly the answer every app claims | Answered as a claim about *capability* rather than intent, with each half tied to what enforces it: an empty permission list means no `INTERNET`, asserted by `ManifestSecurityTest`; and the licence allowlist — the enforced list of everything in the APK — contains no analytics, ads, crash or HTTP SDK. `docs/STORE.md` §3 records which test fails if either stops being true |
 | 2026-08-23 | P1-11-2 | The full description ends "no analytics, and no advertising", and P2-05 adds advertising | Written down as a scheduled falsehood rather than left to be discovered by a reviewer. `docs/STORE.md` says the description and the Data Safety declaration must change **in the release that adds the SDK**, not the one after, and P2-05 already carries the re-verification |
 | 2026-08-23 | P1-11-3 | The DoD wants the licences screen proven in a *release* build, and instrumented tests run against debug. Switching `testBuildType` would drag `ManifestSecurityTest` onto release with it | Neither. The two things R8 could actually break were read straight out of `app-release.apk`: all 149 allowlisted coordinates are present in the DEX after full-mode R8, and `raw/license_apache_2_0` survived resource shrinking — which was the real hazard, since that file is reached through a map of SPDX ids rather than a literal `R.raw` reference. The UI walk stays a debug test |
-| open | P1-11-3 | Every Compose instrumented test fails on the attached device with "No compose hierarchies found", including `ShellSemanticsTest`, which passed on the emulator | Not a code fault. The device is asleep and `mDreamingLockscreen=true`, so no activity can reach the foreground; `ManifestSecurityTest` passes because it launches none. `wm dismiss-keyguard` does not clear a secure lock. **Needs the phone unlocked** — the tests have never run |
+| 2026-08-23 | P1-11-3 | Every Compose instrumented test failed on the attached device with "No compose hierarchies found", including `ShellSemanticsTest`, which had passed on the emulator | Not a code fault: the device was asleep with `mDreamingLockscreen=true`, so no activity could reach the foreground, and `ManifestSecurityTest` passed only because it launches none. `wm dismiss-keyguard` does not clear a secure lock. **Closed** — unlocked, all 10 tests green. Worth remembering as the first thing to check when a whole Compose suite fails at once on hardware |
+| 2026-08-23 | P1-11-3 | On the first run after unlocking, `theLicenceTextTravelsWithTheBinary` failed alone with the same "no hierarchies" message — and it was the first test of the suite, on a freshly installed APK | Not reproducible: it passes alone, passes with its two siblings, and the full suite of 10 then passed twice. Recorded rather than papered over with a wait, because the hierarchy was *gone*, not slow, and a sleep would only have hidden it. A cold-install flake on this device; if it returns with a second sighting it deserves a real cause |
+| 2026-08-23 | P1-11-3 | Running the UI walk against the release build — `testBuildType = "release"` — would prove the DoD literally rather than by inference | Tried and reverted. R8 fails on the *androidTest* APK, not the app: errorprone annotations arriving through espresso reference `javax.lang.model.element.Modifier`, which Android does not have. Fixing it means `-dontwarn` rules that exist for a test dependency, and P1-10-0 keeps `proguard-rules.pro` to line numbers and nothing else. Flipping `testBuildType` would also take `ManifestSecurityTest` off debug entirely. `testProguardFiles` could scope the rules to the test APK if this is ever wanted — it is a config trade-off for a human, not a gap in the evidence |
 | open | P1-11 | A physical device — `CPH2209`, Android 12, API 31, arm64 — is now attached, and P1-10-3 has been blocked on hardware since 2026-08-21 | Not acted on here: P1-10-3 is its own task and rule 2 says one task, one branch. But the blocker it records may no longer hold. **API 31, not the API 26 its DoD names**, so the cold-start target still has nothing to be measured on — the frame timings and the generated profile, however, now do |
