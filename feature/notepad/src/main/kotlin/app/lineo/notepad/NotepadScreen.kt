@@ -24,8 +24,11 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lineo.registry.EditorCommand
+import app.lineo.ui.input.ExpressionChip
+import app.lineo.ui.input.ExpressionChipRow
 import app.lineo.ui.input.Keypad
 import app.lineo.ui.input.rememberAccessoryRowState
 import app.lineo.ui.input.rememberKeypadState
@@ -92,16 +95,18 @@ fun NotepadScreen(state: NotepadState, modifier: Modifier = Modifier) {
         },
         input = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                NotepadChipRow(
+                ExpressionChipRow(
                     // The surface switch is only shown when the keyboard is up. The keypad
                     // carries its own `ABC`, and two keys doing the same thing on one screen
                     // is two places to look for it.
                     keys = accessory.keys.filter {
                         uiState.textInputActive || it.role != LineoRole.InputSwitch
                     },
-                    suggestions = uiState.suggestions,
-                    docked = uiState.textInputActive,
                     onCommand = state::apply,
+                    trailing = uiState.suggestions.asChips(),
+                    // The keypad below owns the inset when it is showing; when it is not,
+                    // this row is the bottom-most thing and owns it instead.
+                    docked = uiState.textInputActive,
                 )
                 if (!uiState.textInputActive) Keypad(state = keypad)
             }
@@ -238,3 +243,30 @@ private fun KeyEvent.asEditorCommand(): EditorCommand? {
 internal fun Char.isTypable(): Boolean = isLetterOrDigit() || this in TYPABLE_PUNCTUATION
 
 private const val TYPABLE_PUNCTUATION = "+-*/^%()., ;=<>!°"
+
+/**
+ * The suggestions as chips the shared row can draw.
+ *
+ * The mapping lives here, in the notepad, because the strings do: what a suggestion *is* —
+ * a name a line above the caret defined, a unit one has already produced — is this screen's
+ * knowledge, and `:core:ui` has no business owning a sentence about it. [ExpressionChip]
+ * therefore carries resolved text rather than a resource id.
+ *
+ * `docs/CONVENTIONS.md` §8 is why the description exists at all: a bare `km` read aloud is a
+ * glyph, not an offer.
+ */
+@Composable
+private fun List<NotepadSuggestion>.asChips(): List<ExpressionChip> = map { suggestion ->
+    ExpressionChip(
+        label = suggestion.text,
+        role = LineoRole.SuggestionChip,
+        command = EditorCommand.InsertText(suggestion.text),
+        contentDescription = stringResource(
+            when (suggestion.kind) {
+                NotepadSuggestion.Kind.Variable -> R.string.notepad_suggestion_variable_description
+                NotepadSuggestion.Kind.Unit -> R.string.notepad_suggestion_unit_description
+            },
+            suggestion.text,
+        ),
+    )
+}

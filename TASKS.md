@@ -436,10 +436,12 @@ not read another's code. Three modules, so three tasks — rule 3.*
   - **DoD:** the existing `AccessoryRow` snapshots pass **unchanged** ✓ — that, not the new
     snapshots, is the proof the move cost a user nothing
 
-- [ ] **P1-15-1 · The notepad uses it** — `S` — `:feature:notepad` — depends on P1-15-0
-  - `NotepadChipRow` deleted; suggestions become `ExpressionChip`s, with the notepad
-    resolving its own description strings
-  - **DoD:** the notepad snapshots pass unchanged
+- [x] **P1-15-1 · The notepad uses it** — `S` — `:feature:notepad` — depends on P1-15-0
+  - `NotepadChipRow` deleted — 130 lines, and the module is one file smaller rather than one
+    file moved. The mapping from `NotepadSuggestion` to `ExpressionChip` stayed here, because
+    the strings did: what a suggestion *is* — a name a line above the caret defined, a unit
+    one has produced — is this screen's knowledge and not `:core:ui`'s
+  - **DoD:** all 10 notepad snapshots pass **unchanged** ✓, and no PNG was rewritten
 
 - [ ] **P1-15-2 · The scientific screen gets its brackets back** — `S` — `:feature:scientific`
   — depends on P1-15-0
@@ -718,3 +720,5 @@ same question being re-litigated in a future session.
 | 2026-08-23 | P1-15-0 | How to prove a refactor of drawing code changed no pixel | Not by looking. `AccessoryRow`'s snapshots were recorded before this row existed and the drawing moved underneath them, so `verifyPaparazziDebug` answers the question directly: 122 existing snapshots passed, and `git status` showed the new PNGs added and **no existing one modified**. That is the DoD, and the new snapshots are only the part it cannot cover |
 | 2026-08-23 | P1-15-0 | The first snapshot named "keys and a screen's own chips after them" did not contain the chips: the row scrolls, and the full key set pushed `subtotal` and `km` past the right edge | Caught by opening the picture rather than by trusting a green test — a passing snapshot proves only that the pixels have not changed since they were recorded, never that they show what the name says. The test now takes two keys, and a constant records why |
 | 2026-08-23 | P1-15-0 | `AccessoryRowState.press(key: KeypadKey)` did not fit a row that also draws chips a screen contributes, which have a command and no key | Changed to take the `EditorCommand`, which is all `press` ever did with the key. Two assertions in `InputSurfaceTest` gained a `.command`; nothing else called it, and it is `:core:ui`'s own API, so no feature noticed |
+| 2026-08-23 | P1-15-1 | Where the `NotepadSuggestion` → `ExpressionChip` mapping belongs, once the row is shared | In the notepad, with the strings. `:core:ui` draws a chip and knows nothing about why it is being offered; "insert the variable subtotal" is a sentence about the document, and `ExpressionChip` therefore carries resolved text rather than a resource id. The alternative — moving the strings into `:core:ui` so it could format them — would have put a feature's vocabulary in a module every feature shares |
+| 2026-08-23 | P1-15-1 | How to know the notepad still draws what it drew, after its chip row was replaced by a different implementation | The 10 `NotepadScreenPaparazziTest` snapshots, unchanged, plus `git status` showing no PNG rewritten. `NotepadChipRow` never had a test of its own — it was only ever covered through the screen — which is exactly why the screen's snapshots are the right guard here |
