@@ -418,17 +418,27 @@ need hardware this machine does not have, and are the part still open.*
 
 - [ ] **P1-13 · Release 1.0** — staged rollout 5% → 20% → 50% → 100%
 
-- [ ] **P1-14 · One destination at a time** — `S` — `:app`
-  - `LineoApp`'s three saved flags — `openModuleId`, `historyOpen`, `settingsOpen` — become
-    one `sealed interface Destination`, so two destinations cannot be open at once. Today a
-    `when` orders them by priority and nothing enforces exclusivity; the bug is unreachable
-    only because no path opens two
-  - Not a navigation library. P0-01 chose Navigation 3 and deferred it — this is the shape
-    that migration will want, and it is right on its own regardless
-  - Must stay `rememberSaveable`: the flags survive process death today and the replacement
-    has to as well
-  - **DoD:** the illegal state does not compile; the shell survives process death with each
-    destination showing; snapshots unchanged
+- [~] **P1-14 · One destination at a time** — `S` — `:app` — **one DoD line needs a device**
+  - `LineoApp`'s three saved flags — `openModuleId`, `historyOpen`, `settingsOpen` — are one
+    `Destination` on a `ShellBackStack` the shell owns. The illegal state is gone, and the
+    bug it allowed was *reachable*, not theoretical: `ModuleMenu` is drawn on every
+    destination, so history opened from settings set both
+  - **A stack, not a flat value.** The three flags were not peers — `openModuleId` survived
+    underneath the other two, which is what made "leave settings, return to the module" work.
+    A flat `Destination` would have quietly lost that; see the log
+  - The notepad and a module are work surfaces and clear the stack; history and settings are
+    side trips and push onto it. Back is a pop, and returns false at the root so the system
+    still gets the gesture
+  - Not a navigation library. P0-01 chose Navigation 3 and deferred it — a back stack the
+    caller holds is exactly Nav 3's model, so this shrinks that migration rather than
+    competing with it
+  - Saved as a `List<String>` through a `Saver` rather than `@Parcelize`, which is a Gradle
+    plugin and so an `AGENTS.md` §7 decision. An unrecognised entry restores to the notepad,
+    because saved state outlives the build that wrote it
+  - **DoD:** illegal state does not compile ✓; snapshots unchanged ✓ (`verifyPaparazziDebug`
+    green, which is the point — this changes no pixel); 13 unit tests including the Saver
+    round trip ✓. **Left:** process death with each destination showing, and the instrumented
+    tests that walk this wiring — no device is attached
 
 ---
 
@@ -697,3 +707,7 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-10b | "A hostile or malformed rate payload must yield `RateUnavailable`" cannot be satisfied: there is no rate fetcher, no parser and no `RateUnavailable` — only the Room cache tables | Deferred to **P2-03**, where the fetcher is written, and restated there rather than left as a tick nobody can defend. What P1-10b *can* do for it — refusing cleartext before the first request exists — is done |
 | 2026-08-21 | P1-10b | The §7 checklist found one row genuinely broken: `NotepadScreen` collected its state with `collectAsState` | Now `collectAsStateWithLifecycle`, which §1 requires without exception. `lifecycle-runtime-compose` was already on the release classpath and in the allowlist, so the module declares what it uses and nothing new ships |
 | 2026-08-21 | P1-10b | Verified on the emulator — `ManifestSecurityTest`, 3 tests, against the installed package rather than the source manifest | The manifest in `src/main` is not what ships: every library merges into it, so "is the permission list exactly this?" is only answerable from `PackageManager`. A permission that appears without a line in that test is the test doing its job |
+| 2026-08-23 | P1-14 | The task said "three flags become one `sealed interface Destination`", and doing exactly that would have caused a regression | The three were not peers. `openModuleId` survived *underneath* `historyOpen` and `settingsOpen`, so leaving settings returned to the module they were opened from — a two-level stack nobody had named, falling out of the order of a `when`. A flat `Destination` replaces the module when settings open, and back would then land on the notepad. Built as a small `List<Destination>` instead, which keeps that behaviour, gives back one definition everywhere, and is the shape Nav 3 will want when P0-01's trigger arrives |
+| 2026-08-23 | P1-14 | Was the illegal state ever actually reachable, or only theoretically? | Reachable. `ModuleMenu` is drawn by `LineoAppShell` on *every* destination, settings included, so Settings → overflow → History set both flags; the `when` kept showing settings, and back then revealed a screen the user had already walked away from. Worth checking before rewriting anything — a latent bug and a live one deserve different amounts of care |
+| 2026-08-23 | P1-14 | Opening a module *from* settings had no defined answer: today it sets `openModuleId` while `settingsOpen` stays true, so the tap appears to do nothing until back is pressed | No behaviour to preserve, so the rule was chosen rather than inherited: the notepad and a module are **work surfaces**, history and settings are **side trips**, and opening a work surface ends the trip. The first implementation pushed instead, its own test caught it, and the test was the one that was right — a rule that can be stated in a sentence beats one that only the code knows |
+| 2026-08-23 | P1-14 | `rememberSaveable` cannot store a sealed interface without help, and `@Parcelize` is the obvious answer | Rejected: `kotlin-parcelize` is a Gradle plugin, and adding one is a dependency decision `AGENTS.md` §7 reserves for a human — a large thing to buy for four variants. A `Saver` over `List<String>` costs a `when` in each direction. The module prefix is stripped rather than split on, because a module id may itself contain the separator, and `pack:tax-*` ids will |

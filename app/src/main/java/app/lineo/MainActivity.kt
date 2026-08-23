@@ -8,10 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lineo.data.settings.ThemePreference
@@ -19,6 +16,7 @@ import app.lineo.engine.EvalContext
 import app.lineo.engine.unit.UnitRegistry
 import app.lineo.registry.ModuleRegistry
 import app.lineo.registry.Tier
+import app.lineo.shell.Destination
 import app.lineo.shell.HistoryRoute
 import app.lineo.shell.HistoryViewModel
 import app.lineo.shell.LineoAppShell
@@ -29,6 +27,7 @@ import app.lineo.shell.NotepadViewModel
 import app.lineo.shell.ResolvedSettings
 import app.lineo.shell.SettingsRoute
 import app.lineo.shell.SettingsViewModel
+import app.lineo.shell.rememberShellBackStack
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -63,11 +62,15 @@ class MainActivity : ComponentActivity() {
 /**
  * The whole app below the window: the settings resolved once, and one destination showing.
  *
- * Which destination that is is `rememberSaveable` state rather than a nav graph. **Not a
- * navigation library**: which one Lineo adopts is the open decision recorded against P0-01,
- * due before P1-10, and P1-04-2 needed a second destination before that answer exists. Each
- * flag survives process death, a module still never sees a controller
- * (`docs/ARCHITECTURE.md` §4), and whatever wins later is an edit to this file alone.
+ * Which destination that is is a [ShellBackStack] the shell owns, not a nav graph. **Still not
+ * a navigation library**: P0-01 chose Navigation 3 and deferred adding it until a destination
+ * needs a back stack of its own or a deep link. Nav 3's model is a back stack the caller
+ * holds, which is what this is, so the day it arrives is an edit to this file alone — and a
+ * module still never sees a controller (`docs/ARCHITECTURE.md` §4).
+ *
+ * It used to be three independent flags ordered by a `when`, and two could be set at once:
+ * `ModuleMenu` is drawn on every destination, so history opened from settings left both true.
+ * P1-14 made that unrepresentable.
  *
  * Lifted out of `onCreate` so that what the activity does — draw edge to edge and hand over —
  * stays readable beside what the app does.
@@ -88,10 +91,14 @@ private fun LineoApp(
     // Entitlement is FREE until Play Billing lands at P2-01. Every module shipped so far is
     // free anyway (`docs/SPEC.md` §4), so nothing is hidden by the placeholder.
     val visible = modules.visible(Tier.FREE, locale)
-    var openModuleId: String? by rememberSaveable { mutableStateOf(null) }
-    var historyOpen: Boolean by rememberSaveable { mutableStateOf(false) }
-    var settingsOpen: Boolean by rememberSaveable { mutableStateOf(false) }
-    val open = visible.firstOrNull { it.id == openModuleId }
+    val backStack = rememberShellBackStack()
+    val destination = backStack.current
+    // A module the registry no longer shows — gated by tier or locale, or gone from a build
+    // the saved stack outlived — resolves to nothing, and the `when` below sends that to the
+    // notepad rather than to an empty screen.
+    val open = (destination as? Destination.Module)?.let { module ->
+        visible.firstOrNull { it.id == module.id }
+    }
 
     LineoAppShell(
         settings = resolved,
@@ -103,24 +110,25 @@ private fun LineoApp(
         overflow = {
             ModuleMenu(
                 modules = visible,
-                onOpenModule = { openModuleId = it },
-                onOpenHistory = { historyOpen = true },
-                onOpenSettings = { settingsOpen = true },
+                onOpenModule = { backStack.open(Destination.Module(it)) },
+                onOpenHistory = { backStack.open(Destination.History) },
+                onOpenSettings = { backStack.open(Destination.Settings) },
             )
         },
     ) {
         when {
-            settingsOpen -> SettingsRoute(viewModel = settings, onLeave = { settingsOpen = false })
+            destination is Destination.Settings ->
+                SettingsRoute(viewModel = settings, onLeave = { backStack.back() })
 
-            historyOpen -> HistoryRoute(
+            destination is Destination.History -> HistoryRoute(
                 viewModel = history,
                 // Reuse lands in the notepad, so the tape leaves the module behind as well as
                 // itself: the expression goes where a line can hold it.
                 onReuse = { expression ->
-                    openModuleId = null
+                    backStack.open(Destination.Notepad)
                     notepad.reuse(expression)
                 },
-                onLeave = { historyOpen = false },
+                onLeave = { backStack.back() },
             )
 
             open == null -> NotepadRoute(
@@ -142,8 +150,8 @@ private fun LineoApp(
                 // Already resolved, never AUTO: what "auto" means is a locale question, and
                 // `ResolvedSettings` is where every locale question is answered.
                 unitSystem = resolved.unitSystem,
-                onLeave = { openModuleId = null },
-                onOpenModule = { id -> openModuleId = id },
+                onLeave = { backStack.back() },
+                onOpenModule = { id -> backStack.open(Destination.Module(id)) },
             )
         }
     }
