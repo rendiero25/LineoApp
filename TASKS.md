@@ -403,14 +403,57 @@ need hardware this machine does not have, and are the part still open.*
     tasks: TalkBack (P1-08-3), the baseline profile (P1-10-3), Data Safety (P1-11), the
     staged rollout (P1-13)
 
-- [ ] **P1-11 · Store readiness** — `M` — non-code
-  - Privacy policy live; Data Safety form; icon, feature graphic, screenshots
-  - Title `Lineo: Notepad Calculator`; keystore backed up in two places
-  - Attribution reachable from Settings — the obligation Apache-2.0 §4 puts on the binary,
-    not on the repo. The list generates itself from the licence allowlist; what P1-11 owes is
-    that the release build actually reaches it
-  - **DoD:** internal testing track accepts an upload; the licences screen is reachable in a
-    release build and names all shipped dependencies
+*P1-11 was labelled non-code and is mostly not, but three of its lines are: a build that can
+be signed, an icon that is not the template, and a proof that the licences survive R8. Split
+so the code parts can be finished and the Console parts can wait on a human.*
+
+- [x] **P1-11-0 · The build can be signed** — `S` — `:app`
+  - `signingConfigs.release` from a gitignored `keystore.properties`, or the four
+    `LINEO_KEYSTORE_*` / `LINEO_KEY_*` variables on CI. `keystore.properties.template`
+    documents both and how to generate the key
+  - Applied **only when all four credentials are present**, so CI keeps building the release
+    APK for the 12 MB check without holding a key. CI globs `*.apk`, so the signed and
+    unsigned filenames both satisfy it
+  - **DoD:** verified both ways — a throwaway key produced `app-release.apk`, `apksigner`
+    confirmed one v2 signer, and with no credentials the same task produced
+    `app-release-unsigned.apk`. The throwaway key was deleted
+
+- [x] **P1-11-1 · The icon** — `S` — `:app`
+  - The Android Studio template green robot is gone. Three lines of a document and the rule
+    they total to, olive `#646116` on pale `#EBE68D` from `docs/LineoCP` — the product's one
+    sentence, and the *linea* of `AGENTS.md` §1 made visible
+  - Every stroke, round caps included, sits inside the 66 dp safe circle; the same drawable
+    is the `monochrome` layer for themed icons
+  - The five density `mipmap-*` folders went with it: at minSdk 26 `mipmap-anydpi` always
+    wins, so 33 KB of robot art was unreachable and shipping anyway
+  - **DoD:** the release APK builds and the mark reads at 36 px
+
+- [x] **P1-11-2 · What the store is told** — `M` — non-code
+  - `docs/STORE.md`: listing copy, the Data Safety answers, the privacy policy text, and the
+    release configuration. Every claim names what enforces it, so a claim that stops being
+    true fails a test rather than becoming a lie in a listing
+  - The Data Safety answer is **no data collected, no data shared** — a claim about
+    capability, not intent: the permission list is empty, so there is no `INTERNET` to send
+    anything over, and nothing in the allowlist is an analytics, ads, crash or HTTP SDK
+  - **DoD:** the drafts exist and are defensible against the code. Hosting, the contact
+    address and the Console itself are the human's — listed in `docs/STORE.md` §6
+
+- [~] **P1-11-3 · The licences survive the release build** — `S` — `:app` — **see the log**
+  - `LicencesReachableTest` walks overflow → Settings → licences and asserts every generated
+    coordinate is named and the Apache-2.0 text opens
+  - **Done without a device:** all 149 allowlisted coordinates survive R8 full mode in the
+    release DEX, and `raw/license_apache_2_0` survives resource shrinking — both read out of
+    `app-release.apk` itself
+  - **Left:** the test has never run. The only device attached is locked, and every Compose
+    test fails on it for that reason alone
+  - **DoD:** the licences screen is reachable in a release build and names all shipped
+    dependencies
+
+- [ ] **P1-11-4 · The Console** — `M` — non-code — depends on P1-11-0, P1-11-2
+  - Domain secured before the first upload — `applicationId` becomes permanent then
+  - Upload keystore generated and backed up in two places; privacy policy hosted; icon
+    exported, feature graphic made, screenshots taken
+  - **DoD:** internal testing track accepts an upload
 
 - [ ] **P1-12 · Closed testing** — `L` — non-code
   - 12 testers, 14 continuous days (personal accounts)
@@ -550,7 +593,7 @@ same question being re-litigated in a future session.
 | 2026-08-17 | P0-14-2 | Expression and result were aligned to the start; the reference design aligns them to the end | Aligned to the end, and the message and fix chip follow the same edge so the block reads as one thing. Digits of the expression and of the result now line up column for column, which is the point — the eye compares them without moving. §10 says so explicitly now |
 | 2026-08-17 | P0-13 | Keys sat too close to the window edge, and the digit fill at `surfaceContainerLowest` read as stark white rather than the tinted grey of the reference | `LineoDimens.KeypadEdge` (16 dp) pads the leading and trailing edges; digits moved to `surfaceContainerLow`. Both are one-token changes and both are in §10 |
 | 2026-08-17 | P0-11b-2 | The overflow button was overlaid on the content and collided with the expression: both want the top trailing corner, and a right-aligned expression grows towards it | Given a reserved row of its own. It costs the height of one button and cannot collide with anything. The shell also paints `surface` *before* the inset padding, so the colour runs behind the status bar instead of leaving the window's default white showing above the editor |
-| open | P0-11b-2 | The overflow button opens nothing. History is P1-06, settings is P1-07, and there is no menu to show until one exists | Drawn from three circles rather than an icon dependency, with a tap target and a spoken label, so the layout around it is real. **A control that does nothing is a defect if it ships** — wire it, or remove it, before P1-11 |
+| 2026-08-23 | P0-11b-2 | The overflow button opens nothing. History is P1-06, settings is P1-07, and there is no menu to show until one exists | **Closed.** `ModuleMenu` opens history, every registered module and settings, and P1-11 was the deadline that row set for itself. The button still draws three circles rather than taking an icon dependency; only its KDoc, which still said "it opens nothing yet", needed correcting |
 | 2026-08-17 | P0-13 | Key labels and the display panel were both asked to grow by about 30% | Moved up the type scale rather than multiplying a size: keypad `headlineSmall` → `headlineLarge` (+33%), expression `displayMedium` → `displayLarge` (+27%), result `displaySmall` → `displayMedium` (+25%). Staying on the scale keeps the ratios between them intact and keeps §10 describable in role names |
 | 2026-08-17 | P0-13 | The digit fill went white, then pale cream, then back to `surfaceContainerHigh` across three rounds of matching the reference | `surfaceContainerHigh` is the answer: neutral grey circles on a cream surface in light, lighter circles on near-black in dark. It reads as distinct from the olive operators once the keys are large — the earlier attempts were compensating for a font that was too small to let the hue difference register |
 | 2026-08-17 | P0-12 | The yellow was asked to be more yellow and the operators deeper. Neither was reachable from the export: TonalSpot builds primary at chroma 36 and secondary at 16, so the palette's most saturated yellow is a pale olive | The accent families are regenerated from the same hue, 108.671°, at chroma 64 and 32, with the same HCT port that reproduced Material's baseline earlier. Surfaces, neutrals, tertiary and error are untouched, so the change is confined to the two families that were asked about |
@@ -684,3 +727,11 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-10b | "A hostile or malformed rate payload must yield `RateUnavailable`" cannot be satisfied: there is no rate fetcher, no parser and no `RateUnavailable` — only the Room cache tables | Deferred to **P2-03**, where the fetcher is written, and restated there rather than left as a tick nobody can defend. What P1-10b *can* do for it — refusing cleartext before the first request exists — is done |
 | 2026-08-21 | P1-10b | The §7 checklist found one row genuinely broken: `NotepadScreen` collected its state with `collectAsState` | Now `collectAsStateWithLifecycle`, which §1 requires without exception. `lifecycle-runtime-compose` was already on the release classpath and in the allowlist, so the module declares what it uses and nothing new ships |
 | 2026-08-21 | P1-10b | Verified on the emulator — `ManifestSecurityTest`, 3 tests, against the installed package rather than the source manifest | The manifest in `src/main` is not what ships: every library merges into it, so "is the permission list exactly this?" is only answerable from `PackageManager`. A permission that appears without a line in that test is the test doing its job |
+| 2026-08-23 | P1-11 | The task is `M` and labelled non-code, but three of its lines are code and one of them gates the rest | Split four ways. A build that cannot be signed cannot be uploaded, so P1-11-0 comes first; the icon and the store text are independent; and P1-11-4 holds everything only the Play Console can answer, so the code parts can close without waiting on a domain purchase |
+| 2026-08-23 | P1-11-0 | A release build that failed when no keystore was present would break CI, which builds the release APK on every push for the 12 MB check of P1-10-0 | The signing config is applied only when all four credentials resolve — from `keystore.properties` or from the environment. All four or none: three of four is a typo, and filling the fourth from a default would sign with a key nobody chose. Verified both ways, and CI globs `*.apk` so the `-unsigned` suffix costs it nothing |
+| 2026-08-23 | P1-11-1 | The launcher icon was still the Android Studio template — the green robot, `#3DDC84`, in an app whose palette was chosen deliberately at P0-12 | Replaced with three lines and the rule they total to. The five density `mipmap-*` folders were deleted with it: `mipmap-anydpi` carries no API qualifier and beats every density-specific alternative, so at minSdk 26 those 33 KB of robot art were unreachable and shipping regardless |
+| 2026-08-23 | P1-11-2 | Play's Data Safety form asks what the app collects, and the honest answer is "nothing" — which is exactly the answer every app claims | Answered as a claim about *capability* rather than intent, with each half tied to what enforces it: an empty permission list means no `INTERNET`, asserted by `ManifestSecurityTest`; and the licence allowlist — the enforced list of everything in the APK — contains no analytics, ads, crash or HTTP SDK. `docs/STORE.md` §3 records which test fails if either stops being true |
+| 2026-08-23 | P1-11-2 | The full description ends "no analytics, and no advertising", and P2-05 adds advertising | Written down as a scheduled falsehood rather than left to be discovered by a reviewer. `docs/STORE.md` says the description and the Data Safety declaration must change **in the release that adds the SDK**, not the one after, and P2-05 already carries the re-verification |
+| 2026-08-23 | P1-11-3 | The DoD wants the licences screen proven in a *release* build, and instrumented tests run against debug. Switching `testBuildType` would drag `ManifestSecurityTest` onto release with it | Neither. The two things R8 could actually break were read straight out of `app-release.apk`: all 149 allowlisted coordinates are present in the DEX after full-mode R8, and `raw/license_apache_2_0` survived resource shrinking — which was the real hazard, since that file is reached through a map of SPDX ids rather than a literal `R.raw` reference. The UI walk stays a debug test |
+| open | P1-11-3 | Every Compose instrumented test fails on the attached device with "No compose hierarchies found", including `ShellSemanticsTest`, which passed on the emulator | Not a code fault. The device is asleep and `mDreamingLockscreen=true`, so no activity can reach the foreground; `ManifestSecurityTest` passes because it launches none. `wm dismiss-keyguard` does not clear a secure lock. **Needs the phone unlocked** — the tests have never run |
+| open | P1-11 | A physical device — `CPH2209`, Android 12, API 31, arm64 — is now attached, and P1-10-3 has been blocked on hardware since 2026-08-21 | Not acted on here: P1-10-3 is its own task and rule 2 says one task, one branch. But the blocker it records may no longer hold. **API 31, not the API 26 its DoD names**, so the cold-start target still has nothing to be measured on — the frame timings and the generated profile, however, now do |

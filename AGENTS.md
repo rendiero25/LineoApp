@@ -190,3 +190,5 @@ Full roadmap in `docs/SPEC.md` §3.
 - `docs/ARCHITECTURE.md` — module contracts, error model, storage, licensing policy
 - `docs/CONVENTIONS.md` — locale, separators, standards, rounding
 - `docs/GRAMMAR.md` — formal expression grammar and every ambiguity decision
+- `docs/STORE.md` — the Play listing, the Data Safety answers and the privacy policy, each
+  claim tied to what enforces it in the code

@@ -27,10 +27,10 @@ import app.lineo.ui.theme.LineoDimens
  * circles — and `docs/CONVENTIONS.md` §10 asks for Material Symbols where an icon carries
  * meaning, which this one only borrows by convention.
  *
- * **It opens nothing yet.** History is P1-06 and settings is P1-07; until one of them
- * exists there is no menu to show, and inventing a menu of one disabled item would be
- * worse than a button that plainly does nothing. The tap target and the spoken label are
- * here so the layout around them is real.
+ * It draws the affordance and nothing else. What it opens is [ModuleMenu]'s business, which
+ * is where the destinations are known — P0-11b-2 left this button opening nothing and
+ * recorded that as a defect that must not ship, and P1-11 is the task that had to see it
+ * closed. It is closed: history, the modules and settings are all one tap away.
  */
 @Composable
 internal fun OverflowMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit = {}) {

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.lineo.android.application)
     alias(libs.plugins.lineo.android.compose)
@@ -21,6 +23,51 @@ tasks.withType<Test>().configureEach {
     javaLauncher.set(
         javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) },
     )
+}
+
+// The four names `keystore.properties` must carry, in one place so the file and the
+// environment-variable path cannot drift apart.
+val SIGNING_KEYS = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+
+// Signing (P1-11-0). The upload key lives outside the repo: a gitignored
+// `keystore.properties` on a workstation, the LINEO_KEYSTORE_* environment variables on CI.
+// `keystore.properties.template` documents both, and how to generate the key.
+//
+// **Applied only when credentials are actually present.** P1-10-0 has CI build the release
+// APK on every push to hold it under the 12 MB ceiling, and that check has no business
+// holding a signing key — so with no credentials the release build still builds, unsigned.
+// An unsigned APK is caught once, at upload; a CI job that cannot build is caught by
+// everybody, every day.
+val releaseSigning: Map<String, String>? = run {
+    val properties = rootProject.file("keystore.properties")
+    val credentials = if (properties.exists()) {
+        val loaded = Properties().apply { properties.inputStream().use(::load) }
+        SIGNING_KEYS.associateWith { loaded.getProperty(it).orEmpty() }
+    } else {
+        mapOf(
+            "storeFile" to System.getenv("LINEO_KEYSTORE_PATH").orEmpty(),
+            "storePassword" to System.getenv("LINEO_KEYSTORE_PASSWORD").orEmpty(),
+            "keyAlias" to System.getenv("LINEO_KEY_ALIAS").orEmpty(),
+            "keyPassword" to System.getenv("LINEO_KEY_PASSWORD").orEmpty(),
+        )
+    }
+    // All four or none. Three of four is a typo, and a build that filled the fourth from a
+    // default would produce an APK signed by a key nobody chose.
+    credentials.takeIf { values -> values.values.none(String::isEmpty) }
+}
+
+android {
+    if (releaseSigning != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file(releaseSigning.getValue("storeFile"))
+                storePassword = releaseSigning.getValue("storePassword")
+                keyAlias = releaseSigning.getValue("keyAlias")
+                keyPassword = releaseSigning.getValue("keyPassword")
+            }
+        }
+        buildTypes.named("release") { signingConfig = signingConfigs.getByName("release") }
+    }
 }
 
 // The attribution list is generated from the shipped licence allowlist on every build, and

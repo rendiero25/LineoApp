@@ -15,3 +15,10 @@
 local.properties
 **/build/
 .kotlin/
+
+# The upload key and its passwords. AGENTS.md §2 keeps nothing secret in the repo, and a
+# keystore committed once is a keystore rotated forever — Play App Signing will not take a
+# replacement upload key without a support round trip.
+keystore.properties
+*.jks
+*.keystore

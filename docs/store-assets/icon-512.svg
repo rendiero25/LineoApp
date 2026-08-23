@@ -1,0 +1,19 @@
+<!--
+  The Play Store icon: 512x512, exported to 32-bit PNG.
+
+  Not a separate design. It is the adaptive icon of `app/src/main/res/drawable/` with the
+  launcher's mask already applied — the visible 72dp of the 108dp viewport, scaled by
+  512/72 and shifted by -18 on both axes. Anything else and the icon in the store would not
+  be the icon on the phone.
+
+  Play rounds the corners itself, so this stays a full square.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#EBE68D"/>
+  <g stroke="#646116" stroke-linecap="round" fill="none">
+    <path d="M113.78,128 L355.56,128" stroke-width="42.67"/>
+    <path d="M113.78,206.22 L284.44,206.22" stroke-width="42.67"/>
+    <path d="M113.78,284.44 L384,284.44" stroke-width="42.67"/>
+    <path d="M113.78,384 L398.22,384" stroke-width="56.89"/>
+  </g>
+</svg>
