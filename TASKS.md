@@ -443,12 +443,22 @@ not read another's code. Three modules, so three tasks — rule 3.*
     one has produced — is this screen's knowledge and not `:core:ui`'s
   - **DoD:** all 10 notepad snapshots pass **unchanged** ✓, and no PNG was rewritten
 
-- [ ] **P1-15-2 · The scientific screen gets its brackets back** — `S` — `:feature:scientific`
+- [x] **P1-15-2 · The scientific screen gets its brackets back** — `S` — `:feature:scientific`
   — depends on P1-15-0
-  - The row goes above *both* surfaces, `docked = false` when the keypad is below it, as the
-    notepad already does. `AccessoryRow` then has no caller and can go
-  - **DoD:** `(2+3)*4` is typable in keypad mode on a compact window — the defect this task
-    exists for
+  - The row goes above *both* surfaces, `docked` following the keypad exactly as the notepad
+    does, and `onCommand = accessory::press` so a chip feeds the same stream the keypad does
+    and cannot edit by another path
+  - **DoD:** met. The four scientific snapshots re-recorded and read: `(`, `)`, `^`, `√`, `%`
+    and the argument separator are on screen in keypad mode, where before there were none.
+    The diff against the old images is that row and the keypad shifting down — nothing else
+  - `AccessoryRow` now has no production caller. Removing it is `:core:ui`, so P1-15-3
+
+- [ ] **P1-15-3 · The row with no callers** — `S` — `:core:ui` — depends on P1-15-2
+  - `AccessoryRow` is a five-line delegation nothing calls any more; `AccessoryRowState`
+    stays, since both screens still read its keys and feed its stream
+  - Its two `KeypadPaparazziTest` snapshots move to `ExpressionChipRow` with the same content,
+    so the images should not change — if they do, the delegation was not equivalent
+  - **DoD:** no unused public composable in `:core:ui`; those two snapshots pass unchanged
 
 ---
 
@@ -722,3 +732,6 @@ same question being re-litigated in a future session.
 | 2026-08-23 | P1-15-0 | `AccessoryRowState.press(key: KeypadKey)` did not fit a row that also draws chips a screen contributes, which have a command and no key | Changed to take the `EditorCommand`, which is all `press` ever did with the key. Two assertions in `InputSurfaceTest` gained a `.command`; nothing else called it, and it is `:core:ui`'s own API, so no feature noticed |
 | 2026-08-23 | P1-15-1 | Where the `NotepadSuggestion` → `ExpressionChip` mapping belongs, once the row is shared | In the notepad, with the strings. `:core:ui` draws a chip and knows nothing about why it is being offered; "insert the variable subtotal" is a sentence about the document, and `ExpressionChip` therefore carries resolved text rather than a resource id. The alternative — moving the strings into `:core:ui` so it could format them — would have put a feature's vocabulary in a module every feature shares |
 | 2026-08-23 | P1-15-1 | How to know the notepad still draws what it drew, after its chip row was replaced by a different implementation | The 10 `NotepadScreenPaparazziTest` snapshots, unchanged, plus `git status` showing no PNG rewritten. `NotepadChipRow` never had a test of its own — it was only ever covered through the screen — which is exactly why the screen's snapshots are the right guard here |
+| 2026-08-23 | P1-15-2 | The defect P1-15 exists for, closed: in keypad mode the scientific screen now shows `(`, `)`, `^`, `√`, `%` and the argument separator | The four snapshots were re-recorded and *looked at*, not just re-recorded. Diffed against the images from before, the only change is the chip row appearing and the keypad shifting down — which is what a correct change to this screen should look like, and what a wrong one would not |
+| 2026-08-23 | P1-15-2 | The lone `ABC` key sitting on a row of its own above the keypad looks like something this change introduced | It is not — the previous snapshot has it too, pulled from git and compared side by side before concluding anything. It is the keypad's own mode key and belongs to `:core:ui`. Recorded so the next person to notice it does not go looking for it in this commit |
+| open | P1-15-2 | `%` now appears twice on one screen: on the chip row and on the keypad's `AC` row | **Not new, and not this task's** — the notepad has shown it twice since P1-03-2, and the scientific screen inherits the pattern rather than inventing it. But P0-13 added a test that no two keys on *one surface* share a label, and two stacked surfaces sidestep it. The fix would be to filter `%` from the row when the keypad is showing, exactly as `InputSwitch` already is — one line, but it changes the notepad's appearance too, which P1-15-1 just guaranteed unchanged. **Needs the owner** |

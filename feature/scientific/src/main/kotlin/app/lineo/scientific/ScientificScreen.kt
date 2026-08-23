@@ -1,5 +1,7 @@
 package app.lineo.scientific
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,12 +24,13 @@ import app.lineo.ui.editor.EditorState
 import app.lineo.ui.editor.ExpressionEditor
 import app.lineo.ui.editor.LocalAngleMode
 import app.lineo.ui.format.LocalNumberLocale
-import app.lineo.ui.input.AccessoryRow
+import app.lineo.ui.input.ExpressionChipRow
 import app.lineo.ui.input.Keypad
 import app.lineo.ui.input.LocalDecimalSeparator
 import app.lineo.ui.input.rememberAccessoryRowState
 import app.lineo.ui.input.rememberKeypadState
 import app.lineo.ui.layout.AdaptivePane
+import app.lineo.ui.theme.LineoRole
 import kotlinx.coroutines.flow.merge
 import java.util.Locale
 
@@ -108,10 +111,27 @@ internal fun ScientificScreen(modifier: Modifier = Modifier) {
         modifier = modifier,
         document = { ExpressionEditor(state = editor, focusRequester = focusRequester) },
         input = {
-            // One surface at a time, as the single-line screen did. The chip row the notepad
-            // keeps above *both* surfaces lives in `:feature:notepad`, and a feature may not
-            // read another; lifting it into `:core:ui` is its own task, recorded in TASKS.md.
-            if (textInputActive) AccessoryRow(state = accessory) else Keypad(state = keypad)
+            // The chip row sits above *whichever* surface is showing, which is what
+            // `docs/ARCHITECTURE.md` §5 asks for and what this screen could not do until
+            // P1-15-0 put the row in `:core:ui`. Before that it appeared only with the text
+            // keyboard, so in keypad mode `(`, `)`, `^`, `√`, `%` and the argument separator
+            // were unreachable — a scientific calculator that could not type `(2+3)*4`.
+            Column(modifier = Modifier.fillMaxWidth()) {
+                ExpressionChipRow(
+                    // The keypad carries its own `ABC`, so the row's `123` would be a second
+                    // key doing the same job and a second place to look for it.
+                    keys = accessory.keys.filter {
+                        textInputActive || it.role != LineoRole.InputSwitch
+                    },
+                    // Into the same stream the keypad feeds, so `ToggleTextInput` and `=`
+                    // keep the one handler above and a chip cannot edit by another path.
+                    onCommand = accessory::press,
+                    // The keypad below owns the inset when it is showing; when it is not,
+                    // this row is the bottom-most thing and owns it instead.
+                    docked = textInputActive,
+                )
+                if (!textInputActive) Keypad(state = keypad)
+            }
         },
     )
 }
