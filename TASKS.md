@@ -384,10 +384,32 @@ need hardware this machine does not have, and are the part still open.*
     `allowMainThreadQueries`, so a main-thread read is not expressible
   - **DoD:** verified by reading, and recorded rather than re-done
 
-- [~] **P1-10-3 · The numbers** — `S` — **blocked on hardware, see the log**
-  - Cold start on an API 26 device, frame timings while typing, and a generated profile
-    committed to `app/src/release/generated/baselineProfiles`
-  - **DoD:** cold start under 500 ms on an API 26 device; no dropped frames while typing
+- [~] **P1-10-3 · The numbers** — `S` — **the profile is in; the numbers are not**
+  - **Done:** the generated profile is committed to `app/src/release/generated/baselineProfiles`
+    — 18581 lines, 1703 of them `app.lineo`, covering every package the journey touches. It
+    reaches a release build by both routes: `.dm` files for a Play install on API 28+, and
+    `assets/dexopt/baseline.prof` for `profileinstaller` to apply at first run below that, so
+    the API 26 device the target names is not left without one
+  - **Cannot be regenerated on the attached device**, and the library says why in as many
+    words: collection needs API 33+ or a rooted API 28+ device. `CPH2209` is API 31, a `user`
+    build with no `su`. The emulator is the only thing here that can, being API 37
+  - **Left:** the numbers themselves. Macrobenchmark refuses to run while Android Studio's
+    device mirroring is active, and suppressing that error would measure the wrong device
+  - **DoD:** cold start under 500 ms on an API 26 device; no dropped frames while typing.
+    The API 26 half needs hardware nobody here has — see P1-10-4
+
+- [!] **P1-10-4 · The number that decides the target** — `S` — **blocked: no API 26 device**
+  - `docs/ANDROID_STANDARDS.md` §3 sets cold start under 500 ms *on API 26*, and API 26 is
+    Lineo's `minSdk` — the slowest device it supports is the one the target is about, and the
+    only one that cannot be measured here
+  - Needs a physical API 26 device, or an `x86` API 26 system image accepted as a stand-in
+    with the difference recorded. An emulator is not the phone, but a trend on one beats no
+    number at all
+  - Not the same task as P1-10-3: that one is the numbers this machine can take, and this one
+    waits on hardware that may never arrive. Blocking 1.0 on a device purchase would be the
+    wrong call, so P1-13 does not depend on it
+  - **DoD:** cold start under 500 ms measured on API 26, or the target formally revised with
+    the reasoning recorded
 
 - [x] **P1-10b · Security and privacy pass** — `M` — `:app`
   - The permission list is *empty*: neither `INTERNET` nor `ACCESS_NETWORK_STATE` has
@@ -675,7 +697,12 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-10-1 | `androidx.baselineprofile` 1.4.1, the stable line, cannot apply on AGP 9.3.1: it asks for the `TestExtension` type AGP 9 replaced | Raised to `1.5.0-rc01`, the line that targets AGP 9 — the same trade P0-12 made for Paparazzi, and for the same reason: the plugin and the macrobenchmark library are build-time and test-only, so nothing pre-release reaches the APK. `profileinstaller`, the half that *does* ship, stays on stable 1.4.1 and was already in the allowlist as a transitive of Compose |
 | 2026-08-21 | P1-10-1 | The benchmark module needs `minSdk 28`, while the app ships to 26 | Macrobenchmark reads the system traces it measures from, and those start at Android 9. It is the instrument that needs the newer device, not the app — but it means **the DoD's API 26 number cannot come from Macrobenchmark at all**. That measurement is `am start -W` on an API 26 device, and it is part of P1-10-3 |
 | 2026-08-21 | P1-10-1 | The journey presses keys by their *spoken* label — `By.desc("Add")` | The accessibility work of P1-08 is what makes the keypad drivable at all: a circle with a glyph has nothing else to find it by. Worth knowing before someone "tidies up" a content description |
-| open | P1-10-3 | No numbers were taken. The only system image on this machine is API 37 Google Play, which is not rooted, and the emulator is software-rendered | Three consequences, all hardware: `BaselineProfileRule` cannot generate a profile on a Play image (it needs root or a userdebug build); a Macrobenchmark run on a software-rendered emulator did not get past setup in twenty minutes; and API 26 is not installed, so the cold-start target has nothing to be measured on. **Needs a physical device**, or a decision to download a `google_apis` image and accept emulator numbers for the trend rather than the target |
+| 2026-08-23 | P1-10-3 | No numbers were taken. The only system image on this machine is API 37 Google Play, which is not rooted, and the emulator is software-rendered | **Half wrong, and the wrong half mattered.** `BaselineProfileRule` does not need root on a Play image above API 33 — the library's own message is "requires API 33+, *or* a rooted device running API 28 or higher". The API 37 emulator satisfies the first clause, which is why a valid profile exists in the tree and is committed by this task. What remains true is the API 26 half: the cold-start target still has nothing to be measured on, and that is now **P1-10-4** rather than a caveat inside this row |
+| 2026-08-23 | P1-10-3 | The attached `CPH2209` is a real arm64 phone, which the previous row said was all that was needed | Not enough for the profile. It is API 31 and a `user` build with no `su`, so it satisfies neither clause: below 33, and not rooted. Verified by running the generator and reading the exception rather than by inferring it from the build type. Macrobenchmark itself needs no root, so the *measurements* are within reach on it — the profile is not |
+| 2026-08-23 | P1-10-3 | The committed profile was generated on an emulator, not on a phone, and nothing recorded where it came from | Kept, and the reasoning written down instead of the provenance being guessed at: it holds 1703 `app.lineo` entries spanning `notepad`, `ui`, `shell`, `engine`, `data`, `converter` and `scientific`, so it is a real run of this journey and not a library default, and the API 37 emulator is the only thing here that can produce one. A profile is a hint to ART, not a correctness input — a stale one costs speed, never a wrong answer — so committing it beats shipping none while P1-10-4 waits |
+| 2026-08-23 | P1-10-3 | `minSdk` is 26 but AGP only emits `.dm` baseline profiles from API 28, which would have left the slowest supported devices — the ones the 500 ms target is about — with no profile at all | They are not left out, and this was checked in the APK rather than assumed. The release APK carries both routes: `baselineProfiles/*.dm` for a Play install on API 28+, and `assets/dexopt/baseline.prof` with `profileinstaller` to apply it at first run below that |
+| 2026-08-23 | P1-10-3 | `baseline-prof.txt` and `startup-prof.txt` are byte-identical | Expected from the generator as written — `includeInStartupProfile = true` wraps the whole journey, so everything typed is marked as startup — but probably not what is wanted. A startup profile drives dex layout, and one that also covers typing asks ART to lay out for more than the first frame. **Worth splitting the collect in two**, which is a `:benchmark` change and so not this task's: recorded against P1-10-1 |
+| open | P1-10-3 | Macrobenchmark refuses to run: "Android Studio Device Mirroring is active" — the phone is sending frames to a second display, which is exactly the kind of load that moves a startup number | Not suppressed, though the library offers a flag for it. The whole point of this task is a number that means something, and `suppressErrors` would have produced a tidy measurement of the wrong device. **Needs the mirroring session closed in Android Studio's Running Devices tab** — no code change will fix it |
 | open | P1-10-1 | `:benchmark` applies `com.android.test` directly rather than a convention plugin, so it is outside `detekt`, `lint` and the licence gate | Accepted for now: it ships nothing, and its dependencies landed in the test allowlist through `:app`. A `lineo.android.test` convention plugin would fix it and is worth writing when a second test module appears |
 | open | P0-01 | Navigation Compose or Navigation 3 — the row above says "decide before P1-10 (app shell)", and P1-10 has now been done without touching navigation | Still unresolved, and still not blocking: the shell is one `when` over `rememberSaveable` flags. The next thing that forces it is a screen that needs a back stack of its own. **Decide before P1-11**, which is where the store listing fixes what the app is |
 | 2026-08-21 | P1-10b | Both backup files were the untouched Android Studio template, TODO comment and all — so every document a user had written was going to Google's cloud backup by default | Cloud backup now excludes every domain; device transfer keeps the database and files. The distinction is the point: a transfer copies to the new phone during setup, end-to-end encrypted and never on a server, which is what someone replacing a phone expects of their notepad. `allowBackup` stays true because turning it off would take the transfer with it and protect against neither |
