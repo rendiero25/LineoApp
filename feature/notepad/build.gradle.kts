@@ -28,6 +28,10 @@ dependencies {
     // is used; Room stays behind it, and no entity crosses this boundary.
     implementation(project(":core:data"))
     api(libs.kotlinx.coroutines.core)
+    // `collectAsStateWithLifecycle`, which `docs/ANDROID_STANDARDS.md` §1 requires over
+    // `collectAsState`. Already on the release classpath and already in the licence
+    // allowlist, so this adds no artifact and no licence decision.
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

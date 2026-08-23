@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    No cleartext, anywhere, ever (`docs/ANDROID_STANDARDS.md` §5).
+
+    Lineo has no network code yet — currency rates arrive in Phase 2 — and that is exactly
+    when this is worth writing: a config added *before* the first request cannot be forgotten
+    by the change that makes the first request. An `http://` URL then fails at the socket
+    rather than quietly working in development and shipping.
+
+    `cleartextTrafficPermitted="false"` in the base config covers every domain, including the
+    ad SDK's, which §5 names as the largest external surface in the app. There are no
+    per-domain exceptions and there should never be one: an exception here is a decision for
+    a human (`AGENTS.md` §7), not a line someone adds to unblock a test server.
+
+    Debug builds inherit the same rule. A test server on `http://10.0.2.2` would need an
+    override in a debug-only config, which is the point at which somebody has to think.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

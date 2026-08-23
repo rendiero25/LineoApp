@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,6 +24,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lineo.registry.EditorCommand
 import app.lineo.ui.input.Keypad
 import app.lineo.ui.input.rememberAccessoryRowState
@@ -52,7 +52,7 @@ import kotlinx.coroutines.flow.merge
  */
 @Composable
 fun NotepadScreen(state: NotepadState, modifier: Modifier = Modifier) {
-    val uiState by state.uiState.collectAsState()
+    val uiState by state.uiState.collectAsStateWithLifecycle()
     val keypad = rememberKeypadState()
     val accessory = rememberAccessoryRowState()
     val keyboard = LocalSoftwareKeyboardController.current

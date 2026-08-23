@@ -1,19 +1,32 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    What leaves the device, and what does not (API 31+; `backup_rules.xml` is the same
+    decision for API 26–30).
+
+    **Nothing goes to cloud backup.** People compute salaries, debts, rent and medical costs
+    in a calculator — `docs/ANDROID_STANDARDS.md` §5 calls notepad documents the sensitive
+    surface of this app, and says to exclude app data from cloud auto-backup unless the user
+    opts into it. There is no opt-in yet, so the honest setting is none of it: no database,
+    no settings, no cached rates.
+
+    **Device transfer is allowed**, and the distinction is deliberate. A transfer copies the
+    data directly to the new phone during setup, encrypted end to end and never sitting on
+    Google's servers — it is the same device's data moving with the same person, which is
+    what a user replacing a phone expects to happen to their notepad.
+
+    `allowBackup` stays true because that is what makes device transfer possible at all.
+    Turning it off would take both, to protect against neither.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="file" />
+        <exclude domain="external" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <include domain="database" path="." />
+        <include domain="file" path="." />
     </device-transfer>
-    -->
 </data-extraction-rules>

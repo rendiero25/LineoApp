@@ -389,12 +389,19 @@ need hardware this machine does not have, and are the part still open.*
     committed to `app/src/release/generated/baselineProfiles`
   - **DoD:** cold start under 500 ms on an API 26 device; no dropped frames while typing
 
-- [ ] **P1-10b · Security and privacy pass** — `M` — `:app`
-  - Permission list is exactly `INTERNET` + `ACCESS_NETWORK_STATE`
-  - Network security config forbids cleartext; hostile/malformed rate payload yields
-    `RateUnavailable`, never a crash or a silently wrong rate
-  - Cloud auto-backup excluded unless the user opts in
-  - **DoD:** `ANDROID_STANDARDS.md` §7 checklist passes end to end
+- [x] **P1-10b · Security and privacy pass** — `M` — `:app`
+  - The permission list is *empty*: neither `INTERNET` nor `ACCESS_NETWORK_STATE` has
+    anything to serve until currency lands, and each is declared by the change that needs it
+  - `network_security_config.xml` forbids cleartext everywhere, written before there is any
+    network code to forbid it for. The rate-payload half belongs to P2-03 — see the log
+  - Cloud backup excludes everything; device transfer keeps the documents, which is a
+    different journey and a different threat
+  - `collectAsState` in the notepad became `collectAsStateWithLifecycle`, the one §1 line
+    the checklist found still broken
+  - **DoD:** `ManifestSecurityTest` asserts the shipped package on a device — the permission
+    list, the cleartext flag and the backup flag. The §7 rows still open are owned by open
+    tasks: TalkBack (P1-08-3), the baseline profile (P1-10-3), Data Safety (P1-11), the
+    staged rollout (P1-13)
 
 - [ ] **P1-11 · Store readiness** — `M` — non-code
   - Privacy policy live; Data Safety form; icon, feature graphic, screenshots
@@ -671,3 +678,9 @@ same question being re-litigated in a future session.
 | open | P1-10-3 | No numbers were taken. The only system image on this machine is API 37 Google Play, which is not rooted, and the emulator is software-rendered | Three consequences, all hardware: `BaselineProfileRule` cannot generate a profile on a Play image (it needs root or a userdebug build); a Macrobenchmark run on a software-rendered emulator did not get past setup in twenty minutes; and API 26 is not installed, so the cold-start target has nothing to be measured on. **Needs a physical device**, or a decision to download a `google_apis` image and accept emulator numbers for the trend rather than the target |
 | open | P1-10-1 | `:benchmark` applies `com.android.test` directly rather than a convention plugin, so it is outside `detekt`, `lint` and the licence gate | Accepted for now: it ships nothing, and its dependencies landed in the test allowlist through `:app`. A `lineo.android.test` convention plugin would fix it and is worth writing when a second test module appears |
 | open | P0-01 | Navigation Compose or Navigation 3 — the row above says "decide before P1-10 (app shell)", and P1-10 has now been done without touching navigation | Still unresolved, and still not blocking: the shell is one `when` over `rememberSaveable` flags. The next thing that forces it is a screen that needs a back stack of its own. **Decide before P1-11**, which is where the store listing fixes what the app is |
+| 2026-08-21 | P1-10b | Both backup files were the untouched Android Studio template, TODO comment and all — so every document a user had written was going to Google's cloud backup by default | Cloud backup now excludes every domain; device transfer keeps the database and files. The distinction is the point: a transfer copies to the new phone during setup, end-to-end encrypted and never on a server, which is what someone replacing a phone expects of their notepad. `allowBackup` stays true because turning it off would take the transfer with it and protect against neither |
+| 2026-08-21 | P1-10b | The permission list is *empty*, where the DoD says "exactly `INTERNET` + `ACCESS_NETWORK_STATE`" | Empty is the honest state: both are for currency rates and ads, and neither exists yet. `docs/ANDROID_STANDARDS.md` §5 is about minimisation, so a permission arrives with the change that needs it — P2-03. The one entry in the merged manifest is androidx.core's own signature-level `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, which it grants to itself to keep its runtime receivers unexported |
+| 2026-08-21 | P1-10b | A network security config with no network code looked like paperwork | Written anyway, and deliberately *first*: a config added before the first request cannot be forgotten by the change that makes the first request, and an `http://` URL then fails at the socket instead of quietly working in development. There are no per-domain exceptions and adding one is a §7 decision |
+| 2026-08-21 | P1-10b | "A hostile or malformed rate payload must yield `RateUnavailable`" cannot be satisfied: there is no rate fetcher, no parser and no `RateUnavailable` — only the Room cache tables | Deferred to **P2-03**, where the fetcher is written, and restated there rather than left as a tick nobody can defend. What P1-10b *can* do for it — refusing cleartext before the first request exists — is done |
+| 2026-08-21 | P1-10b | The §7 checklist found one row genuinely broken: `NotepadScreen` collected its state with `collectAsState` | Now `collectAsStateWithLifecycle`, which §1 requires without exception. `lifecycle-runtime-compose` was already on the release classpath and in the allowlist, so the module declares what it uses and nothing new ships |
+| 2026-08-21 | P1-10b | Verified on the emulator — `ManifestSecurityTest`, 3 tests, against the installed package rather than the source manifest | The manifest in `src/main` is not what ships: every library merges into it, so "is the permission list exactly this?" is only answerable from `PackageManager`. A permission that appears without a line in that test is the test doing its job |
