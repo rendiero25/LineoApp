@@ -418,6 +418,36 @@ need hardware this machine does not have, and are the part still open.*
 
 - [ ] **P1-13 · Release 1.0** — staged rollout 5% → 20% → 50% → 100%
 
+*P1-15 closes a defect that ships: on a compact phone the scientific module cannot type a
+bracket at all. `(`, `)`, `^`, `√`, `%` and the argument separator are not on the keypad, and
+the row that carries them appears only with the text keyboard. The notepad solved this with a
+chip row above **both** surfaces, but that row lives in `:feature:notepad` and a feature may
+not read another's code. Three modules, so three tasks — rule 3.*
+
+- [x] **P1-15-0 · One chip row, in `:core:ui`** — `S` — `:core:ui`
+  - `ExpressionChipRow` — the expression keys, plus `ExpressionChip`s the calling screen
+    contributes. Resolved strings in the chip, not resource ids: `:core:ui` has no business
+    owning a string about a variable in scope
+  - There were already **two** near-identical rows — `AccessoryRow` here and `NotepadChipRow`
+    in the notepad, same chip, same 16 dp corner, same 48 dp floor. Adding a third would have
+    been the wrong fix, so `AccessoryRow` is now a five-line call to this one
+  - `AccessoryRowState.press` takes the `EditorCommand` rather than the `KeypadKey` it used
+    to unwrap — a contributed chip has a command and no key, and the command is what both have
+  - **DoD:** the existing `AccessoryRow` snapshots pass **unchanged** ✓ — that, not the new
+    snapshots, is the proof the move cost a user nothing
+
+- [ ] **P1-15-1 · The notepad uses it** — `S` — `:feature:notepad` — depends on P1-15-0
+  - `NotepadChipRow` deleted; suggestions become `ExpressionChip`s, with the notepad
+    resolving its own description strings
+  - **DoD:** the notepad snapshots pass unchanged
+
+- [ ] **P1-15-2 · The scientific screen gets its brackets back** — `S` — `:feature:scientific`
+  — depends on P1-15-0
+  - The row goes above *both* surfaces, `docked = false` when the keypad is below it, as the
+    notepad already does. `AccessoryRow` then has no caller and can go
+  - **DoD:** `(2+3)*4` is typable in keypad mode on a compact window — the defect this task
+    exists for
+
 ---
 
 ## Phase 2 — Monetisation and network
@@ -684,3 +714,7 @@ same question being re-litigated in a future session.
 | 2026-08-21 | P1-10b | "A hostile or malformed rate payload must yield `RateUnavailable`" cannot be satisfied: there is no rate fetcher, no parser and no `RateUnavailable` — only the Room cache tables | Deferred to **P2-03**, where the fetcher is written, and restated there rather than left as a tick nobody can defend. What P1-10b *can* do for it — refusing cleartext before the first request exists — is done |
 | 2026-08-21 | P1-10b | The §7 checklist found one row genuinely broken: `NotepadScreen` collected its state with `collectAsState` | Now `collectAsStateWithLifecycle`, which §1 requires without exception. `lifecycle-runtime-compose` was already on the release classpath and in the allowlist, so the module declares what it uses and nothing new ships |
 | 2026-08-21 | P1-10b | Verified on the emulator — `ManifestSecurityTest`, 3 tests, against the installed package rather than the source manifest | The manifest in `src/main` is not what ships: every library merges into it, so "is the permission list exactly this?" is only answerable from `PackageManager`. A permission that appears without a line in that test is the test doing its job |
+| 2026-08-23 | P1-15-0 | The task was "lift `NotepadChipRow` into `:core:ui`", and `:core:ui` turned out to already have `AccessoryRow` — the same row, drawn the same way, differing only in that it always docks and cannot take a screen's own chips | Lifting as asked would have left three near-identical rows. `AccessoryRow` is now a five-line call to `ExpressionChipRow`, so there is one implementation of a chip strip and two names for uses of it. Its single caller — the scientific screen, which is the one with the defect — did not change |
+| 2026-08-23 | P1-15-0 | How to prove a refactor of drawing code changed no pixel | Not by looking. `AccessoryRow`'s snapshots were recorded before this row existed and the drawing moved underneath them, so `verifyPaparazziDebug` answers the question directly: 122 existing snapshots passed, and `git status` showed the new PNGs added and **no existing one modified**. That is the DoD, and the new snapshots are only the part it cannot cover |
+| 2026-08-23 | P1-15-0 | The first snapshot named "keys and a screen's own chips after them" did not contain the chips: the row scrolls, and the full key set pushed `subtotal` and `km` past the right edge | Caught by opening the picture rather than by trusting a green test — a passing snapshot proves only that the pixels have not changed since they were recorded, never that they show what the name says. The test now takes two keys, and a constant records why |
+| 2026-08-23 | P1-15-0 | `AccessoryRowState.press(key: KeypadKey)` did not fit a row that also draws chips a screen contributes, which have a command and no key | Changed to take the `EditorCommand`, which is all `press` ever did with the key. Two assertions in `InputSurfaceTest` gained a `.command`; nothing else called it, and it is `:core:ui`'s own API, so no feature noticed |

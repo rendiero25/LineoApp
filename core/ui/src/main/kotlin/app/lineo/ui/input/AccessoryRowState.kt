@@ -25,8 +25,15 @@ class AccessoryRowState(decimalSeparator: Char = '.') : CommandInputSurface() {
     /** Left to right, in the order they are shown. */
     val keys: List<KeypadKey> = accessoryKeys(decimalSeparator)
 
-    fun press(key: KeypadKey) {
-        emit(key.command)
+    /**
+     * Emits [command] to whoever is collecting this surface.
+     *
+     * Takes the command rather than the [KeypadKey] it came from. The key was only ever
+     * unwrapped here, and [ExpressionChipRow] draws chips a screen contributes as well as
+     * keys — those have a command and no key, so the command is the thing both have.
+     */
+    fun press(command: EditorCommand) {
+        emit(command)
     }
 }
 

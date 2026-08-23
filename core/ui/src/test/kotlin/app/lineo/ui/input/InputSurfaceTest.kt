@@ -33,7 +33,7 @@ class InputSurfaceTest {
             assertEquals(EditorCommand.InsertText("1"), awaitItem())
         }
         attached[1].commands.test {
-            accessory.press(accessory.key("^"))
+            accessory.press(accessory.key("^").command)
 
             assertEquals(EditorCommand.InsertText("^"), awaitItem())
         }
@@ -206,7 +206,7 @@ class InputSurfaceTest {
         val accessory = AccessoryRowState()
 
         accessory.commands.test {
-            accessory.press(accessory.key("√"))
+            accessory.press(accessory.key("√").command)
 
             assertEquals(EditorCommand.InsertFunction(name = "sqrt", arity = 1), awaitItem())
         }
