@@ -74,7 +74,14 @@ private fun StackedPanes(
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(RoleColors.of(LineoRole.Editor).container)) {
         val ceiling = (maxHeight - minDocumentHeight).coerceAtLeast(LineoDimens.MinTouchTarget)
         Column(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxWidth().weight(1f)) { document() }
+            // The fade is the pane's and not the document's: what gets cut is whatever the
+            // pane could not fit, and only the pane knows where its edges are.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .fadingVerticalEdges(RoleColors.of(LineoRole.Editor).container),
+            ) { document() }
             // The ceiling is what stops an input pane from taking the window. A keypad's
             // intrinsic height is rows × key width, so a layout with two more rows than the
             // basic one asked for more than the screen and left the document nothing — the
@@ -98,7 +105,11 @@ private fun SideBySidePanes(
             .fillMaxSize()
             .background(RoleColors.of(LineoRole.Editor).container),
     ) {
-        Column(modifier = Modifier.weight(DOCUMENT_SHARE)) { document() }
+        Column(
+            modifier = Modifier
+                .weight(DOCUMENT_SHARE)
+                .fadingVerticalEdges(RoleColors.of(LineoRole.Editor).container),
+        ) { document() }
         Column(
             modifier = Modifier
                 .weight(INPUT_SHARE)

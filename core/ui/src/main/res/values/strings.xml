@@ -30,8 +30,6 @@
         `123` a number system, so both change with the language — a Cyrillic user is shown
         their own three letters. Every other key label is notation and lives in code.
     -->
-    <string name="key_text_keyboard_label">ABC</string>
-    <string name="key_numeric_keypad_label">123</string>
 
     <!--
         How an expression is spoken (docs/CONVENTIONS.md §8). These are read out loud in a

@@ -20,7 +20,9 @@ import app.lineo.ui.editor.LocalAngleMode
 import app.lineo.ui.format.LocalNumberLocale
 import app.lineo.ui.format.LocalQuantityFormat
 import app.lineo.ui.format.QuantityFormat
+import app.lineo.ui.input.InputModeToggle
 import app.lineo.ui.input.LocalDecimalSeparator
+import app.lineo.ui.input.LocalInputModeToggle
 import app.lineo.ui.layout.LocalWindowWidthClass
 import app.lineo.ui.theme.LineoTheme
 
@@ -40,6 +42,8 @@ import app.lineo.ui.theme.LineoTheme
  *
  * @param overflow what sits in that band. The shell reserves the space; what the button
  *   opens is the host's, since only the host knows which destinations exist.
+ * @param leading the other end of the band. By default the surface switch, which is drawn
+ *   only on a screen that bound itself to it — see `InputModeToggle`.
  * @param settings the settings resolved into values — reading locale, separator, decimal
  *   places, angle mode and whether the wallpaper decides the colours. Provided to everything
  *   below, so a screen reads what the user chose rather than what the device happens to say.
@@ -52,11 +56,16 @@ import app.lineo.ui.theme.LineoTheme
 fun LineoAppShell(
     settings: ResolvedSettings = ResolvedSettings.default(),
     darkTheme: Boolean = isSystemInDarkTheme(),
+    leading: @Composable () -> Unit = { InputModeButton() },
     overflow: @Composable () -> Unit = { OverflowMenuButton() },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
         LocalWindowWidthClass provides rememberWindowWidthClass(),
+        // The surface switch, which the top bar draws and a screen binds to. It is created
+        // here because the bar is above every screen, and an ancestor cannot read state a
+        // descendant holds — see `InputModeToggle`.
+        LocalInputModeToggle provides remember { InputModeToggle() },
         // Both ends of the boundary `docs/CONVENTIONS.md` §1 draws, resolved once and from the
         // same settings: the locale an expression is read in, the character the decimal key
         // types, and how a result is written. A screen that took them as parameters would
@@ -84,8 +93,9 @@ fun LineoAppShell(
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
+                        leading()
                         overflow()
                     }
                     Box(modifier = Modifier.weight(1f)) { content() }

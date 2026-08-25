@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.lineo.android.application)
     alias(libs.plugins.lineo.android.compose)
     alias(libs.plugins.lineo.android.hilt)
+    alias(libs.plugins.kotlin.serialization)
     // Screens live here now — settings, history, licences — and P1-06 recorded that they
     // would go unsnapshotted until this was applied. Test-only, so nothing reaches the APK.
     alias(libs.plugins.paparazzi)
@@ -43,12 +44,15 @@ androidComponents {
 }
 
 dependencies {
+    implementation(project(":core:billing"))
     implementation(project(":core:data"))
     implementation(project(":core:registry"))
     implementation(project(":core:ui"))
     implementation(project(":feature:notepad"))
     implementation(project(":feature:scientific"))
     implementation(project(":feature:converter"))
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

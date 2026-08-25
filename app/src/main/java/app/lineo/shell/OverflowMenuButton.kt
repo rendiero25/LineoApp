@@ -37,7 +37,10 @@ internal fun OverflowMenuButton(modifier: Modifier = Modifier, onClick: () -> Un
     val description = stringResource(R.string.menu_more_options)
     Column(
         modifier = modifier
-            .padding(LineoDimens.EditorPadding)
+            // The band is as short as its buttons allow: the space under it is the same
+            // `KeyGap` the keypad leaves above its first row, so the document sits between
+            // two equal margins and gets every dp the bar does not need.
+            .padding(horizontal = LineoDimens.EditorPadding, vertical = LineoDimens.KeyGap)
             .clip(CircleShape)
             .clickable(onClick = onClick)
             .size(LineoDimens.MinTouchTarget)

@@ -1,9 +1,5 @@
 package app.lineo.ui.input
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import app.lineo.ui.theme.LineoTheme
@@ -51,33 +47,10 @@ class KeypadPaparazziTest {
     }
 
     @Test
-    fun `keypad and accessory row right to left`() {
-        paparazzi.snapshot {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                LineoTheme(darkTheme = false, dynamicColor = false) {
-                    Column {
-                        AccessoryRow(state = AccessoryRowState())
-                        Keypad(state = KeypadState())
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
     fun `keypad in a window wide enough for the function column`() {
         paparazzi.snapshot {
             LineoTheme(darkTheme = false, dynamicColor = false) {
                 Keypad(state = KeypadState(hasRoomForFunctions = true))
-            }
-        }
-    }
-
-    @Test
-    fun `accessory row in light scheme`() {
-        paparazzi.snapshot {
-            LineoTheme(darkTheme = false, dynamicColor = false) {
-                AccessoryRow(state = AccessoryRowState())
             }
         }
     }

@@ -27,11 +27,15 @@ import app.lineo.ui.theme.LineoRole
  */
 internal object ScientificKeypadLayout : KeypadLayout {
 
-    override fun rows(decimalSeparator: Char, hasRoomForFunctions: Boolean): List<List<KeypadKey>> =
+    override fun rows(
+        decimalSeparator: Char,
+        hasExtraColumn: Boolean,
+        hasRoomForFunctions: Boolean,
+    ): List<List<KeypadKey>> =
         if (hasRoomForFunctions) {
-            WIDE_ROWS + basicKeypadRows(decimalSeparator, hasRoomForFunctions = true)
+            WIDE_ROWS + basicKeypadRows(decimalSeparator, hasExtraColumn)
         } else {
-            NARROW_ROWS + basicKeypadRows(decimalSeparator, hasRoomForFunctions = false)
+            NARROW_ROWS + basicKeypadRows(decimalSeparator, hasExtraColumn)
         }
 
     /**

@@ -27,7 +27,9 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.lineo.engine.CalcError
 import app.lineo.ui.R
 import app.lineo.ui.format.LocalQuantityFormat
@@ -67,7 +69,7 @@ fun ExpressionEditor(
         ExpressionField(state = state, focusRequester = focusRequester)
         when (val evaluation = state.evaluation) {
             EditorEvaluation.Empty, EditorEvaluation.Unfinished -> Unit
-            is EditorEvaluation.Result -> ResultLine(evaluation)
+            is EditorEvaluation.Result -> ResultLine(evaluation, state.text.length)
             is EditorEvaluation.Failure -> FailureLines(state = state, error = evaluation.error)
         }
     }
@@ -79,6 +81,8 @@ private fun ExpressionField(state: EditorState, focusRequester: FocusRequester?)
     val underlineColour = RoleColors.of(LineoRole.ErrorUnderline).container
     val span = (state.evaluation as? EditorEvaluation.Failure)?.error?.span
 
+    val (fontSize, lineHeight) = shrinkStep(state.text.length)
+
     BasicTextField(
         value = TextFieldValue(text = state.text, selection = TextRange(state.caret)),
         onValueChange = { state.setText(it.text, it.selection.start) },
@@ -87,7 +91,12 @@ private fun ExpressionField(state: EditorState, focusRequester: FocusRequester?)
             .let { if (focusRequester == null) it else it.focusRequester(focusRequester) },
         textStyle = LineoTypography.Expression
             .asExpression()
-            .copy(color = editor.content, textAlign = TextAlign.End),
+            .copy(
+                color = editor.content,
+                textAlign = TextAlign.End,
+                fontSize = fontSize,
+                lineHeight = lineHeight,
+            ),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         visualTransformation = errorSpanTransformation(span, underlineColour),
     )
@@ -95,13 +104,17 @@ private fun ExpressionField(state: EditorState, focusRequester: FocusRequester?)
 
 /** The computed value, muted, directly under the expression it belongs to. */
 @Composable
-private fun ResultLine(result: EditorEvaluation.Result) {
+private fun ResultLine(result: EditorEvaluation.Result, textLength: Int) {
     // The display boundary of docs/CONVENTIONS.md §1: grouping, the locale separator and the
     // decimal-place ceiling, resolved once by the shell from the user's settings. The engine
     // stays locale-free above and below this line.
+    val (fontSize, lineHeight) = resultShrinkStep(textLength)
     Text(
         text = LocalQuantityFormat.current.format(result.value).display(),
-        style = LineoTypography.Result.asExpression(),
+        style = LineoTypography.Result.asExpression().copy(
+            fontSize = fontSize,
+            lineHeight = lineHeight,
+        ),
         color = RoleColors.of(LineoRole.Result).content,
         textAlign = TextAlign.End,
         modifier = Modifier.fillMaxWidth(),
@@ -181,6 +194,44 @@ private fun AnnotatedString.underlined(start: Int, end: Int, colour: androidx.co
         // meaning. error on surface measures 6.13:1, above the AA minimum for text.
         addStyle(SpanStyle(color = colour, textDecoration = TextDecoration.Underline), start, end)
     }
+
+/**
+ * The font size and line height for an expression of [length] characters.
+ *
+ * Steps down from the 68 sp base as the line grows, so that a longer expression can still
+ * be read without running off the leading edge.
+ */
+private fun shrinkStep(length: Int): Pair<TextUnit, TextUnit> = stepFor(length).expression
+
+/** The same steps for the result line, keeping the one-step-smaller relationship. */
+private fun resultShrinkStep(length: Int): Pair<TextUnit, TextUnit> = stepFor(length).result
+
+private fun stepFor(length: Int): ShrinkStep = SHRINK_STEPS.first { length > it.overLength }
+
+/**
+ * One rung of the ladder: how big the expression and its result are past a given length.
+ *
+ * The two sizes are one row rather than two tables, because the relationship between them is
+ * the thing worth keeping — the result is always one step smaller than the expression above
+ * it, and two tables could drift apart without anything noticing.
+ */
+private data class ShrinkStep(
+    val overLength: Int,
+    val expression: Pair<TextUnit, TextUnit>,
+    val result: Pair<TextUnit, TextUnit>,
+)
+
+/**
+ * Longest first, so the first match is the right one. The last rung is `-1`, which every
+ * length clears: it is the base size and not a step down from anything.
+ */
+private val SHRINK_STEPS: List<ShrinkStep> = listOf(
+    ShrinkStep(overLength = 35, expression = 22.sp to 28.sp, result = 18.sp to 24.sp),
+    ShrinkStep(overLength = 25, expression = 28.sp to 36.sp, result = 22.sp to 28.sp),
+    ShrinkStep(overLength = 20, expression = 38.sp to 48.sp, result = 28.sp to 36.sp),
+    ShrinkStep(overLength = 12, expression = 54.sp to 62.sp, result = 38.sp to 48.sp),
+    ShrinkStep(overLength = -1, expression = 68.sp to 76.sp, result = 54.sp to 62.sp),
+)
 
 private val MessageCornerRadius = 8.dp
 private val ChipCornerRadius = 16.dp

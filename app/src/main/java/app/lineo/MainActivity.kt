@@ -8,17 +8,24 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import app.lineo.billing.BillingRepository
+import app.lineo.billing.Entitlement
 import app.lineo.data.settings.ThemePreference
 import app.lineo.engine.EvalContext
 import app.lineo.engine.unit.UnitRegistry
+import app.lineo.registry.CalculatorModule
 import app.lineo.registry.ModuleRegistry
 import app.lineo.registry.Tier
+import app.lineo.shell.Destination
 import app.lineo.shell.HistoryRoute
 import app.lineo.shell.HistoryViewModel
 import app.lineo.shell.LineoAppShell
@@ -53,10 +60,13 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var modules: ModuleRegistry
 
+    @Inject
+    lateinit var billing: BillingRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { LineoApp(modules, notepad, history, settings) }
+        setContent { LineoApp(modules, billing, notepad, history, settings) }
     }
 }
 
@@ -75,23 +85,25 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun LineoApp(
     modules: ModuleRegistry,
+    billing: BillingRepository,
     notepad: NotepadViewModel,
     history: HistoryViewModel,
     settings: SettingsViewModel,
 ) {
     val systemLocale = LocalConfiguration.current.locales[0]
     val stored by settings.uiState.collectAsStateWithLifecycle()
+    val entitlement by billing.entitlement.collectAsStateWithLifecycle()
+
     // One resolution for the whole window: the same locale reads the numbers, prints them and
     // labels the decimal key, so the three can never disagree.
     val resolved = remember(stored, systemLocale) { ResolvedSettings.of(stored, systemLocale) }
     val locale = resolved.locale
-    // Entitlement is FREE until Play Billing lands at P2-01. Every module shipped so far is
-    // free anyway (`docs/SPEC.md` §4), so nothing is hidden by the placeholder.
-    val visible = modules.visible(Tier.FREE, locale)
-    var openModuleId: String? by rememberSaveable { mutableStateOf(null) }
-    var historyOpen: Boolean by rememberSaveable { mutableStateOf(false) }
-    var settingsOpen: Boolean by rememberSaveable { mutableStateOf(false) }
-    val open = visible.firstOrNull { it.id == openModuleId }
+    val tier = when (entitlement) {
+        Entitlement.Free -> Tier.FREE
+        Entitlement.Premium -> Tier.PREMIUM
+    }
+    val visible = modules.visible(tier, locale)
+    val navController = rememberNavController()
 
     LineoAppShell(
         settings = resolved,
@@ -103,48 +115,90 @@ private fun LineoApp(
         overflow = {
             ModuleMenu(
                 modules = visible,
-                onOpenModule = { openModuleId = it },
-                onOpenHistory = { historyOpen = true },
-                onOpenSettings = { settingsOpen = true },
+                navController = navController,
             )
         },
     ) {
-        when {
-            settingsOpen -> SettingsRoute(viewModel = settings, onLeave = { settingsOpen = false })
+        LineoNavHost(
+            navController = navController,
+            visible = visible,
+            resolved = resolved,
+            // Every module's functions *and* units, so a name typed in the notepad resolves to
+            // the same thing its own screen calls (`AGENTS.md` §1): `sec(60)` from the scientific
+            // module, `5 km to mi` from the converter. The angle mode and the reading locale come
+            // from the settings, which is what makes them mean anything.
+            context = EvalContext(
+                locale = locale,
+                angleMode = resolved.angleMode,
+                functions = modules.functionRegistry(tier, locale),
+                units = UnitRegistry.BUILTIN.with(modules.units(tier, locale)),
+            ),
+            notepad = notepad,
+            history = history,
+            settings = settings,
+        )
+    }
+}
 
-            historyOpen -> HistoryRoute(
+/**
+ * The destinations, and what each one is handed.
+ *
+ * A function of its own rather than a block inside `LineoApp`: what the app resolves — the
+ * settings, the tier, the module list — and what the graph does with them are two different
+ * readings, and only the second one changes when a destination is added.
+ */
+@Composable
+private fun LineoNavHost(
+    navController: NavHostController,
+    visible: List<CalculatorModule>,
+    resolved: ResolvedSettings,
+    context: EvalContext,
+    notepad: NotepadViewModel,
+    history: HistoryViewModel,
+    settings: SettingsViewModel,
+) {
+    NavHost(navController = navController, startDestination = Destination.Notepad) {
+        composable<Destination.Notepad> {
+            NotepadRoute(viewModel = notepad, context = context)
+        }
+
+        composable<Destination.History> {
+            HistoryRoute(
                 viewModel = history,
                 // Reuse lands in the notepad, so the tape leaves the module behind as well as
                 // itself: the expression goes where a line can hold it.
                 onReuse = { expression ->
-                    openModuleId = null
+                    navController.popBackStack(Destination.Notepad, inclusive = false)
                     notepad.reuse(expression)
                 },
-                onLeave = { historyOpen = false },
+                onLeave = { navController.popBackStack() },
             )
+        }
 
-            open == null -> NotepadRoute(
-                viewModel = notepad,
-                // Every module's functions *and* units, so a name typed in the notepad resolves
-                // to the same thing its own screen calls (`AGENTS.md` §1): `sec(60)` from the
-                // scientific module, `5 km to mi` from the converter. The angle mode and the
-                // reading locale come from the settings, which is what makes them mean anything.
-                context = EvalContext(
-                    locale = locale,
-                    angleMode = resolved.angleMode,
-                    functions = modules.functionRegistry(Tier.FREE, locale),
-                    units = UnitRegistry.BUILTIN.with(modules.units(Tier.FREE, locale)),
-                ),
+        composable<Destination.Settings> {
+            SettingsRoute(
+                viewModel = settings,
+                onLeave = { navController.popBackStack() },
             )
+        }
 
-            else -> ModuleRoute(
-                module = open,
-                // Already resolved, never AUTO: what "auto" means is a locale question, and
-                // `ResolvedSettings` is where every locale question is answered.
-                unitSystem = resolved.unitSystem,
-                onLeave = { openModuleId = null },
-                onOpenModule = { id -> openModuleId = id },
-            )
+        composable<Destination.Module> { backStackEntry ->
+            val route: Destination.Module = backStackEntry.toRoute()
+            val open = visible.firstOrNull { it.id == route.id }
+            if (open != null) {
+                ModuleRoute(
+                    module = open,
+                    // Already resolved, never AUTO: what "auto" means is a locale question, and
+                    // `ResolvedSettings` is where every locale question is answered.
+                    unitSystem = resolved.unitSystem,
+                    onLeave = { navController.popBackStack() },
+                    onOpenModule = { id ->
+                        navController.navigate(Destination.Module(id)) {
+                            popUpTo(Destination.Notepad)
+                        }
+                    },
+                )
+            }
         }
     }
 }

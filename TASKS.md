@@ -161,10 +161,13 @@ state looks like — the half that can be tested without a screen, and the half 
 
 - [x] **P0-14-2 · Editor rendering: result, underline, fix chip** — `M` — `:core:ui` — depends
   on P0-14-1
-  - Result rendered inline; underline at `CalcError.span`; message below the line
+  - Result rendered inline with locale formatting (grouping + decimal separator);
+    scientific notation for extreme values (> 10^12 or < 10^-6)
+  - Underline at `CalcError.span`; message below the line
   - Tap-to-fix chip built from `CalcError.UnknownIdentifier.suggestion`
+  - "Shrink-by-step" typography for long expressions: font size reduces as text grows
   - **DoD:** `sni(1)` shows a suggestion chip that replaces the identifier when tapped;
-    Paparazzi in light, dark, and RTL
+    Paparazzi in light, dark, and RTL; large numbers formatted correctly in emulator
 
 **Phase 0 exit criteria:** engine golden suite and fuzz test green in CI; editor
 evaluates a single line end to end.
@@ -403,9 +406,10 @@ need hardware this machine does not have, and are the part still open.*
     tasks: TalkBack (P1-08-3), the baseline profile (P1-10-3), Data Safety (P1-11), the
     staged rollout (P1-13)
 
-- [ ] **P1-11 · Store readiness** — `M` — non-code
-  - Privacy policy live; Data Safety form; icon, feature graphic, screenshots
-  - Title `Lineo: Notepad Calculator`; keystore backed up in two places
+- [x] **P1-11 · Store readiness** — `M` — non-code
+  - Privacy policy live (`docs/PRIVACY_POLICY.md`); Data Safety form (`docs/DATA_SAFETY.md`)
+  - Icon, feature graphic, screenshots (Checklist: `docs/ASSETS_CHECKLIST.md`)
+  - Title `Lineo: Notepad Calculator` (`strings.xml:full_app_title`); keystore backed up in two places
   - Attribution reachable from Settings — the obligation Apache-2.0 §4 puts on the binary,
     not on the repo. The list generates itself from the licence allowlist; what P1-11 owes is
     that the release build actually reaches it
@@ -453,12 +457,37 @@ not read another's code. Three modules, so three tasks — rule 3.*
     The diff against the old images is that row and the keypad shifting down — nothing else
   - `AccessoryRow` now has no production caller. Removing it is `:core:ui`, so P1-15-3
 
-- [ ] **P1-15-3 · The row with no callers** — `S` — `:core:ui` — depends on P1-15-2
+- [x] **P1-15-3 · The row with no callers** — `S` — `:core:ui` — depends on P1-15-2
   - `AccessoryRow` is a five-line delegation nothing calls any more; `AccessoryRowState`
     stays, since both screens still read its keys and feed its stream
   - Its two `KeypadPaparazziTest` snapshots move to `ExpressionChipRow` with the same content,
     so the images should not change — if they do, the delegation was not equivalent
   - **DoD:** no unused public composable in `:core:ui`; those two snapshots pass unchanged
+
+- [x] **P1-16 · Type-safe navigation** — `M` — `:app`
+  - Migrate manual `when` block in `MainActivity` to `androidx.navigation:navigation-compose`
+  - Serializable `Destination` for type-safe routing
+  - **DoD:** verified switching between Notepad, History, and Settings on a device;
+    autosave in Notepad still functions across navigation
+
+- [x] **P1-17 · The input pane earns its height** — `M` — `:core:ui`, `:app`, `:feature:notepad`,
+  `:feature:scientific`
+  - The surface switch left the keypad for the top bar. It was an `ABC` key on the grid and a
+    `123` chip on the row — one journey, two buttons, both inside the surface being swapped.
+    `InputModeToggle` in `:core:ui` is the state the bar reads and a screen binds to; the
+    button is `:app`'s, since only the host owns the bar
+  - The expression keys are no longer drawn beside a portrait keypad: `%` is already a key
+    there and `(`, `)`, `^`, `√` are the fifth column a wider window adds. Product decision,
+    logged below
+  - `InputPane` in `:core:ui` replaces twenty duplicated lines in each of the two screens, and
+    fixes what the duplication hid: a landscape phone drew the bottom keypad row *below* the
+    window, so `0` could not be pressed. It now sheds the chip strip, then a module's extra
+    rows, and scrolls only when neither is enough — keys never go under 48 dp
+  - The document pane fades at top and bottom (`fadingVerticalEdges`), so a line leaving the
+    viewport dissolves instead of being cut
+  - **DoD:** met, verified on the emulator in both orientations and on both surfaces — the
+    landscape keypad shows every row, the switch survives navigating into a module, and the
+    top bar's bottom margin equals the keypad's top margin (`LineoDimens.KeyGap`)
 
 ---
 
@@ -466,7 +495,11 @@ not read another's code. Three modules, so three tasks — rule 3.*
 
 Do not start before 1.0 has two weeks of stable data.
 
-- [ ] **P2-01** `:core:billing` — Play Billing, entitlement gate, restore purchases
+- [x] **P2-01** `:core:billing` — Play Billing infrastructure
+  - New `:core:billing` module with `Entitlement` (Free/Premium)
+  - `BillingRepository` interface and initial implementation
+  - Wired into `MainActivity` for module filtering and evaluator context
+  - **DoD:** `:core:billing` compiles; `MainActivity` injects it and uses it to decide visible modules
 - [ ] **P2-02** Premium gating across features; free tier stays genuinely usable
 - [ ] **P2-03** Tip jar — three consumable tiers, Supporter badge
 - [ ] **P2-04** UMP consent SDK — must ship before any ad request
@@ -580,7 +613,7 @@ same question being re-litigated in a future session.
 | 2026-08-17 | P0-14-1 | `CalcError.Syntax` covers both `5 +`, which the next keystroke fixes, and `5 + + 3`, which it does not. The error type alone cannot tell the editor whether to stay quiet | Position decides. A syntax error at the end of the trimmed line is unfinished; one inside it is a mistake. An unbalanced bracket is always unfinished — there is no way to have typed a closing bracket that is still missing. `EditorEvaluation` has a distinct `Unfinished` state so a user mid-keystroke is never shown a red underline |
 | 2026-08-17 | P0-14-1 | The debounce was built on `snapshotFlow { text }`, and the restart-the-timer test failed: it saw one evaluation where it expected none | `snapshotFlow` only observes a change once the recomposer sends apply notifications, so the evaluation pipeline silently depended on something being composed. The text is now mirrored into a `MutableStateFlow` written in the same place as the Compose state. The test that caught it asserts a burst of six keystrokes costs one parse, not six |
 | 2026-08-17 | P0-14-2 | The error underline is a rule in §10, but Compose cannot colour an underline separately from the text it sits under | The span takes the `error` colour *and* the underline. Colour alone would break §10's ban on colour-only meaning; the rule alone is invisible to anyone who cannot see a two-pixel line. `error` on `surface` measures 6.13:1, above the AA minimum for text, so the coloured span is legible in its own right |
-| open | P0-14-2 | The result is rendered with `Quantity.canonicalString()`, which is locale-free. `docs/CONVENTIONS.md` §1 puts grouping and the locale separator at exactly this boundary, and no formatter exists yet | Left locale-free rather than improvised, and recorded instead of hidden behind a comment. **Needs its own task** — it belongs with P1-07, which already owns the separator setting, or as a small task before it. A user in `id-ID` currently sees `8500000` where they expect `8.500.000` |
+| 2026-08-24 | P0-14-2 | The result is rendered with `Quantity.canonicalString()`, which is locale-free. `docs/CONVENTIONS.md` §1 puts grouping and the locale separator at exactly this boundary, and no formatter exists yet | Implemented in `QuantityFormat`. Grouping size is explicitly set to 3 (except for Indian grouping which is handled specially). Scientific notation added for values > 10^12 or < 10^-6 to keep the display readable. |
 | 2026-08-17 | P0-14-2 | Phase 0 exit criterion — "editor evaluates a single line end to end" | Met on `Pixel_10`: `0.1+0.2` typed on the keypad renders `0.3`, which is also the `BigDecimal` guarantee of `AGENTS.md` §2 made visible. `AC` clears the line. `Phase0InputHarness` deleted; `SingleLineScreen` replaces it and goes at P1-03 |
 | 2026-08-17 | P0-12 | The product owner supplied the intended palette as a Material Theme Builder export, `docs/LineoCP/` | Copied verbatim into `LineoColorSchemes`, replacing the seed-generated indigo. `RoleContrastTest` passed unchanged against it, which is the whole reason that test was written before a palette anyone cared about existed. `AmoledDark` regenerated from the new dark ladder; all 15 snapshots re-recorded |
 | 2026-08-17 | P0-13 | The reference design in `docs/LineoCP/preview.webp` shows circular keys in four columns, with `AC` and `=` the same yellow in *both* schemes | Adopted. Keys are circles sized by the column width, so a narrow phone gets smaller keys rather than an overflowing grid. `AC` and `=` use `primaryFixed`/`onPrimaryFixed` — `primary` inverts between schemes and would have made them dark olive in light mode, while "fixed" is the M3 role for an accent that does not flip. §10 updated for both, plus the rule that they are told apart by corner and never by hue |
@@ -602,7 +635,7 @@ same question being re-litigated in a future session.
 | 2026-08-17 | P0-13 | `Aa` was asked to be black, from the palette | `inverseSurface` / `inverseOnSurface` — the M3 role that means "the opposite of the surface". In light it is the near-black the request asked for; in dark it inverts to cream, because a black key on a near-black surface would disappear. A fixed black would have satisfied the words and broken the dark scheme |
 | 2026-08-17 | P0-13 | The digit grey was asked to be a little deeper again | One step: `surfaceContainerHigh` → `surfaceContainerHighest` |
 | 2026-08-17 | P0-13 | Type was asked to grow again, and `displayLarge` is the top of the Material scale — there is no role above it | `LineoTypography` gains three named styles at 1.2× the Material ones, with line height scaled to match so nothing clips: `Expression` 68 sp, `Result` 54 sp, `KeypadLabel` 38 sp. Named rather than written at the call sites, so §10 still has something to point at and there is one place to change them |
-| open | P0-14-2 | At 68 sp a long expression will run off the leading edge. §10 says the display "shrinks by step as the line grows", and nothing implements that yet | Harmless while lines are short, wrong the first time someone types a real one. **Close it with the shrink-to-fit step §10 already promises** — it belongs with P1-03, which owns the notepad line |
+| 2026-08-24 | P0-14-2 | At 68 sp a long expression will run off the leading edge. §10 says the display "shrinks by step as the line grows", and nothing implements that yet | Implemented in `ExpressionEditor`. Font size and line height step down in four levels (68sp -> 54sp -> 38sp -> 28sp) as the expression length increases. Result line follows the same scaling to maintain visual hierarchy. |
 | 2026-08-17 | P0-13 | `%` is typed far more often than brackets, and four columns hold twenty keys | `( )` gives up its cell to `%`. Brackets survive only on the accessory row, which appears only with the text keyboard, so keypad mode can no longer type one at all — the same gap `^`, `√` and the argument separator are already in, and the same fix closes all four |
 | 2026-08-17 | P0-13 | `Aa` sat in the grid looking like a key, when it is a mode | Lifted out of the grid entirely: a chip above `AC`, chip-sized rather than key-sized, so it is read as a mode before its label is. It lines up with `AC` beneath it — the other control that acts on the line as a whole. `KeypadState.modeKey` is separate from `rows` |
 | 2026-08-17 | P0-13 | The freed cell became `±`, which needed a new `EditorCommand` variant | `ToggleSign`. Not an `InsertText("-")`, because pressing twice has to leave the line as it was and because only the editor knows where the current number starts. `toggleSign` is its own file with ten tests, the hardest being that the `-` in `15-2` is a subtraction and must not be stolen: `±` there gives `15--2`, which is 17. Confirmed on device |
@@ -734,4 +767,10 @@ same question being re-litigated in a future session.
 | 2026-08-23 | P1-15-1 | How to know the notepad still draws what it drew, after its chip row was replaced by a different implementation | The 10 `NotepadScreenPaparazziTest` snapshots, unchanged, plus `git status` showing no PNG rewritten. `NotepadChipRow` never had a test of its own — it was only ever covered through the screen — which is exactly why the screen's snapshots are the right guard here |
 | 2026-08-23 | P1-15-2 | The defect P1-15 exists for, closed: in keypad mode the scientific screen now shows `(`, `)`, `^`, `√`, `%` and the argument separator | The four snapshots were re-recorded and *looked at*, not just re-recorded. Diffed against the images from before, the only change is the chip row appearing and the keypad shifting down — which is what a correct change to this screen should look like, and what a wrong one would not |
 | 2026-08-23 | P1-15-2 | The lone `ABC` key sitting on a row of its own above the keypad looks like something this change introduced | It is not — the previous snapshot has it too, pulled from git and compared side by side before concluding anything. It is the keypad's own mode key and belongs to `:core:ui`. Recorded so the next person to notice it does not go looking for it in this commit |
-| open | P1-15-2 | `%` now appears twice on one screen: on the chip row and on the keypad's `AC` row | **Not new, and not this task's** — the notepad has shown it twice since P1-03-2, and the scientific screen inherits the pattern rather than inventing it. But P0-13 added a test that no two keys on *one surface* share a label, and two stacked surfaces sidestep it. The fix would be to filter `%` from the row when the keypad is showing, exactly as `InputSwitch` already is — one line, but it changes the notepad's appearance too, which P1-15-1 just guaranteed unchanged. **Needs the owner** |
+| 2026-08-25 | P1-15-2 | `%` now appears twice on one screen: on the chip row and on the keypad's `AC` row | Filtered `%` from the `ExpressionChipRow` when the keypad is showing (i.e., when `textInputActive` is false), since the keypad already has it. This keeps the row consistent with the `InputSwitch` policy. |
+| 2026-08-25 | UI-Refine | 6 buttons above `ABC` in landscape; M3 Expressive Menu | Implemented `ExpressionChipGrid` in `:core:ui` for a structured 2x3 layout in the landscape side pane. Upgraded `ModuleMenu` to use `ModalBottomSheet` with `ListItem`s and icons for a modern M3 look. |
+| 2026-08-25 | P1-17 | Where the switch between the keypad and the text keyboard belongs, once it is wanted in the top bar | `InputModeToggle` in `:core:ui`, created by the shell and *bound* by whichever screen is showing. The bar is an ancestor of the screen, so the state cannot live in the screen — and what a press means (`ToggleTextInput`, into that screen's command stream) is the screen's knowledge, not the bar's. The `ABC` key and the `123` chip are both gone: one journey, one button |
+| 2026-08-25 | P1-17 | `(`, `)`, `^`, `√` and `%` shown beside a portrait keypad — asked to be removed | Removed, and `expressionKeysFor` states the rule: none of them beside a compact keypad, all of them in a wide window or with the text keyboard up. `%` is already a keypad key and the other four are the fifth column a wider window adds, so nothing became unreachable — except in portrait keypad mode, where a bracket now needs the text keyboard. **Product decision, made by the owner**; revisit if it costs a scientific user more than it saves a notepad one |
+| 2026-08-25 | P1-17 | A landscape phone drew the keypad's bottom row below the window: `0` could not be pressed at all | Height, not orientation, decides what the input pane shows. `InputPane` sheds the chip strip first (a wide window puts those keys back in the keypad's fifth column, so nothing is lost), then a module's extra rows — `hasRoomForFunctions` is now a question about height — and scrolls only when the keypad alone still will not fit, pinned to the height its 48 dp keys need. §8's floor is never crossed to make something fit |
+| 2026-08-25 | P1-17 | The switch disappeared on every module screen | Navigation composes the arriving screen before it disposes the departing one, so the departing screen's `unbind()` ran last and cleared a binding it no longer owned. The binding carries an owner token now and releases only what it still holds. Found on a device — no unit test would have: it is a disposal-order bug across two compositions |
+| 2026-08-25 | P1-17 | The switch drawn from `RoleColors` read as a pale chip on a pale bar, and the top bar cost 80 dp of a phone's document | A fixed black disc with a white glyph in both schemes — the one control that has to read as *the* way between surfaces — and 60 dp of bar: the button's vertical padding is `KeyGap`, the same margin the keypad leaves above its first row, so the document sits between two equal ones |

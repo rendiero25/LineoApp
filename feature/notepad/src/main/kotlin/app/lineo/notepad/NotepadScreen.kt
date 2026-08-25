@@ -1,10 +1,8 @@
 package app.lineo.notepad
 
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,8 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lineo.registry.EditorCommand
 import app.lineo.ui.input.ExpressionChip
-import app.lineo.ui.input.ExpressionChipRow
-import app.lineo.ui.input.Keypad
+import app.lineo.ui.input.InputModeBinding
+import app.lineo.ui.input.InputPane
 import app.lineo.ui.input.rememberAccessoryRowState
 import app.lineo.ui.input.rememberKeypadState
 import app.lineo.ui.layout.AdaptivePane
@@ -46,8 +44,9 @@ import kotlinx.coroutines.flow.merge
  * suggestion chip all reach the document by one path and cannot each edit it their own way
  * (`docs/ARCHITECTURE.md` §5).
  *
- * The surface swap changes what is *below* the chip row and nothing else: the row is there
- * either way, at the same height, so pressing `ABC` does not move the document.
+ * The chip row above the surface carries the screen's suggestions, and the expression keys
+ * only where there is room for them — never beside a portrait keypad, where every key it
+ * would show is either already on the keypad or belongs to the column a wider window adds.
  *
  * @param state the screen's model. Held by whatever owns the open document — a `ViewModel`
  *   at screen level, per `docs/ANDROID_STANDARDS.md` §1 — and never created here, or a
@@ -85,6 +84,14 @@ fun NotepadScreen(state: NotepadState, modifier: Modifier = Modifier) {
     val typing = remember { FocusRequester() }
     LaunchedEffect(inspecting) { if (!inspecting) typing.requestFocus() }
 
+    // The surface switch lives in the top bar, above every screen. This is what makes it
+    // *this* screen's switch while the notepad is showing: the same `ToggleTextInput` the
+    // keypad key used to emit, into the same handler.
+    InputModeBinding(
+        textInputActive = uiState.textInputActive,
+        onToggle = { state.apply(EditorCommand.ToggleTextInput) },
+    )
+
     AdaptivePane(
         modifier = modifier
             .focusRequester(typing)
@@ -94,22 +101,15 @@ fun NotepadScreen(state: NotepadState, modifier: Modifier = Modifier) {
             NotepadLines(state = state, uiState = uiState)
         },
         input = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                ExpressionChipRow(
-                    // The surface switch is only shown when the keyboard is up. The keypad
-                    // carries its own `ABC`, and two keys doing the same thing on one screen
-                    // is two places to look for it.
-                    keys = accessory.keys.filter {
-                        uiState.textInputActive || it.role != LineoRole.InputSwitch
-                    },
-                    onCommand = state::apply,
-                    trailing = uiState.suggestions.asChips(),
-                    // The keypad below owns the inset when it is showing; when it is not,
-                    // this row is the bottom-most thing and owns it instead.
-                    docked = uiState.textInputActive,
-                )
-                if (!uiState.textInputActive) Keypad(state = keypad)
-            }
+            InputPane(
+                keypad = keypad,
+                accessory = accessory,
+                textInputActive = uiState.textInputActive,
+                onCommand = state::apply,
+                // The names and units this document has in scope. What they are is the
+                // notepad's knowledge; where they are drawn is `:core:ui`'s.
+                trailing = uiState.suggestions.asChips(),
+            )
         },
     )
 }

@@ -1,7 +1,5 @@
 package app.lineo.scientific
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,13 +22,12 @@ import app.lineo.ui.editor.EditorState
 import app.lineo.ui.editor.ExpressionEditor
 import app.lineo.ui.editor.LocalAngleMode
 import app.lineo.ui.format.LocalNumberLocale
-import app.lineo.ui.input.ExpressionChipRow
-import app.lineo.ui.input.Keypad
+import app.lineo.ui.input.InputModeBinding
+import app.lineo.ui.input.InputPane
 import app.lineo.ui.input.LocalDecimalSeparator
 import app.lineo.ui.input.rememberAccessoryRowState
 import app.lineo.ui.input.rememberKeypadState
 import app.lineo.ui.layout.AdaptivePane
-import app.lineo.ui.theme.LineoRole
 import kotlinx.coroutines.flow.merge
 import java.util.Locale
 
@@ -94,6 +91,13 @@ internal fun ScientificScreen(modifier: Modifier = Modifier) {
         }
     }
 
+    // The surface switch is in the top bar now, and this is what binds it to this screen:
+    // one button, whichever surface is showing under it.
+    InputModeBinding(
+        textInputActive = textInputActive,
+        onToggle = { textInputActive = !textInputActive },
+    )
+
     // The keyboard follows the state rather than the press, so the two cannot disagree.
     // Never in a screenshot test: there is no keyboard there, and asking for one starts a
     // platform thread layoutlib cannot give it.
@@ -111,27 +115,14 @@ internal fun ScientificScreen(modifier: Modifier = Modifier) {
         modifier = modifier,
         document = { ExpressionEditor(state = editor, focusRequester = focusRequester) },
         input = {
-            // The chip row sits above *whichever* surface is showing, which is what
-            // `docs/ARCHITECTURE.md` §5 asks for and what this screen could not do until
-            // P1-15-0 put the row in `:core:ui`. Before that it appeared only with the text
-            // keyboard, so in keypad mode `(`, `)`, `^`, `√`, `%` and the argument separator
-            // were unreachable — a scientific calculator that could not type `(2+3)*4`.
-            Column(modifier = Modifier.fillMaxWidth()) {
-                ExpressionChipRow(
-                    // The keypad carries its own `ABC`, so the row's `123` would be a second
-                    // key doing the same job and a second place to look for it.
-                    keys = accessory.keys.filter {
-                        textInputActive || it.role != LineoRole.InputSwitch
-                    },
-                    // Into the same stream the keypad feeds, so `ToggleTextInput` and `=`
-                    // keep the one handler above and a chip cannot edit by another path.
-                    onCommand = accessory::press,
-                    // The keypad below owns the inset when it is showing; when it is not,
-                    // this row is the bottom-most thing and owns it instead.
-                    docked = textInputActive,
-                )
-                if (!textInputActive) Keypad(state = keypad)
-            }
+            InputPane(
+                keypad = keypad,
+                accessory = accessory,
+                textInputActive = textInputActive,
+                // Into the same stream the keypad feeds, so `ToggleTextInput` and `=` keep
+                // the one handler above and a chip cannot edit by another path.
+                onCommand = accessory::press,
+            )
         },
     )
 }

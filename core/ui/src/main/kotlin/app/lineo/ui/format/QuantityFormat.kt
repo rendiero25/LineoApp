@@ -2,6 +2,7 @@ package app.lineo.ui.format
 
 import androidx.compose.runtime.Immutable
 import app.lineo.engine.Quantity
+import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -46,7 +47,10 @@ class QuantityFormat(
             // `#,##,##0` is read as plain groups of three and `hi-IN` prints `1,234,567`.
             // Applying the pattern is therefore not enough — the digits are regrouped in
             // [groupIndian] instead, with the separators CLDR gives for the locale.
-            isGroupingUsed = !indianGrouping
+            isGroupingUsed = true
+            groupingSize = 3
+            if (indianGrouping) isGroupingUsed = false
+
             maximumFractionDigits = decimalPlaces.coerceIn(0, MAX_FRACTION_DIGITS)
             // HALF_UP, not banker's rounding: §4 calls it out by name, because half-to-even
             // contradicts what anyone outside accounting expects a calculator to do.
@@ -63,13 +67,37 @@ class QuantityFormat(
     fun format(quantity: Quantity): FormattedQuantity {
         val places = decimalPlaces.coerceIn(0, MAX_FRACTION_DIGITS)
         val rounded = quantity.value.setScale(places, RoundingMode.HALF_UP)
-        val formatted = numbers.format(quantity.value)
-        val digits = if (indianGrouping) groupIndian(formatted) else formatted
+
+        val absValue = quantity.value.abs()
+        val useScientific = absValue.signum() != 0 &&
+            (absValue >= SCIENTIFIC_UPPER || absValue < SCIENTIFIC_LOWER)
+
+        val digits = if (useScientific) {
+            formatScientific(quantity.value)
+        } else {
+            val formatted = numbers.format(quantity.value)
+            if (indianGrouping) groupIndian(formatted) else formatted
+        }
+
         val unit = quantity.unit?.takeIf { !it.isEmpty }?.symbol
         return FormattedQuantity(
             text = if (unit == null) digits else "$digits $unit",
             truncated = rounded.compareTo(quantity.value) != 0,
         )
+    }
+
+    /**
+     * Renders [value] in scientific notation, e.g., `1.23E15`.
+     *
+     * Honours the decimal separator and rounding mode. The exponent is always shown with
+     * the platform's default exponent symbol ('E').
+     */
+    private fun formatScientific(value: BigDecimal): String {
+        val symbols = numbers.decimalFormatSymbols
+        // We use a fixed pattern for the significand but respect the chosen symbols.
+        val format = DecimalFormat("0.########E0", symbols)
+        format.roundingMode = RoundingMode.HALF_UP
+        return format.format(value)
     }
 
     /**
@@ -122,6 +150,12 @@ class QuantityFormat(
 
         /** Every group above it: two digits, so `1234567` reads `12,34,567`. */
         const val INDIAN_GROUP = 2
+
+        /** Numbers larger than this use scientific notation. */
+        private val SCIENTIFIC_UPPER = BigDecimal("1000000000000")
+
+        /** Positive numbers smaller than this use scientific notation. */
+        private val SCIENTIFIC_LOWER = BigDecimal("0.000001")
     }
 }
 

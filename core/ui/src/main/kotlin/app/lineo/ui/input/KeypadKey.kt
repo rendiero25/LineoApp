@@ -1,5 +1,6 @@
 package app.lineo.ui.input
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import app.lineo.registry.EditorCommand
@@ -18,6 +19,7 @@ import app.lineo.ui.theme.LineoRole
  *   rather than notation — `ABC` and `123`, which name a script and a number system and
  *   change with the language (`AGENTS.md` §5). Resolved where the key is drawn, so the
  *   layout stays a pure function with no `Context` in reach of it.
+ * @param iconRes optional icon for the key. If present, it takes precedence over the label.
  * @param role the token mapping row from `docs/CONVENTIONS.md` §10 this key belongs to.
  * @param command what pressing it emits.
  * @param contentDescription string resource TalkBack reads when [label] is not a word —
@@ -31,4 +33,5 @@ data class KeypadKey(
     val command: EditorCommand,
     @param:StringRes val contentDescription: Int? = null,
     @param:StringRes val labelRes: Int? = null,
+    @param:DrawableRes val iconRes: Int? = null,
 )

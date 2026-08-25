@@ -45,17 +45,14 @@ fun rememberAccessoryRowState(decimalSeparator: Char = LocalDecimalSeparator.cur
  * What the text keyboard cannot type.
  *
  * `√` inserts a call rather than a glyph: `sqrt(` with the caret inside, because the
- * character on its own is not something the parser accepts. The `123` key is the return
- * journey of `Aa` — the same [EditorCommand.ToggleTextInput], which is a toggle.
+ * character on its own is not something the parser accepts.
+ *
+ * The way back to the keypad is not here. It was a `123` chip on this row and an `ABC` key
+ * on the keypad — one journey with two buttons, in two places that moved as the surface
+ * swapped. Both are now the single switch in the top bar (`InputModeToggle`), which does not
+ * move when the surface below it does.
  */
-internal fun accessoryKeys(decimalSeparator: Char = '.'): List<KeypadKey> = listOf(
-    KeypadKey(
-        // `123` names a number system, so it is a word like `ABC` and not notation.
-        labelRes = R.string.key_numeric_keypad_label,
-        role = LineoRole.InputSwitch,
-        command = EditorCommand.ToggleTextInput,
-        contentDescription = R.string.key_numeric_keypad_description,
-    ),
+fun accessoryKeys(decimalSeparator: Char = '.'): List<KeypadKey> = listOf(
     KeypadKey("(", LineoRole.SuggestionChip, EditorCommand.InsertText("("), R.string.key_open_bracket_description),
     KeypadKey(")", LineoRole.SuggestionChip, EditorCommand.InsertText(")"), R.string.key_close_bracket_description),
     KeypadKey("^", LineoRole.SuggestionChip, EditorCommand.InsertText("^"), R.string.key_power_description),
@@ -73,3 +70,26 @@ internal fun accessoryKeys(decimalSeparator: Char = '.'): List<KeypadKey> = list
         contentDescription = R.string.key_argument_separator_description,
     ),
 )
+
+/**
+ * Which of [keys] a screen's chip row shows, for the window and the surface it is in.
+ *
+ * Three cases, and the middle one is the product decision of P1-15-3:
+ *
+ * - **A wide window** shows all of them. The pane has the room for a grid, and the argument
+ *   separator belongs in it because no other surface types that character.
+ * - **A portrait window with the keypad up** shows none. The row of notation above the digits
+ *   is more than a phone should spend on keys that are either already a keypad key (`%`) or
+ *   part of the fifth column a wider window adds (`(`, `)`, `^`, `√`). What the row draws
+ *   there is whatever the screen suggests, and nothing when there is nothing to suggest.
+ * - **The text keyboard up** shows all of them again, in any window: the keypad is gone, and
+ *   this row is then the only surface that can type a bracket at all.
+ *
+ * @param wideWindow whether the window is wider than compact. From the width class and never
+ *   from the orientation (`docs/ANDROID_STANDARDS.md` §2) — the caller has already asked.
+ */
+fun expressionKeysFor(
+    keys: List<KeypadKey>,
+    wideWindow: Boolean,
+    textInputActive: Boolean,
+): List<KeypadKey> = if (wideWindow || textInputActive) keys else emptyList()

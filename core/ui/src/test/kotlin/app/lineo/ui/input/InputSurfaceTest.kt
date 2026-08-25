@@ -3,7 +3,6 @@ package app.lineo.ui.input
 import app.cash.turbine.test
 import app.lineo.registry.EditorCommand
 import app.lineo.registry.InputSurface
-import app.lineo.ui.R
 import app.lineo.ui.theme.LineoRole
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -145,9 +144,14 @@ class InputSurfaceTest {
         // What P1-04 needs from `:core:ui`: a module brings its own keys, and everything
         // else about a keypad — the separator, the extra width, the command stream — is
         // unchanged. The keys themselves stay in the module that owns them.
-        val layout = KeypadLayout { separator, hasRoom ->
-            listOf(listOf(KeypadKey("ln", LineoRole.Function, EditorCommand.InsertFunction("ln", 1)))) +
-                basicKeypadRows(separator, hasRoom)
+        val layout = object : KeypadLayout {
+            override fun rows(
+                decimalSeparator: Char,
+                hasExtraColumn: Boolean,
+                hasRoomForFunctions: Boolean,
+            ): List<List<KeypadKey>> =
+                listOf(listOf(KeypadKey("ln", LineoRole.Function, EditorCommand.InsertFunction("ln", 1)))) +
+                    basicKeypadRows(decimalSeparator, hasExtraColumn)
         }
         val keypad = KeypadState(decimalSeparator = ',', hasRoomForFunctions = true, layout = layout)
 
@@ -213,17 +217,31 @@ class InputSurfaceTest {
     }
 
     @Test
-    fun `both surfaces toggle the text keyboard with the same command`() = runTest {
-        // Aa raises the system keyboard and 123 brings the keypad back; one toggle, two keys.
+    fun `neither surface carries the switch between them any more`() {
+        // It was an `ABC` key on the keypad and a `123` chip on the row: one journey, two
+        // buttons, both of them inside the surface being swapped. P1-15-3 moved it to the
+        // top bar (`InputModeToggle`), and this asserts the two copies are gone rather than
+        // joined by a third.
         val keypad = KeypadState()
         val accessory = AccessoryRowState()
 
-        assertEquals(EditorCommand.ToggleTextInput, keypad.modeKey.command)
-        // Both labels are *words* — a script and a number system — so they are resource ids
-        // rather than text (`AGENTS.md` §5), and the switch is asserted by what it emits.
-        assertEquals(R.string.key_text_keyboard_label, keypad.modeKey.labelRes)
-        val back = accessory.keys.single { it.command == EditorCommand.ToggleTextInput }
-        assertEquals(R.string.key_numeric_keypad_label, back.labelRes)
+        assertTrue(keypad.rows.flatten().none { it.command == EditorCommand.ToggleTextInput })
+        assertTrue(accessory.keys.none { it.command == EditorCommand.ToggleTextInput })
+    }
+
+    @Test
+    fun `the row shows no expression keys beside a portrait keypad, and all of them elsewhere`() {
+        // P1-15-3. Beside the keypad the row is the screen's suggestions and nothing else; a
+        // wide window has room for the grid, and the text keyboard leaves the row as the only
+        // surface that can type a bracket.
+        val keys = AccessoryRowState().keys
+
+        assertEquals(
+            emptyList<KeypadKey>(),
+            expressionKeysFor(keys, wideWindow = false, textInputActive = false),
+        )
+        assertEquals(keys, expressionKeysFor(keys, wideWindow = true, textInputActive = false))
+        assertEquals(keys, expressionKeysFor(keys, wideWindow = false, textInputActive = true))
     }
 
     @Test
@@ -239,13 +257,13 @@ class InputSurfaceTest {
     private fun KeypadState.key(label: String): KeypadKey =
         rows.flatten().single { it.label == label }
 
-    private fun KeypadState.allKeys(): List<KeypadKey> = rows.flatten() + modeKey
+    private fun KeypadState.allKeys(): List<KeypadKey> = rows.flatten()
 
     private fun AccessoryRowState.key(label: String): KeypadKey =
         keys.single { it.label == label }
 
     private companion object {
-        /** `Aa`, `0`, separator, `=` — the separator is the third column of the last row. */
+        /** `±`, `0`, separator, `=` — the separator is the third column of the last row. */
         const val DECIMAL_KEY_COLUMN = 2
     }
 }

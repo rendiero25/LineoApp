@@ -19,17 +19,17 @@ class ScientificKeypadLayoutTest {
 
     @Test
     fun `the digits and operators are the ones every other surface has`() {
-        val basic = basicKeypadRows('.', hasRoomForFunctions = false)
+        val basic = basicKeypadRows('.', hasExtraColumn = false)
 
-        val rows = ScientificKeypadLayout.rows('.', hasRoomForFunctions = false)
+        val rows = ScientificKeypadLayout.rows('.', hasExtraColumn = false, hasRoomForFunctions = false)
 
         assertEquals(basic, rows.takeLast(basic.size))
     }
 
     @Test
     fun `a wider window adds rows rather than replacing them`() {
-        val narrow = ScientificKeypadLayout.rows('.', hasRoomForFunctions = false)
-        val wide = ScientificKeypadLayout.rows('.', hasRoomForFunctions = true)
+        val narrow = ScientificKeypadLayout.rows('.', hasExtraColumn = false, hasRoomForFunctions = false)
+        val wide = ScientificKeypadLayout.rows('.', hasExtraColumn = true, hasRoomForFunctions = true)
 
         assertTrue(wide.size > narrow.size)
         // The inverses and the reciprocals are what the room buys.
@@ -39,7 +39,7 @@ class ScientificKeypadLayoutTest {
 
     @Test
     fun `every function key inserts a call and not a glyph`() {
-        val functionKeys = ScientificKeypadLayout.rows('.', hasRoomForFunctions = true)
+        val functionKeys = ScientificKeypadLayout.rows('.', hasExtraColumn = true, hasRoomForFunctions = true)
             .flatten()
             .filter { it.command is EditorCommand.InsertFunction }
 
@@ -54,7 +54,7 @@ class ScientificKeypadLayoutTest {
     fun `every function this module registers has a key in the wide layout`() {
         // The keypad is the module's other face (`docs/ARCHITECTURE.md` §4). A function with
         // no key is only reachable by typing it, which defeats the point of a focused screen.
-        val onKeys = ScientificKeypadLayout.rows('.', hasRoomForFunctions = true)
+        val onKeys = ScientificKeypadLayout.rows('.', hasExtraColumn = true, hasRoomForFunctions = true)
             .flatten()
             .mapNotNull { (it.command as? EditorCommand.InsertFunction)?.name }
             .toSet()
@@ -70,7 +70,7 @@ class ScientificKeypadLayoutTest {
     fun `no two keys in one layout show the same label`() {
         listOf(true, false).forEach { hasRoom ->
             listOf('.', ',').forEach { separator ->
-                val duplicated = ScientificKeypadLayout.rows(separator, hasRoom)
+                val duplicated = ScientificKeypadLayout.rows(separator, hasRoom, hasRoom)
                     .flatten()
                     .groupingBy { it.label }
                     .eachCount()
@@ -83,7 +83,7 @@ class ScientificKeypadLayoutTest {
 
     @Test
     fun `every key this module adds is described for TalkBack`() {
-        val undescribed = ScientificKeypadLayout.rows('.', hasRoomForFunctions = true)
+        val undescribed = ScientificKeypadLayout.rows('.', hasExtraColumn = true, hasRoomForFunctions = true)
             .flatten()
             .filter { it.contentDescription == null }
             .map { it.label }

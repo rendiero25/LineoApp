@@ -14,14 +14,24 @@ package app.lineo.ui.input
  * enough for more columns. It is never told the orientation or the device
  * (`docs/ANDROID_STANDARDS.md` §2).
  */
-fun interface KeypadLayout {
+interface KeypadLayout {
 
     /** The grid, top row first. Rows may differ in length; [Keypad] lays each one out on its own. */
-    fun rows(decimalSeparator: Char, hasRoomForFunctions: Boolean): List<List<KeypadKey>>
+    fun rows(
+        decimalSeparator: Char,
+        hasExtraColumn: Boolean,
+        hasRoomForFunctions: Boolean,
+    ): List<List<KeypadKey>>
 
     companion object {
 
         /** The calculator grid of P0-13: four columns, five when there is room. */
-        val Basic: KeypadLayout = KeypadLayout(::basicKeypadRows)
+        val Basic: KeypadLayout = object : KeypadLayout {
+            override fun rows(
+                decimalSeparator: Char,
+                hasExtraColumn: Boolean,
+                hasRoomForFunctions: Boolean,
+            ): List<List<KeypadKey>> = basicKeypadRows(decimalSeparator, hasExtraColumn)
+        }
     }
 }

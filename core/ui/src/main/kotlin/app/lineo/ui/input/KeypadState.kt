@@ -46,32 +46,17 @@ class KeypadState(
      * width there is. A phone in landscape has room; so does a tablet held upright, and so
      * does an unfolded foldable. All three get the same keypad for the same reason.
      */
+    var hasExtraColumn: Boolean by mutableStateOf(hasRoomForFunctions)
+
+    /**
+     * Whether the window has enough vertical space for extra rows (e.g. scientific functions).
+     */
     var hasRoomForFunctions: Boolean by mutableStateOf(hasRoomForFunctions)
 
     /** The grid, top row first. Derived, so only a real change rebuilds it. */
     val rows: List<List<KeypadKey>> by derivedStateOf {
-        layout.rows(this.decimalSeparator, this.hasRoomForFunctions)
+        layout.rows(this.decimalSeparator, this.hasExtraColumn, this.hasRoomForFunctions)
     }
-
-    /**
-     * The surface switch, which sits outside the grid.
-     *
-     * Floating above the grid rather than occupying a cell, because it is the one control
-     * that does not type: it changes the instrument. A key in the grid looks like a key,
-     * and this is a mode.
-     *
-     * Labelled `ABC` rather than with an icon or an `Aa`: it is the label every software
-     * keyboard on the platform uses for exactly this journey, and it names the destination
-     * rather than the mechanism. `123` on the accessory row is the same key coming back.
-     */
-    val modeKey: KeypadKey = KeypadKey(
-        // A word, not notation: `ABC` names the Latin script, and a Cyrillic or Greek user is
-        // shown their own three letters (`AGENTS.md` §5).
-        labelRes = R.string.key_text_keyboard_label,
-        role = LineoRole.InputSwitch,
-        command = EditorCommand.ToggleTextInput,
-        contentDescription = R.string.key_text_keyboard_description,
-    )
 
     /** Publishes what [key] means. The only way a press reaches the editor. */
     fun press(key: KeypadKey) {
@@ -94,10 +79,13 @@ fun rememberKeypadState(
     decimalSeparator: Char = LocalDecimalSeparator.current,
     layout: KeypadLayout = KeypadLayout.Basic,
 ): KeypadState {
-    val hasRoom = LocalWindowWidthClass.current != WindowWidthClass.Compact
-    val state = remember(layout) { KeypadState(decimalSeparator, hasRoom, layout) }
+    val windowWidth = LocalWindowWidthClass.current
+    val hasExtraColumn = windowWidth != WindowWidthClass.Compact
+    val hasRoomForFunctions = windowWidth != WindowWidthClass.Compact
+    val state = remember(layout) { KeypadState(decimalSeparator, hasExtraColumn, layout) }
     state.decimalSeparator = decimalSeparator
-    state.hasRoomForFunctions = hasRoom
+    state.hasExtraColumn = hasExtraColumn
+    state.hasRoomForFunctions = hasRoomForFunctions
     return state
 }
 
@@ -110,9 +98,9 @@ fun rememberKeypadState(
  * and `⌫` is kept away from `=`, because two keys that destroy work should not neighbour
  * the one pressed most often.
  *
- * `ABC` is not here: it floats above the grid, being a mode rather than a key. `=` emits
- * `NewLine`, which is what committing a line means in a notepad calculator. `AC` clears the
- * line and not the document. `±` flips the sign of the number the caret is in.
+ * The surface switch is not here: it lives in the top bar, being a mode rather than a key.
+ * `=` emits `NewLine`, which is what committing a line means in a notepad calculator. `AC`
+ * clears the line and not the document. `±` flips the sign of the number the caret is in.
  *
  * Public because a module layout builds on it rather than restating it: `:feature:scientific`
  * keeps these exact digits and operators and adds rows of its own above them, so the hand
@@ -125,7 +113,7 @@ fun rememberKeypadState(
  */
 fun basicKeypadRows(
     decimalSeparator: Char,
-    hasRoomForFunctions: Boolean = false,
+    hasExtraColumn: Boolean = false,
 ): List<List<KeypadKey>> {
     val extras = listOf(
         KeypadKey("(", LineoRole.Function, EditorCommand.InsertText("("), R.string.key_open_bracket_description),
@@ -145,7 +133,7 @@ fun basicKeypadRows(
         ),
     )
     return baseRows(decimalSeparator).mapIndexed { index, row ->
-        if (hasRoomForFunctions) row.dropLast(1) + extras[index] + row.last() else row
+        if (hasExtraColumn) row.dropLast(1) + extras[index] + row.last() else row
     }
 }
 

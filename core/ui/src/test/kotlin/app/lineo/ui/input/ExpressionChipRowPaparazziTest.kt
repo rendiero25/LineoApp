@@ -15,13 +15,9 @@ import org.junit.Test
 /**
  * The shared chip row (P1-15-0).
  *
- * `AccessoryRow`'s own snapshots in `KeypadPaparazziTest` are the other half of this test and
- * the more important one: they were recorded before this row existed, and the drawing moved
- * underneath them. If they still pass unchanged, the move cost a user nothing — which is the
- * whole claim P1-15-0 makes.
- *
- * What is new here is the part `AccessoryRow` cannot show: a screen's own chips after the
- * keys, and the undocked form that sits above a keypad rather than above a keyboard.
+ * This test includes snapshots for the row in various states (light, dark, RTL, suggestions)
+ * and configurations (docked vs undocked). It covers the cases previously asserted by
+ * `AccessoryRow` in `KeypadPaparazziTest`.
  */
 class ExpressionChipRowPaparazziTest {
 
@@ -104,6 +100,29 @@ class ExpressionChipRowPaparazziTest {
                         onCommand = {},
                         trailing = suggestions,
                     )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `accessory row in light scheme`() {
+        paparazzi.snapshot {
+            LineoTheme(darkTheme = false, dynamicColor = false) {
+                ExpressionChipRow(keys = accessoryKeys(), onCommand = {})
+            }
+        }
+    }
+
+    @Test
+    fun `keypad and accessory row right to left`() {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                LineoTheme(darkTheme = false, dynamicColor = false) {
+                    Column {
+                        ExpressionChipRow(keys = accessoryKeys(), onCommand = {})
+                        Keypad(state = KeypadState())
+                    }
                 }
             }
         }

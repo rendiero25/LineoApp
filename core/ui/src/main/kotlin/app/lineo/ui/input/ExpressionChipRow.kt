@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -91,6 +92,60 @@ fun ExpressionChipRow(
 }
 
 /**
+ * A grid of expression keys, used in landscape where vertical space allows more structure.
+ *
+ * Arranges [keys] and [trailing] into [columns]. Unlike the row variant, this does not
+ * scroll — it is meant for a side pane where the width is fixed and the goal is to make the
+ * buttons large and stable targets.
+ */
+@Composable
+fun ExpressionChipGrid(
+    keys: List<KeypadKey>,
+    onCommand: (EditorCommand) -> Unit,
+    modifier: Modifier = Modifier,
+    trailing: List<ExpressionChip> = emptyList(),
+    columns: Int = 3,
+) {
+    val allChips = keys.map { key ->
+        ExpressionChip(
+            label = keyLabel(key),
+            role = key.role,
+            command = key.command,
+            contentDescription = key.contentDescription?.let { stringResource(it) },
+        )
+    } + trailing
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(RoleColors.of(LineoRole.Editor).container)
+            .padding(horizontal = LineoDimens.KeypadEdge, vertical = LineoDimens.Grid),
+        verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
+    ) {
+        allChips.chunked(columns).forEach { rowChips ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap),
+            ) {
+                rowChips.forEach { chip ->
+                    Chip(
+                        label = chip.label,
+                        role = chip.role,
+                        description = chip.contentDescription,
+                        onPress = { onCommand(chip.command) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                // Fill the rest of the row with empty boxes to keep the grid aligned.
+                repeat(columns - rowChips.size) {
+                    Box(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/**
  * A chip a screen contributes to [ExpressionChipRow], beyond the expression keys.
  *
  * Resolved strings rather than resource ids: what a suggestion is called and how it is
@@ -121,10 +176,16 @@ data class ExpressionChip(
  * a starting point.
  */
 @Composable
-private fun Chip(label: String, role: LineoRole, description: String?, onPress: () -> Unit) {
+private fun Chip(
+    label: String,
+    role: LineoRole,
+    description: String?,
+    onPress: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = RoleColors.of(role)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .defaultMinSize(minWidth = LineoDimens.MinTouchTarget, minHeight = LineoDimens.MinTouchTarget)
             .clip(RoundedCornerShape(ChipCornerRadius))
             .background(colors.container)

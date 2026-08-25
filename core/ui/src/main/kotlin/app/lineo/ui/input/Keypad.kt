@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -51,15 +49,14 @@ fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
         val size = keySize(state.rows, this.maxWidth, this.maxHeight)
         val gap = gapFor(state.rows, this.maxWidth, size)
         Column(verticalArrangement = Arrangement.spacedBy(LineoDimens.KeyGap)) {
-            ModeKey(key = state.modeKey, onPress = state::press)
             state.rows.forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     // Spread, never centred. Where the height is the binding constraint the
                     // keys are narrower than their columns, and centring the leftover moved
-                    // the whole grid inwards — `AC` no longer sat under `ABC`, which is the
-                    // one alignment `KeypadState` promises. The slack goes into the gaps, so
-                    // the leading key keeps the pane's edge and so does the trailing one.
+                    // the whole grid inwards — `AC` no longer sat under the chip row above
+                    // it. The slack goes into the gaps, so the leading key keeps the pane's
+                    // edge and so does the trailing one.
                     horizontalArrangement = Arrangement.spacedBy(gap),
                 ) {
                     row.forEach { key -> Key(key = key, onPress = state::press, size = size) }
@@ -75,7 +72,7 @@ fun Keypad(state: KeypadState, modifier: Modifier = Modifier) {
  * At least [LineoDimens.KeyGap], which is what it works out to whenever the width is the
  * binding constraint — so the phone keypad is unchanged and only a grid sized by its height
  * spreads further apart. Spreading rather than centring is what keeps the leading key on the
- * pane's edge, under `ABC` and in line with the chip row above it.
+ * pane's edge, in line with the chip row above it.
  */
 private fun gapFor(rows: List<List<KeypadKey>>, maxWidth: Dp, size: Dp): Dp {
     val columns = rows.maxOfOrNull { it.size } ?: return LineoDimens.KeyGap
@@ -100,8 +97,9 @@ internal fun keySize(rows: List<List<KeypadKey>>, maxWidth: Dp, maxHeight: Dp): 
     val gap = LineoDimens.KeyGap
     val byWidth = (maxWidth - gap * (columns - 1)) / columns
     if (maxHeight == Dp.Infinity) return byWidth.atLeastATarget()
-    // The mode key sits above the grid and takes its own row's worth of height with it.
-    val forRows = maxHeight - LineoDimens.MinTouchTarget - gap * rows.size
+    // Nothing is reserved above the grid: the surface switch moved to the top bar, so every
+    // row of the pane is a row of keys.
+    val forRows = maxHeight - gap * rows.size
     val byHeight = forRows / rows.size
     return minOf(byWidth, byHeight).atLeastATarget()
 }
@@ -115,36 +113,6 @@ internal fun keySize(rows: List<List<KeypadKey>>, maxWidth: Dp, maxHeight: Dp): 
  * on a landscape phone was neither.
  */
 private fun Dp.atLeastATarget(): Dp = coerceAtLeast(LineoDimens.MinTouchTarget)
-
-/**
- * The surface switch, above the grid and the size of a chip rather than a key.
- *
- * Deliberately not a cell. Every key in the grid types something into the expression; this
- * one changes what you are typing with, and a control that sits apart is read as a mode
- * before its label is. It lines up with `AC` beneath it, the other key that acts on the
- * line as a whole rather than on a character in it.
- */
-@Composable
-private fun ModeKey(key: KeypadKey, onPress: (KeypadKey) -> Unit) {
-    val colors = RoleColors.of(key.role)
-    val description = key.contentDescription?.let { stringResource(it) }
-    Box(
-        modifier = Modifier
-            // A minimum rather than a size: this is the one key whose label is a *word*, so
-            // it is the one key whose label grows with the system font. Pinned to 48 dp it
-            // showed `AB` at the largest accessibility size — found in a snapshot at 2×
-            // (P1-08b). Growing, it becomes a pill and stays readable.
-            .defaultMinSize(minWidth = LineoDimens.MinTouchTarget, minHeight = LineoDimens.MinTouchTarget)
-            .clip(CircleShape)
-            .background(colors.container)
-            .clickable { onPress(key) }
-            .padding(horizontal = LineoDimens.Grid)
-            .semanticsLabel(description),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = keyLabel(key), style = MaterialTheme.typography.titleMedium, color = colors.content)
-    }
-}
 
 /**
  * One key, at the size [keySize] decided for the whole grid.

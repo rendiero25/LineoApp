@@ -98,6 +98,31 @@ class QuantityFormatTest {
         assertEquals("5,3 km", QuantityFormat(Locale.GERMANY).format(quantity).text)
     }
 
+    @Test
+    fun `large numbers use scientific notation`() {
+        // 10^12 is the threshold
+        assertEquals("1E12", format(Locale.US, "1000000000000"))
+        assertEquals("1.23456789E15", format(Locale.US, "1234567890123456"))
+    }
+
+    @Test
+    fun `small numbers use scientific notation`() {
+        // 10^-6 is the threshold
+        assertEquals("1E-7", format(Locale.US, "0.0000001"))
+        assertEquals("1.23E-10", format(Locale.US, "0.000000000123"))
+    }
+
+    @Test
+    fun `scientific notation respects the decimal separator`() {
+        val comma = QuantityFormat(Locale.GERMANY)
+        assertEquals("1,23456789E15", comma.format(quantity("1234567890123456")).text)
+    }
+
+    @Test
+    fun `numbers just below the threshold stay plain and grouped`() {
+        assertEquals("999,999,999,999.99", format(Locale.US, "999999999999.99"))
+    }
+
     private fun format(locale: Locale, value: String): String =
         QuantityFormat(locale).format(quantity(value)).text
 

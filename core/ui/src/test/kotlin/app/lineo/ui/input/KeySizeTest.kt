@@ -17,7 +17,11 @@ import org.junit.Test
  */
 class KeySizeTest {
 
-    private val basic = KeypadLayout.Basic.rows(decimalSeparator = '.', hasRoomForFunctions = false)
+    private val basic = KeypadLayout.Basic.rows(
+        decimalSeparator = '.',
+        hasExtraColumn = false,
+        hasRoomForFunctions = false,
+    )
 
     @Test
     fun `a comfortable window is measured from the width`() {
