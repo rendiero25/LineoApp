@@ -1,6 +1,12 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Lineo</string>
-    <string name="full_app_title">Lineo: Notepad Calculator</string>
+    <!--
+      The Play Store title (P1-11), 25 characters. Nothing in the app draws it — the launcher
+      shows `app_name` and the listing is typed into the Console — but it lives here so the
+      title has one source that travels with the code and is translated with everything else.
+      Lint is told so rather than the string being deleted and re-typed from a doc.
+    -->
+    <string name="full_app_title" tools:ignore="UnusedResources">Lineo: Notepad Calculator</string>
 
     <!-- Spoken label for the overflow affordance in the top corner. -->
     <string name="history_title">History</string>
