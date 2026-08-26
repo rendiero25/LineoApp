@@ -68,11 +68,10 @@ class MainActivity : ComponentActivity() {
 /**
  * The whole app below the window: the settings resolved once, and one destination showing.
  *
- * Which destination that is is `rememberSaveable` state rather than a nav graph. **Not a
- * navigation library**: which one Lineo adopts is the open decision recorded against P0-01,
- * due before P1-10, and P1-04-2 needed a second destination before that answer exists. Each
- * flag survives process death, a module still never sees a controller
- * (`docs/ARCHITECTURE.md` §4), and whatever wins later is an edit to this file alone.
+ * Which destination that is is a Navigation Compose graph over serializable `Destination`
+ * routes (P1-16), which closed the library decision left open against P0-01. The back stack
+ * survives process death, and a module still never sees a controller
+ * (`docs/ARCHITECTURE.md` §4) — the host resolves the route and hands a screen its state.
  *
  * Lifted out of `onCreate` so that what the activity does — draw edge to edge and hand over —
  * stays readable beside what the app does.
