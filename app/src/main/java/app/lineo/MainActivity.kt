@@ -17,8 +17,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import app.lineo.billing.BillingRepository
-import app.lineo.billing.Entitlement
 import app.lineo.data.settings.ThemePreference
 import app.lineo.engine.EvalContext
 import app.lineo.engine.unit.UnitRegistry
@@ -60,13 +58,10 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var modules: ModuleRegistry
 
-    @Inject
-    lateinit var billing: BillingRepository
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { LineoApp(modules, billing, notepad, history, settings) }
+        setContent { LineoApp(modules, notepad, history, settings) }
     }
 }
 
@@ -85,23 +80,20 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun LineoApp(
     modules: ModuleRegistry,
-    billing: BillingRepository,
     notepad: NotepadViewModel,
     history: HistoryViewModel,
     settings: SettingsViewModel,
 ) {
     val systemLocale = LocalConfiguration.current.locales[0]
     val stored by settings.uiState.collectAsStateWithLifecycle()
-    val entitlement by billing.entitlement.collectAsStateWithLifecycle()
 
     // One resolution for the whole window: the same locale reads the numbers, prints them and
     // labels the decimal key, so the three can never disagree.
     val resolved = remember(stored, systemLocale) { ResolvedSettings.of(stored, systemLocale) }
     val locale = resolved.locale
-    val tier = when (entitlement) {
-        Entitlement.Free -> Tier.FREE
-        Entitlement.Premium -> Tier.PREMIUM
-    }
+    // Every module is free until Play Billing lands: `:core:billing` was reverted with P2-01,
+    // and a tier this window invented would be a gate with nothing behind it.
+    val tier = Tier.FREE
     val visible = modules.visible(tier, locale)
     val navController = rememberNavController()
 

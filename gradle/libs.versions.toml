@@ -26,7 +26,6 @@ profileinstaller = "1.4.1"
 uiautomator = "2.4.0"
 navigation = "2.9.8"
 kotlinSerialization = "1.8.0"
-billing = "7.1.1"
 
 [libraries]
 # Gradle plugins consumed as libraries by the convention plugins in build-logic.
@@ -82,7 +81,6 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }
-androidx-billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
 
 # Android unit tests that need a real framework: Room migrations and DataStore.
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }

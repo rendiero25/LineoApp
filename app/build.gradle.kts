@@ -44,7 +44,6 @@ androidComponents {
 }
 
 dependencies {
-    implementation(project(":core:billing"))
     implementation(project(":core:data"))
     implementation(project(":core:registry"))
     implementation(project(":core:ui"))

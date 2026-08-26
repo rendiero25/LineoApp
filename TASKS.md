@@ -512,11 +512,20 @@ not read another's code. Three modules, so three tasks — rule 3.*
 
 Do not start before 1.0 has two weeks of stable data.
 
-- [x] **P2-01** `:core:billing` — Play Billing infrastructure
-  - New `:core:billing` module with `Entitlement` (Free/Premium)
-  - `BillingRepository` interface and initial implementation
-  - Wired into `MainActivity` for module filtering and evaluator context
-  - **DoD:** `:core:billing` compiles; `MainActivity` injects it and uses it to decide visible modules
+- [!] **P2-01** `:core:billing` — Play Billing infrastructure — **reverted, needs a §2 decision**
+  - Was built and merged early, inside the P1-17 commit. Removed again on 2026-08-26, because
+    `checkDependencyLicenses` had never been run against it and it broke two non-negotiables:
+    `com.android.billingclient:billing*` and the five `com.google.android.gms:play-services-*`
+    it drags in are under the **Android Software Development Kit License**, not Apache-2.0,
+    MIT or BSD (AGENTS.md §2, read from each POM); and the merged release manifest gained
+    `com.android.vending.BILLING`, `INTERNET` and `ACCESS_NETWORK_STATE`, which P1-10b states
+    are absent and `ManifestSecurityTest` asserts against
+  - The module also pulled `play-services-location` and `play-services-places-placereport`
+    into a calculator that asks for no capability at all
+  - **Blocked on:** a human decision recorded in `docs/ARCHITECTURE.md` §7 that Play Billing
+    is an agreed exception to §2. Write that first; the code is a day's work after it
+  - **DoD:** the exception is written down, `checkDependencyLicenses` passes with the billing
+    tree recorded, and `ManifestSecurityTest` names every permission billing merges
 - [ ] **P2-02** Premium gating across features; free tier stays genuinely usable
 - [ ] **P2-03** Tip jar — three consumable tiers, Supporter badge
 - [ ] **P2-04** UMP consent SDK — must ship before any ad request
